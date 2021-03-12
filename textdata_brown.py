@@ -9,8 +9,7 @@ import random
 import string, copy
 from nltk.tokenize import word_tokenize
 from Hyperparameters import args
-
-from Hyperparameters import args
+from nltk.corpus import brown
 class Batch:
     """Struct containing batches info
     """
@@ -156,15 +155,13 @@ class TextData:
         """Load/create the conversations data
         """
         # self.corpusDir = '../Gutenberg_data/' + corpusname + '/' if args['createDataset'] else args['rootDir']
-        if corpusname == 'LMbenchmark':
-            self.basedir = '../1-billion-word-language-modeling-benchmark-r13output/'
-            if not args['createDataset']:
-                self.basedir = args['rootDir']
-            self.corpusDir = self.basedir + '/training-monolingual.tokenized.shuffled/'
+        self.basedir = '../wikitext-2/'
 
-            self.corpusDir_test =  self.basedir + '/heldout-monolingual.tokenized.shuffled/'
+        self.corpus = self.basedir + '/wiki.train.tokens'
 
-            self.fullSamplesPath = args['rootDir'] + '/LMdata.pkl'  # Full sentences length/vocab
+        self.corpus_test =  self.basedir + '/wiki.test.tokens'
+
+        self.fullSamplesPath = args['rootDir'] + '/LMdata_wiki.pkl'  # Full sentences length/vocab
 
 
 
@@ -172,32 +169,31 @@ class TextData:
         datasetExist = os.path.isfile(self.fullSamplesPath)
         if not datasetExist:  # First time we load the database: creating all files
             print('Training data not found. Creating dataset...')
-            datafilenames = os.listdir(self.corpusDir)
 
             total_words = []
             dataset = {'train': [], 'test':[]}
 
-            for datafile in tqdm(datafilenames):
-                with open(self.corpusDir + '/' + datafile, 'r') as rhandle:
-                    lines = rhandle.readlines()
-                    sentences = []
-                    for line in lines:
+            with open(self.corpus, 'r') as rhandle:
+                lines = rhandle.readlines()
+                sentences = []
+                for line in lines:
+                    if len(line) > 10:
                         line = line.lower().strip()
                         # line = self.tokenizer(line)
                         line = line.split()
                         total_words.extend(line)
                         sentences.append(line)
-                    dataset['train'].extend(sentences)
+                dataset['train'].extend(sentences)
 
-            for datafile in tqdm(os.listdir(self.corpusDir_test)):
-                with open(self.corpusDir_test + '/' + datafile, 'r') as rhandle:
-                    lines = rhandle.readlines()
-                    sentences = []
-                    for line in lines:
+            with open(self.corpus_test , 'r') as rhandle:
+                lines = rhandle.readlines()
+                sentences = []
+                for line in lines:
+                    if len(line) > 10:
                         line = line.lower().strip()
                         line = line.split()
                         sentences.append(line)
-                    dataset['test'].extend(sentences)
+                dataset['test'].extend(sentences)
 
             print(len(dataset['train']), len(dataset['test']))
 
@@ -209,7 +205,7 @@ class TextData:
             sort_count = fdist.most_common(30000)
             print('sort_count: ', len(sort_count))
 
-            with open(self.basedir + "/voc.txt", "w") as v:
+            with open(args['rootDir'] + "/voc_wiki2.txt", "w") as v:
                 for w, c in tqdm(sort_count):
                     if w not in [' ', '', '\n']:
                         v.write(w)
@@ -219,7 +215,7 @@ class TextData:
 
                 v.close()
 
-            self.word2index = self.read_word2vec(self.basedir + '/voc.txt')
+            self.word2index = self.read_word2vec(args['rootDir'] + '/voc_wiki2.txt')
             self.sorted_word_index = sorted(self.word2index.items(), key=lambda item: item[1])
             print('sorted')
             self.index2word = [w for w, n in self.sorted_word_index]

@@ -30,7 +30,7 @@ class HP:
 
         args['numEpochs'] = 100
         args['saveEvery'] = 2000
-        args['batchSize'] = 128
+        args['batchSize'] = 256
         args['learningRate'] = 0.001
         args['dropout'] = 0.9
         args['clip'] = 5.0
@@ -45,7 +45,7 @@ class HP:
 
         args['temperature'] =1.0
 
-        args['paratype'] = 'recog'
+        args['LMtype'] = 'lstm' # one of ['lstm', 'asso']
 
 
         return args

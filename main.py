@@ -14,7 +14,7 @@ import time,os
 import math,random
 import nltk
 from nltk.corpus import stopwords
-
+import argparse
 
 # import turibolt as bolt
 import pickle
@@ -26,6 +26,32 @@ import numpy as np
 import copy
 
 from kenLM import LMEvaluator as LMEr
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--gpu', '-g')
+parser.add_argument('--batch', '-b')
+parser.add_argument('--modelarch', '-m')
+
+cmdargs = parser.parse_args()
+
+usegpu = True
+
+if cmdargs.gpu is None:
+    usegpu = False
+    args['device'] = 'cpu'
+else:
+    usegpu = True
+    args['device'] = 'cuda:' + str(cmdargs.gpu)
+
+if cmdargs.batch is None:
+    pass
+else:
+    args['batchSize'] = int(cmdargs.batch)
+
+if cmdargs.modelarch is None:
+    pass
+else:
+    args['LMtype'] = cmdargs.modelarch
 
 def asMinutes(s):
     m = math.floor(s / 60)
@@ -43,7 +69,7 @@ def timeSince(since, percent):
 class Runner:
     def __init__(self):
         self.model_path = args['rootDir'] + '/model.pth'
-        self.model_bw_path = args['rootDir'] + '/model_bw.pth'
+        # self.model_bw_path = args['rootDir'] + '/model_bw.pth'
         self.drawcount = 0
 
 
@@ -56,14 +82,17 @@ class Runner:
         args['vocabularySize'] = self.textData.getVocabularySize()
         print(self.textData.getVocabularySize())
 
-        self.model = LanguageModel(self.textData.word2index, self.textData.index2word)
+        # self.model = LanguageModel(self.textData.word2index, self.textData.index2word)
+        self.model = torch.load(self.model_path.replace('model', 'model_'+'fw'), map_location=args['device'])
+        params = sum([np.prod(p.size()) for p in self.model.parameters()])
+        print(params, sum([sys.getsizeof(p.storage()) for p in self.model.parameters()])/1000000, 'm')
         self.trainLM()     # contain  model saving
         self.evaluateRandomly()
         self.testLM()
 
      
 
-    def trainLM(self,  direction = 'fw', print_every=1000, plot_every=10, learning_rate=0.001):
+    def trainLM(self,  direction = 'fw', print_every=10000, plot_every=10, learning_rate=0.001):
         start = time.time()
         plot_losses = []
         print_loss_total = 0  # Reset every print_every
@@ -82,26 +111,21 @@ class Runner:
 
         min_perplexity = -1
 
+
+
         for epoch in range(args['numEpochs']):
             losses = []
 
             for batch in batches:
                 optimizer.zero_grad()
                 x={}
-                if direction == 'fw':
-                    x['dec_input'] = autograd.Variable(torch.LongTensor(batch.decoderSeqs))
-                    x['dec_len'] = batch.decoder_lens
-                    x['dec_target'] = autograd.Variable(torch.LongTensor(batch.targetSeqs))
-                else:
-                    inputseq = copy.copy(np.asarray(batch.targetSeqs)[:,::-1])
-                    x['dec_input'] = autograd.Variable(torch.LongTensor(inputseq))
-                    x['dec_len'] = batch.decoder_lens
-                    targetseq = copy.copy(np.asarray(batch.decoderSeqs)[:,::-1])
-                    x['dec_target'] = autograd.Variable(torch.LongTensor(targetseq))
+                x['dec_input'] = autograd.Variable(torch.LongTensor(batch.decoderSeqs))
+                x['dec_len'] = batch.decoder_lens
+                x['dec_target'] = autograd.Variable(torch.LongTensor(batch.targetSeqs))
 
 
                 # print(x['enc_input'][0],x['dec_input'][0],x['dec_target'][0])
-                de_output, loss = self.model(x)    # batch seq_len outsize
+                de_output, loss, true_mean = self.model(x)    # batch seq_len outsize
 
                 loss_mean = torch.mean(loss)
                 # Reward = loss_mean.data
@@ -122,6 +146,9 @@ class Runner:
                     print_loss_total = 0
                     print('%s (%d %d%%) %.4f' % (timeSince(start, iter / n_iters),
                                                  iter, iter / n_iters * 100, print_loss_avg))
+
+                    perplexity = self.Cal_perplexity_for_dataset('test', direction)
+                    print('Test ppl: ', perplexity)
 
                 if iter % plot_every == 0:
                     plot_loss_avg = plot_loss_total / plot_every
@@ -157,20 +184,17 @@ class Runner:
         with torch.no_grad():
             for batch in self.testbatches[datasetname]:
                 x = {}
-                if direction == 'fw':
-                    x['dec_input'] = autograd.Variable(torch.LongTensor(batch.decoderSeqs))
-                    x['dec_len'] = batch.decoder_lens
-                    x['dec_target'] = autograd.Variable(torch.LongTensor(batch.targetSeqs))
-                else:
-                    inputseq = copy.copy(np.asarray(batch.targetSeqs)[:,::-1])
-                    x['dec_input'] = autograd.Variable(torch.LongTensor(inputseq))
-                    x['dec_len'] = batch.decoder_lens
-                    targetseq = copy.copy(np.asarray(batch.decoderSeqs)[:,::-1])
-                    x['dec_target'] = autograd.Variable(torch.LongTensor(targetseq))
 
-                de_output, recon_loss_mean = self.model.predict(x)
-                ave_loss = (ave_loss * num + sum(recon_loss_mean)) / (num + len(recon_loss_mean))
-                num += len(recon_loss_mean)
+                x['dec_input'] = autograd.Variable(torch.LongTensor(batch.decoderSeqs))
+                x['dec_len'] = batch.decoder_lens
+                x['dec_target'] = autograd.Variable(torch.LongTensor(batch.targetSeqs))
+
+                de_output, recon_loss_mean, true_mean = self.model(x)
+                # true_mean = recon_loss_mean
+                # print(true_mean.size())
+                ave_loss = (ave_loss * num + sum(true_mean)) / (num + len(true_mean))
+
+                num += len(true_mean)
 
         return torch.exp(ave_loss)
 
