@@ -1,0 +1,16 @@
+
+	GCC 5.5.0 environment now loaded
+
+
+	CUDA-9.2 loaded
+
+
+Loading cuda/9.2
+  Loading requirement: gcc5/5.5.0
+/jmain01/home/JAD015/ttl03/lxs80-ttl03/HopfieldLM
+Traceback (most recent call last):
+  File "main.py", line 4, in <module>
+    from LanguageModel import LanguageModel
+  File "/jmain01/home/JAD015/ttl03/lxs80-ttl03/HopfieldLM/LanguageModel.py", line 1, in <module>
+    import torch
+ModuleNotFoundError: No module named 'torch'

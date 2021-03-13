@@ -1,0 +1,20 @@
+
+	GCC 5.5.0 environment now loaded
+
+
+	CUDA-9.2 loaded
+
+
+Loading cuda/9.2
+  Loading requirement: gcc5/5.5.0
+/jmain01/home/JAD015/ttl03/lxs80-ttl03/HopfieldLM
+Traceback (most recent call last):
+  File "main.py", line 245, in <module>
+    r.main()
+  File "main.py", line 78, in main
+    self.textData = TextData('LMbenchmark')
+  File "/jmain01/home/JAD015/ttl03/lxs80-ttl03/HopfieldLM/textdata.py", line 47, in __init__
+    self.loadCorpus(corpusname)
+  File "/jmain01/home/JAD015/ttl03/lxs80-ttl03/HopfieldLM/textdata.py", line 175, in loadCorpus
+    datafilenames = os.listdir(self.corpusDir)
+FileNotFoundError: [Errno 2] No such file or directory: '../1-billion-word-language-modeling-benchmark-r13output//training-monolingual.tokenized.shuffled/'
