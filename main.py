@@ -82,8 +82,8 @@ class Runner:
         args['vocabularySize'] = self.textData.getVocabularySize()
         print(self.textData.getVocabularySize())
 
-        # self.model = LanguageModel(self.textData.word2index, self.textData.index2word)
-        self.model = torch.load(self.model_path.replace('model', 'model_'+'fw'), map_location=args['device'])
+        self.model = LanguageModel(self.textData.word2index, self.textData.index2word)
+        # self.model = torch.load(self.model_path.replace('model', 'model_'+'fw'), map_location=args['device'])
         params = sum([np.prod(p.size()) for p in self.model.parameters()])
         print(params, sum([sys.getsizeof(p.storage()) for p in self.model.parameters()])/1000000, 'm')
         self.trainLM()     # contain  model saving
@@ -160,7 +160,7 @@ class Runner:
             perplexity = self.Cal_perplexity_for_dataset('test', direction)
             if perplexity < min_perplexity or min_perplexity == -1:
                 print('perplexity = ', perplexity, '>= min_perplexity (', min_perplexity, '), saving model...')
-                torch.save(self.model, self.model_path.replace('model', 'model_'+direction))
+                torch.save(self.model, self.model_path.replace('model', 'model_'+args['LMtype']+'_'+str(args['maxLength'])))
                 min_perplexity = perplexity
 
             print('Epoch ', epoch, 'loss = ', sum(losses) / len(losses), 'Valid perplexity = ', perplexity)
