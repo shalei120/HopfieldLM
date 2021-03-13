@@ -249,6 +249,7 @@ class TextData:
         else:
             self.loadDataset(self.fullSamplesPath)
             print('loaded')
+            print(max([len(sen) for sid, sen in self.datasets['train']]))
             # self.symbols = [str(ind) for ind, w in enumerate(self.index2word) if not w.isalpha()]
             # with open(args['rootDir'] + '/symbol_index.txt','w') as handle:
             #     handle.write(' '.join(self.symbols))

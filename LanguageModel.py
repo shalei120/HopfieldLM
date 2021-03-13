@@ -69,8 +69,10 @@ class LanguageModel(nn.Module):
                 input_size=args['embeddingSize'] )
             self.hp_network = HopfieldEncoderLayer(self.hopfield)
         elif args['LMtype'] == 'transformer':
-            self.trans_net = nn.TransformerEncoderLayer(d_model=512, nhead=8)
-            self.transformer_encoder = nn.TransformerEncoder(self.trans_net, num_layers=6)
+            self.trans_net = nn.TransformerEncoderLayer(d_model=args['embeddingSize'], nhead=4).to(self.device)
+            self.transformer_encoder = nn.TransformerEncoder(self.trans_net, num_layers=6).to(self.device)
+            output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize'])
+            self.transformer_network = nn.Sequential(self.transformer_encoder, output_projection).to(self.device)
 
 
 
@@ -95,7 +97,7 @@ class LanguageModel(nn.Module):
             # print(args['maxLengthDeco'], dec_input_embed.size())
             de_outputs = self.hp_network(dec_input_embed)
         elif args['LMtype']== 'transformer':
-            de_outputs = self.transformer_encoder(dec_input_embed.transpose(0,1))
+            de_outputs = self.transformer_network(dec_input_embed.transpose(0,1).to(self.device))
             de_outputs = de_outputs.transpose(0,1)
 
         recon_loss = self.CEloss(torch.transpose(de_outputs, 1, 2), self.decoderTargets)
