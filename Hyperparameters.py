@@ -18,7 +18,7 @@ class HP:
         # args['retrain_model'] = 'policy'
         args['retrain_model'] = 'No'
 
-        args['maxLength'] = 512
+        args['maxLength'] = 100
         args['vocabularySize'] = 40000
 
         args['hiddenSize'] = 100 #300
