@@ -122,7 +122,7 @@ class Runner:
 
         min_perplexity = -1
 
-
+        self.Cal_perplexity_for_dataset('test', direction)
 
         for epoch in range(args['numEpochs']):
             losses = []

@@ -62,7 +62,7 @@ class TextData_1mb:
         print('Shuffling the dataset...')
         random.shuffle(self.datasets['train'])
 
-    def _createBatch(self, samples):
+    def _createBatch(self, samples, setname):
         """Create a single batch from the list of sample. The batch size is automatically defined by the number of
         samples given.
         The inputs should already be inverted. The target should already have <go> and <eos>
@@ -76,18 +76,20 @@ class TextData_1mb:
         batch = Batch()
         batchSize = len(samples)
 
+        maxlen_def = args['maxLengthEnco'] if setname == 'train' else 511
+
         # Create the batch tensor
         for i in range(batchSize):
             # Unpack the sample
             sample, raw_sentence = samples[i]
 
-            if len(sample) > args['maxLengthEnco']:
-                sample = sample[:args['maxLengthEnco']]
+            if len(sample) > maxlen_def:
+                sample = sample[:maxlen_def]
 
             batch.decoderSeqs.append([self.word2index['START_TOKEN']] + sample)  # Add the <go> and <eos> tokens
             batch.targetSeqs.append(sample + [self.word2index['END_TOKEN']])  # Same as decoder, but shifted to the left (ignore the <go>)
 
-            assert len(batch.decoderSeqs[i]) <= args['maxLengthDeco']
+            assert len(batch.decoderSeqs[i]) <= maxlen_def +1
 
             # TODO: Should use tf batch function to automatically add padding and batch samples
             # Add padding & define weight
@@ -122,17 +124,18 @@ class TextData_1mb:
 
         batches = []
         print(len(self.datasets[setname]))
+        batch_size = args['batchSize'] if setname == 'train' else 64
         def genNextSamples():
             """ Generator over the mini-batch training samples
             """
-            for i in range(0, self.getSampleSize(setname), args['batchSize']):
-                yield self.datasets[setname][i:min(i + args['batchSize'], self.getSampleSize(setname))]
+            for i in range(0, self.getSampleSize(setname), batch_size):
+                yield self.datasets[setname][i:min(i + batch_size, self.getSampleSize(setname))]
 
         # TODO: Should replace that by generator (better: by tf.queue)
 
         for index, samples in enumerate(genNextSamples()):
             # print([self.index2word[id] for id in samples[5][0]], samples[5][2])
-            batch = self._createBatch(samples)
+            batch = self._createBatch(samples, setname)
             batches.append(batch)
 
         # print([self.index2word[id] for id in batches[2].encoderSeqs[5]], batches[2].raws[5])
