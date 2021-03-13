@@ -1,8 +1,10 @@
 # Copyright 2020 . All Rights Reserved.
 # Author : Lei Sha
-
+import functools
+print = functools.partial(print, flush=True)
 from LanguageModel import LanguageModel
-from textdata import TextData
+from textdata_brown import  TextData_wiki2
+from textdata import  TextData_1mb
 import time, sys
 import torch
 import torch.autograd as autograd
@@ -31,6 +33,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--gpu', '-g')
 parser.add_argument('--batch', '-b')
 parser.add_argument('--modelarch', '-m')
+parser.add_argument('--data', '-d')
 
 cmdargs = parser.parse_args()
 
@@ -52,6 +55,11 @@ if cmdargs.modelarch is None:
     pass
 else:
     args['LMtype'] = cmdargs.modelarch
+
+if cmdargs.data is None:
+    pass
+else:
+    args['corpus'] = cmdargs.data
 
 def asMinutes(s):
     m = math.floor(s / 60)
@@ -75,7 +83,10 @@ class Runner:
 
 
     def main(self):
-        self.textData = TextData('LMbenchmark')
+        if args['corpus'] == '1mb':
+            self.textData =  TextData_1mb('LMbenchmark')
+        elif  args['corpus'] == 'wiki2':
+            self.textData = TextData_wiki2('LMbenchmark')
         # self.LMer = LMEr()
         self.start_token = self.textData.word2index['START_TOKEN']
         self.end_token = self.textData.word2index['END_TOKEN']
@@ -160,7 +171,7 @@ class Runner:
             perplexity = self.Cal_perplexity_for_dataset('test', direction)
             if perplexity < min_perplexity or min_perplexity == -1:
                 print('perplexity = ', perplexity, '>= min_perplexity (', min_perplexity, '), saving model...')
-                torch.save(self.model, self.model_path.replace('model', 'model_'+args['LMtype']+'_'+str(args['maxLength'])))
+                torch.save(self.model, self.model_path.replace('model', 'model_'+args['LMtype']+'_'+args['corpus'] + '_'+str(args['maxLength'])))
                 min_perplexity = perplexity
 
             print('Epoch ', epoch, 'loss = ', sum(losses) / len(losses), 'Valid perplexity = ', perplexity)

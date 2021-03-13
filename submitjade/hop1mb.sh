@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --nodes=1
-#SBATCH --partition=devel
-#SBATCH --job-name=TransformerLM
+#SBATCH --partition=small
+#SBATCH --job-name=HopfieldLM
 #SBATCH --gres=gpu:1
 
 module load cuda/9.2
@@ -10,4 +10,4 @@ module load cuda/9.2
 #nvidia-smi
 echo $PWD
 # run the application
-python3 main.py -m transformer -b 128  > slurm-transformerLM-$SLURM_JOB_ID.out
+python3 main.py -m asso -b 128  -d 1mb > slurm-hopLM-1mb-$SLURM_JOB_ID.out

@@ -23,7 +23,7 @@ class Batch:
         self.decoder_lens = []
 
 
-class TextData:
+class TextData_1mb:
     """Dataset class
     Warning: No vocabulary limit
     """

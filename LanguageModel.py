@@ -12,7 +12,6 @@ from Hyperparameters import args
 from queue import PriorityQueue
 import copy
 
-from textdata import TextData
 from kenLM import LMEvaluator as LMEr
 
 from modules import Hopfield, HopfieldPooling, HopfieldLayer
