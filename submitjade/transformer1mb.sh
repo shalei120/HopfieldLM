@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --partition=small
-#SBATCH --job-name=TransformerLM
+#SBATCH --job-name=TfLM1mb
 #SBATCH --gres=gpu:1
 
 module load cuda/9.2
