@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 artifacts/
 
+*.npz
 # C extensions
 *.so
 
