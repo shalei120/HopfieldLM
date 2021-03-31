@@ -5,6 +5,7 @@ __pycache__/
 artifacts/
 *.out
 
+*.npz
 # C extensions
 *.so
 
