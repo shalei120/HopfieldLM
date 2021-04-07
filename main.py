@@ -3,7 +3,7 @@
 import functools
 print = functools.partial(print, flush=True)
 from LanguageModel import LanguageModel
-from textdata_brown import  TextData_wiki2
+from textdata_wiki2 import  TextData_wiki2
 from textdata import  TextData_1mb
 import time, sys
 import torch
@@ -249,6 +249,8 @@ class Runner:
  
 
 if __name__ == '__main__':
+    args['corpus'] = 'wiki2'
+    args['LMtype'] = 'energy'
     r = Runner()
     # r.textData = TextData('LMbenchmark')
 
