@@ -18,7 +18,7 @@ from kenLM import LMEvaluator as LMEr
 
 from modules import Hopfield, HopfieldPooling, HopfieldLayer
 from modules.transformer import  HopfieldEncoderLayer
-
+from Transformer import EnergyTransformerEncoderLayer
 class LanguageModel(nn.Module):
     def __init__(self,w2i, i2w):
         """
@@ -74,6 +74,12 @@ class LanguageModel(nn.Module):
             self.transformer_encoder = nn.TransformerEncoder(self.trans_net, num_layers=6).to(self.device)
             output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize'])
             self.transformer_network = nn.Sequential(self.transformer_encoder, output_projection).to(self.device)
+        elif args['LMtype'] == 'energy':
+            self.trans_net = EnergyTransformerEncoderLayer(d_model=args['embeddingSize'], nhead=4).to(self.device)
+            self.transformer_encoder = nn.TransformerEncoder(self.trans_net, num_layers=6).to(self.device)
+            output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize'])
+            self.transformer_network = nn.Sequential(self.transformer_encoder, output_projection).to(self.device)
+
 
 
 
@@ -100,7 +106,10 @@ class LanguageModel(nn.Module):
         elif args['LMtype']== 'transformer':
             de_outputs = self.transformer_network(dec_input_embed.transpose(0,1).to(self.device))
             de_outputs = de_outputs.transpose(0,1)
-
+        elif args['LMtype'] == 'energy':
+            de_outputs = self.transformer_network(dec_input_embed.transpose(0,1).to(self.device))
+            de_outputs = de_outputs.transpose(0,1)
+        # print(de_outputs.size(),self.decoderTargets.size())
         recon_loss = self.CEloss(torch.transpose(de_outputs, 1, 2), self.decoderTargets)
         mask = torch.sign(self.decoderTargets.float())
         recon_loss = torch.squeeze(recon_loss) * mask
