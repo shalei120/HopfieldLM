@@ -6,6 +6,7 @@ artifacts/
 *.out
 *.png
 data/
+*.pkl
 *.npz
 # C extensions
 *.so
