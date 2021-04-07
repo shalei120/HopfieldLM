@@ -70,12 +70,17 @@ class LanguageModel(nn.Module):
                 input_size=args['embeddingSize'] )
             self.hp_network = HopfieldEncoderLayer(self.hopfield)
         elif args['LMtype'] == 'transformer':
-            self.trans_net = nn.TransformerEncoderLayer(d_model=args['embeddingSize'], nhead=4).to(self.device)
-            self.transformer_encoder = nn.TransformerEncoder(self.trans_net, num_layers=6).to(self.device)
+            self.trans_net = nn.TransformerEncoderLayer(d_model=args['embeddingSize'], nhead=1).to(self.device)
+            self.transformer_encoder = nn.TransformerEncoder(self.trans_net, num_layers=1).to(self.device)
             output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize'])
             self.transformer_network = nn.Sequential(self.transformer_encoder, output_projection).to(self.device)
 
-
+    def generate_square_subsequent_mask(self, sz):
+        mask = torch.logical_not(torch.triu(torch.ones(sz, sz)) == 1)
+        mask[0, 0] = True
+        # mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
+        mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
+        return mask
 
 
 
@@ -95,8 +100,9 @@ class LanguageModel(nn.Module):
             # print(args['maxLengthDeco'], dec_input_embed.size())
             de_outputs = self.hp_network(dec_input_embed)
         elif args['LMtype']== 'asso_enco':
+            src_mask = self.generate_square_subsequent_mask(self.dec_len)
             # print(args['maxLengthDeco'], dec_input_embed.size())
-            de_outputs = self.hp_network(dec_input_embed)
+            de_outputs = self.hp_network(dec_input_embed,src_mask)
         elif args['LMtype']== 'transformer':
             de_outputs = self.transformer_network(dec_input_embed.transpose(0,1).to(self.device))
             de_outputs = de_outputs.transpose(0,1)
