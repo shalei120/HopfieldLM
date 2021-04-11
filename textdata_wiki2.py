@@ -142,9 +142,9 @@ class TextData_wiki2:
         # # print([self.index2word[id] for id in batches[2].encoderSeqs[5]], batches[2].raws[5])
         for data, targets in self.datasets[setname]:
             batch = Batch()
-            batch.decoderSeqs = data
+            batch.decoderSeqs = data.transpose(0,1)
             batch.decoder_lens = data.shape[0]
-            batch.targetSeqs = targets
+            batch.targetSeqs = targets.transpose(0,1)
             batches.append(batch)
         return batches
 

@@ -310,6 +310,7 @@ def hopfield_core_forward(query,                           # type: Tensor
 
                 if attn_mask.dim() == 2:
                     attn_mask = attn_mask.unsqueeze(0)
+                    # print(attn_mask.size(), [1, query.size(0), key.size(0)])
                     if list(attn_mask.size()) != [1, query.size(0), key.size(0)]:
                         raise RuntimeError('The size of the 2D attn_mask is not correct.')
                 elif attn_mask.dim() == 3:
