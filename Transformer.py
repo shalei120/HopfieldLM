@@ -282,6 +282,7 @@ class EnergyTransformerEncoderLayer(Module):
 
         self.W = torch.rand([d_model, d_model])
         self.W = Parameter(self.W).to(args['device'])
+        self.all_attn_linear = Linear(d_model, 1)
         self.linear_reweight = Linear(d_model, d_model)
         self.activation = _get_activation_fn(activation)
 
@@ -289,6 +290,40 @@ class EnergyTransformerEncoderLayer(Module):
         if 'activation' not in state:
             state['activation'] = F.relu
         super(EnergyTransformerEncoderLayer, self).__setstate__(state)
+
+    def All_attn(self, X, attn_mask=None, dropout_p = 0.1, training = True):
+
+        M1 = torch.einsum('bse,ed->bsd',X,self.W)
+        M2 = torch.einsum('bsd,btd->bst',M1,X)  # batch seq seq
+
+        M3 = self.all_attn_linear(X) # batch seq 1
+        attn_output_weights = M2 + M3
+
+        self_attn = torch.einsum('bse,bte->bst',X,X)
+
+        if attn_mask is not None:
+            if attn_mask.dtype == torch.bool:
+                attn_output_weights.masked_fill_(attn_mask, float("-inf"))
+                self_attn.masked_fill_(attn_mask, float("-inf"))
+            else:
+                attn_output_weights += attn_mask
+                self_attn += attn_mask
+
+        attn_output_weights = F.softmax(attn_output_weights, dim=-1)
+
+        self_attn = F.softmax(self_attn)
+
+        KL = (attn_output_weights[:-1,:] * torch.log(attn_output_weights[:-1,:] / self_attn[1:,:])).sum(1).mean(0)
+
+
+
+        attn_output_weights = F.dropout(attn_output_weights, p=dropout_p, training=training)
+
+        attn_output = torch.bmm(attn_output_weights, X)
+        attn_output = self.linear_reweight(attn_output)
+
+
+        return attn_output, KL
 
     def reweight_attn(self, X, attn_mask=None, dropout_p = 0.1, training = True):
         '''
@@ -335,13 +370,14 @@ class EnergyTransformerEncoderLayer(Module):
         # src2 = self.self_attn(src, src, src, attn_mask=src_mask,
         #                       key_padding_mask=src_key_padding_mask)[0]
 
-        src2 = self.reweight_attn(src, attn_mask=src_mask)
+        # src2 = self.reweight_attn(src, attn_mask=src_mask)
+        src2, KL = self.All_attn(src, attn_mask=src_mask)
         src = src + self.dropout1(src2)
         src = self.norm1(src)
         src2 = self.linear2(self.dropout(self.activation(self.linear1(src))))
         src = src + self.dropout2(src2)
         src = self.norm2(src)
-        return src
+        return src, KL
 
 
 

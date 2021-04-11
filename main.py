@@ -27,7 +27,7 @@ from nltk.translate.bleu_score import corpus_bleu, SmoothingFunction
 import numpy as np
 import copy
 
-from kenLM import LMEvaluator as LMEr
+# from kenLM import LMEvaluator as LMEr
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--gpu', '-g')

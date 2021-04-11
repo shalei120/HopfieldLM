@@ -14,7 +14,7 @@ from Hyperparameters import args
 from queue import PriorityQueue
 import copy
 
-from kenLM import LMEvaluator as LMEr
+# from kenLM import LMEvaluator as LMEr
 
 from modules import Hopfield, HopfieldPooling, HopfieldLayer
 from modules.transformer import  HopfieldEncoderLayer
@@ -119,7 +119,7 @@ class LanguageModel(nn.Module):
             de_outputs = de_outputs.transpose(0,1)
         elif args['LMtype'] == 'energy':
             src_mask = self.generate_square_subsequent_mask(self.dec_len).to(self.device)
-            de_outputs = self.trans_net(dec_input_embed, src_mask = src_mask).to(self.device)
+            de_outputs, KL = self.trans_net(dec_input_embed, src_mask = src_mask).to(self.device)
             de_outputs = self.output_projection(de_outputs)
             # de_outputs = de_outputs.transpose(0,1)
         # print(de_outputs.size(),self.decoderTargets.size())
@@ -130,6 +130,9 @@ class LanguageModel(nn.Module):
 
         recon_loss_mean = torch.mean(recon_loss, dim=-1)
         # print(recon_loss.size(), mask.size())
+        if  args['LMtype'] == 'energy':
+            recon_loss_mean += 100*KL
+
         true_mean = recon_loss.sum(1) / mask.sum(1)
         return de_outputs, recon_loss_mean, true_mean
 
