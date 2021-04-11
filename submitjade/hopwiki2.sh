@@ -10,4 +10,4 @@ echo $CUDA_VISIBLE_DEVICES
 nvidia-smi
 echo $PWD
 # run the application
-python3 main.py -m asso -b 128  -d wiki2 > slurm-hopLM-wiki2-$SLURM_JOB_ID.out
+python3 main.py -m asso -b 128  -d wiki2 -g 0 > slurm-hopLM-wiki2-$SLURM_JOB_ID.out

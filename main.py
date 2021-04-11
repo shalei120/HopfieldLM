@@ -93,7 +93,7 @@ class Runner:
         args['vocabularySize'] = self.textData.getVocabularySize()
         print(self.textData.getVocabularySize())
 
-        self.model = LanguageModel(self.textData.word2index, self.textData.index2word)
+        self.model = LanguageModel(self.textData.word2index, self.textData.index2word).to(args['device'])
         # self.model = torch.load(self.model_path.replace('model', 'model_'+'fw'), map_location=args['device'])
         params = sum([np.prod(p.size()) for p in self.model.parameters()])
         print(params, sum([sys.getsizeof(p.storage()) for p in self.model.parameters()])/1000000, 'm')
@@ -249,8 +249,8 @@ class Runner:
  
 
 if __name__ == '__main__':
-    args['corpus'] = 'wiki2'
-    args['LMtype'] = 'energy'
+    # args['corpus'] = 'wiki2'
+    # args['LMtype'] = 'energy'
     r = Runner()
     # r.textData = TextData('LMbenchmark')
 

@@ -10,4 +10,4 @@ echo $CUDA_VISIBLE_DEVICES
 nvidia-smi
 echo $PWD
 # run the application
-python3 main.py -m lstm -b 128  -d 1mb > slurm-lstmLM-1mb-$SLURM_JOB_ID.out
+python3 main.py -m lstm -b 128  -d 1mb -g 0 > slurm-lstmLM-1mb-$SLURM_JOB_ID.out

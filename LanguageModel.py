@@ -69,19 +69,25 @@ class LanguageModel(nn.Module):
             self.hopfield = Hopfield(
                 input_size=args['embeddingSize'] )
             self.hp_network = HopfieldEncoderLayer(self.hopfield)
+            self.output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize'])
         elif args['LMtype'] == 'transformer':
-            self.trans_net = nn.TransformerEncoderLayer(d_model=args['embeddingSize'], nhead=4).to(self.device)
-            self.transformer_encoder = nn.TransformerEncoder(self.trans_net, num_layers=6).to(self.device)
-            output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize'])
-            self.transformer_network = nn.Sequential(self.transformer_encoder, output_projection).to(self.device)
+            self.trans_net = nn.TransformerEncoderLayer(d_model=args['embeddingSize'], nhead=1).to(self.device)
+            self.transformer_encoder = nn.TransformerEncoder(self.trans_net, num_layers=1).to(self.device)
+            self.output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize'])
+            # self.transformer_network = nn.Sequential(self.transformer_encoder, output_projection).to(self.device)
         elif args['LMtype'] == 'energy':
-            self.trans_net = EnergyTransformerEncoderLayer(d_model=args['embeddingSize'], nhead=4).to(self.device)
-            self.transformer_encoder = nn.TransformerEncoder(self.trans_net, num_layers=6).to(self.device)
-            output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize'])
-            self.transformer_network = nn.Sequential(self.transformer_encoder, output_projection).to(self.device)
+            self.trans_net = EnergyTransformerEncoderLayer(d_model=args['embeddingSize'], nhead=1).to(self.device)
+            # self.transformer_encoder = nn.TransformerEncoder(self.trans_net, num_layers=1).to(self.device)
+            self.output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize']).to(self.device)
+            # self.transformer_network = nn.Sequential(self.transformer_encoder, output_projection).to(self.device)
 
 
-
+    def generate_square_subsequent_mask(self, sz):
+        mask = torch.logical_not(torch.triu(torch.ones(sz, sz)) == 1)
+        mask[0, 0] = True
+        # mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
+        mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
+        return mask
 
 
 
@@ -92,7 +98,7 @@ class LanguageModel(nn.Module):
 
         batch_size = self.decoderInputs.size()[0]
         self.dec_len = self.decoderInputs.size()[1]
-        dec_input_embed = self.embedding(self.decoderInputs).to(self.device)
+        dec_input_embed = self.embedding(self.decoderInputs)
 
         if args['LMtype']== 'lstm':
             init_state = (self.init_state[0].repeat([1, batch_size, 1]), self.init_state[1].repeat([1, batch_size, 1]))
@@ -101,15 +107,22 @@ class LanguageModel(nn.Module):
             # print(args['maxLengthDeco'], dec_input_embed.size())
             de_outputs = self.hp_network(dec_input_embed)
         elif args['LMtype']== 'asso_enco':
-            # print(args['maxLengthDeco'], dec_input_embed.size())
-            de_outputs = self.hp_network(dec_input_embed)
+            src_mask = self.generate_square_subsequent_mask(self.dec_len).to(self.device)
+            print(args['maxLengthDeco'], dec_input_embed.size(), src_mask.size())
+            de_outputs = self.hp_network(dec_input_embed,src_mask)
+            de_outputs = self.output_projection(de_outputs)
+            # de_outputs = de_outputs.transpose(0,1)
         elif args['LMtype']== 'transformer':
-            de_outputs = self.transformer_network(dec_input_embed.transpose(0,1).to(self.device))
+            src_mask = self.generate_square_subsequent_mask(self.dec_len).to(self.device)
+            de_outputs = self.transformer_encoder(dec_input_embed.transpose(0,1), mask=src_mask)
+            de_outputs = self.output_projection(de_outputs)
             de_outputs = de_outputs.transpose(0,1)
         elif args['LMtype'] == 'energy':
-            de_outputs = self.transformer_network(dec_input_embed.transpose(0,1).to(self.device))
-            de_outputs = de_outputs.transpose(0,1)
+            src_mask = self.generate_square_subsequent_mask(self.dec_len).to(self.device)
+            de_outputs = self.trans_net(dec_input_embed, src_mask = src_mask).to(self.device)
+            # de_outputs = de_outputs.transpose(0,1)
         # print(de_outputs.size(),self.decoderTargets.size())
+        # print(de_outputs.size(),self.decoderTargets.size() )
         recon_loss = self.CEloss(torch.transpose(de_outputs, 1, 2), self.decoderTargets)
         mask = torch.sign(self.decoderTargets.float())
         recon_loss = torch.squeeze(recon_loss) * mask
