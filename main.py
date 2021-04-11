@@ -249,8 +249,8 @@ class Runner:
  
 
 if __name__ == '__main__':
-    # args['corpus'] = 'wiki2'
-    # args['LMtype'] = 'energy'
+    args['corpus'] = 'wiki2'
+    args['LMtype'] = 'energy'
     r = Runner()
     # r.textData = TextData('LMbenchmark')
 
