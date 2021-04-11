@@ -280,7 +280,8 @@ class EnergyTransformerEncoderLayer(Module):
         self.dropout1 = Dropout(dropout)
         self.dropout2 = Dropout(dropout)
 
-        self.W = Parameter(xavier_uniform_(torch.rand([d_model, d_model]))).to(args['device'])
+        self.W = torch.rand([d_model, d_model])
+        self.W = Parameter(self.W).to(args['device'])
         self.linear_reweight = Linear(d_model, d_model)
         self.activation = _get_activation_fn(activation)
 
