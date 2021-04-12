@@ -310,8 +310,9 @@ class EnergyTransformerEncoderLayer(Module):
                 self_attn += attn_mask
 
         attn_output_weights = F.softmax(attn_output_weights, dim=-1)
-        print(self_attn)
-        self_attn = F.softmax(self_attn)
+        # print(self_attn)
+        self_attn = F.softmax(self_attn,dim=-1)
+        # print(self_attn)
 
         # print(attn_output_weights,self_attn)
 
