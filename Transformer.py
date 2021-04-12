@@ -280,7 +280,7 @@ class EnergyTransformerEncoderLayer(Module):
         self.dropout1 = Dropout(dropout)
         self.dropout2 = Dropout(dropout)
 
-        self.W = torch.rand([d_model, d_model])
+        self.W = xavier_uniform_(torch.rand([d_model, d_model]))
         self.W = Parameter(self.W).to(args['device'])
         self.all_attn_linear = Linear(d_model, 1)
         self.linear_reweight = Linear(d_model, d_model)
@@ -291,7 +291,7 @@ class EnergyTransformerEncoderLayer(Module):
             state['activation'] = F.relu
         super(EnergyTransformerEncoderLayer, self).__setstate__(state)
 
-    def All_attn(self, X, attn_mask=None, dropout_p = 0.1, training = True):
+    def All_attn(self, X, attn_mask=None, dropout_p = 0.1, training = True, eps = 1e-8):
 
         M1 = torch.einsum('bse,ed->bsd',X,self.W)
         M2 = torch.einsum('bsd,btd->bst',M1,X)  # batch seq seq
@@ -310,10 +310,15 @@ class EnergyTransformerEncoderLayer(Module):
                 self_attn += attn_mask
 
         attn_output_weights = F.softmax(attn_output_weights, dim=-1)
-
+        print(self_attn)
         self_attn = F.softmax(self_attn)
 
-        KL = (attn_output_weights[:-1,:] * torch.log(attn_output_weights[:-1,:] / self_attn[1:,:])).sum(1).mean(0)
+        # print(attn_output_weights,self_attn)
+
+
+        KL = (attn_output_weights[:-1,:] * torch.log(attn_output_weights[:-1,:] / (self_attn[1:,:])+eps) + eps)
+        # print(KL.size())
+        KL = KL.sum(2).sum(1).mean(0)
 
 
 
