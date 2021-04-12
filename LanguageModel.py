@@ -83,9 +83,9 @@ class LanguageModel(nn.Module):
 
 
     def generate_square_subsequent_mask(self, sz):
-        mask = torch.logical_not(torch.triu(torch.ones(sz, sz)) == 1)
-        mask[0, 0] = True
-        # mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
+        # mask = torch.logical_not(torch.triu(torch.ones(sz, sz)) == 1)
+        # mask[0, 0] = True
+        mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
         mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
         return mask
 
@@ -131,7 +131,7 @@ class LanguageModel(nn.Module):
         recon_loss_mean = torch.mean(recon_loss, dim=-1)
         # print(recon_loss.size(), mask.size())
         if  args['LMtype'] == 'energy':
-            recon_loss_mean += 100*KL
+            recon_loss_mean = recon_loss_mean.mean() + 100*KL
 
         true_mean = recon_loss.sum(1) / mask.sum(1)
         return de_outputs, recon_loss_mean, true_mean
