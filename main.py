@@ -3,7 +3,7 @@
 import functools
 print = functools.partial(print, flush=True)
 from LanguageModel import LanguageModel
-from textdata_brown import  TextData_wiki2
+from textdata_wiki2 import  TextData_wiki2
 from textdata import  TextData_1mb
 import time, sys
 import torch
@@ -27,7 +27,7 @@ from nltk.translate.bleu_score import corpus_bleu, SmoothingFunction
 import numpy as np
 import copy
 
-from kenLM import LMEvaluator as LMEr
+# from kenLM import LMEvaluator as LMEr
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--gpu', '-g')
@@ -93,7 +93,7 @@ class Runner:
         args['vocabularySize'] = self.textData.getVocabularySize()
         print(self.textData.getVocabularySize())
 
-        self.model = LanguageModel(self.textData.word2index, self.textData.index2word)
+        self.model = LanguageModel(self.textData.word2index, self.textData.index2word).to(args['device'])
         # self.model = torch.load(self.model_path.replace('model', 'model_'+'fw'), map_location=args['device'])
         params = sum([np.prod(p.size()) for p in self.model.parameters()])
         print(params, sum([sys.getsizeof(p.storage()) for p in self.model.parameters()])/1000000, 'm')
@@ -249,6 +249,8 @@ class Runner:
  
 
 if __name__ == '__main__':
+    args['corpus'] = 'wiki2'
+    args['LMtype'] = 'energy'
     r = Runner()
     # r.textData = TextData('LMbenchmark')
 
