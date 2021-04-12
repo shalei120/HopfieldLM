@@ -111,7 +111,9 @@ class Runner:
 
         print(type(self.textData.word2index))
 
-        optimizer = optim.Adam(self.model.parameters(), lr=learning_rate, eps=1e-3, amsgrad=True)
+        # optimizer = optim.Adam(self.model.parameters(), lr=learning_rate, eps=1e-3, amsgrad=True)
+        optimizer = torch.optim.SGD(self.model.parameters(), lr=5.0)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=0.95)
 
         iter = 1
         batches = self.textData.getBatches()
@@ -168,6 +170,7 @@ class Runner:
 
                 iter+=1
 
+            scheduler.step()
             perplexity = self.Cal_perplexity_for_dataset('test', direction)
             if perplexity < min_perplexity or min_perplexity == -1:
                 print('perplexity = ', perplexity, '>= min_perplexity (', min_perplexity, '), saving model...')

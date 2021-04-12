@@ -291,7 +291,7 @@ class EnergyTransformerEncoderLayer(Module):
             state['activation'] = F.relu
         super(EnergyTransformerEncoderLayer, self).__setstate__(state)
 
-    def All_attn(self, X, attn_mask=None, dropout_p = 0.1, training = True, eps = 1e-8):
+    def All_attn(self, X, attn_mask=None, dropout_p = 0.1, training = True, eps = 1e-6):
 
         M1 = torch.einsum('bse,ed->bsd',X,self.W)
         M2 = torch.einsum('bsd,btd->bst',M1,X)  # batch seq seq
@@ -316,9 +316,9 @@ class EnergyTransformerEncoderLayer(Module):
 
         # print(attn_output_weights,self_attn)
 
-
-        KL = (attn_output_weights[:-1,:] * torch.log(attn_output_weights[:-1,:] / (self_attn[1:,:])+eps) + eps)
-        # print(KL.size())
+        klq = attn_output_weights[:-1,:] / (self_attn[1:,:]+eps)
+        KL = (attn_output_weights[:-1,:] * torch.log(klq + eps))
+        # print(klq, KL)
         KL = KL.sum(2).sum(1).mean(0)
 
 
