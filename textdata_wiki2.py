@@ -125,27 +125,27 @@ class TextData_wiki2:
         #
         #
         batches = []
-        # print(len(self.datasets[setname]))
-        # def genNextSamples():
-        #     """ Generator over the mini-batch training samples
-        #     """
-        #     for i in range(0, self.getSampleSize(setname), args['batchSize']):
-        #         yield self.datasets[setname][i:min(i + args['batchSize'], self.getSampleSize(setname))]
-        #
-        # # TODO: Should replace that by generator (better: by tf.queue)
-        #
-        # for index, samples in enumerate(genNextSamples()):
-        #     # print([self.index2word[id] for id in samples[5][0]], samples[5][2])
-        #     batch = self._createBatch(samples)
-        #     batches.append(batch)
-        #
-        # # print([self.index2word[id] for id in batches[2].encoderSeqs[5]], batches[2].raws[5])
-        for data, targets in self.datasets[setname]:
-            batch = Batch()
-            batch.decoderSeqs = data.transpose(0,1)
-            batch.decoder_lens = data.shape[0]
-            batch.targetSeqs = targets.transpose(0,1)
+        print(len(self.datasets[setname]))
+        def genNextSamples():
+            """ Generator over the mini-batch training samples
+            """
+            for i in range(0, self.getSampleSize(setname), args['batchSize']):
+                yield self.datasets[setname][i:min(i + args['batchSize'], self.getSampleSize(setname))]
+
+        # TODO: Should replace that by generator (better: by tf.queue)
+
+        for index, samples in enumerate(genNextSamples()):
+            # print([self.index2word[id] for id in samples[5][0]], samples[5][2])
+            batch = self._createBatch(samples)
             batches.append(batch)
+
+        # print([self.index2word[id] for id in batches[2].encoderSeqs[5]], batches[2].raws[5])
+        # for data, targets in self.datasets[setname]:
+        #     batch = Batch()
+        #     batch.decoderSeqs = data.transpose(0,1)
+        #     batch.decoder_lens = data.shape[0]
+        #     batch.targetSeqs = targets.transpose(0,1)
+        #     batches.append(batch)
         return batches
 
     def getSampleSize(self, setname = 'train'):
@@ -188,51 +188,56 @@ class TextData_wiki2:
             vocab = Vocab(counter)
 
             def data_process(raw_text_iter):
-                data = [torch.tensor([vocab[token] for token in tokenizer(item)],
-                                     dtype=torch.long) for item in raw_text_iter]
-                return torch.cat(tuple(filter(lambda t: t.numel() > 0, data)))
+                data = []
+                for item in raw_text_iter:
+                    item = tokenizer(item)
+                    data.append(item)
+                # data = [torch.tensor([vocab[token] for token in tokenizer(item)],
+                #                      dtype=torch.long) for item in raw_text_iter]
+                # return torch.cat(tuple(filter(lambda t: t.numel() > 0, data)))
+                return data
 
             train_iter, val_iter, test_iter = WikiText2()
             train_data = data_process(train_iter)
             val_data = data_process(val_iter)
             test_data = data_process(test_iter)
 
-            def batchify(data, bsz):
-                # Divide the dataset into bsz parts.
-                nbatch = data.size(0) // bsz
-                # Trim off any extra elements that wouldn't cleanly fit (remainders).
-                data = data.narrow(0, 0, nbatch * bsz)
-                # Evenly divide the data across the bsz batches.
-                data = data.view(bsz, -1).t().contiguous()
-                return data.to(args['device'])
+            # def batchify(data, bsz):
+            #     # Divide the dataset into bsz parts.
+            #     nbatch = data.size(0) // bsz
+            #     # Trim off any extra elements that wouldn't cleanly fit (remainders).
+            #     data = data.narrow(0, 0, nbatch * bsz)
+            #     # Evenly divide the data across the bsz batches.
+            #     data = data.view(bsz, -1).t().contiguous()
+            #     return data.to(args['device'])
 
             batch_size = args['batchSize']
             eval_batch_size = args['batchSize']
-            train_data = batchify(train_data, batch_size)
-            val_data = batchify(val_data, eval_batch_size)
-            test_data = batchify(test_data, eval_batch_size)
-            bptt = 35
+            # train_data = batchify(train_data, batch_size)
+            # val_data = batchify(val_data, eval_batch_size)
+            # test_data = batchify(test_data, eval_batch_size)
+            # bptt = 35
 
-            def get_batch(source, i):
-                seq_len = min(bptt, len(source) - 1 - i)
-                data = source[i:i + seq_len]
-                target = source[i + 1:i + 1 + seq_len]
-                return data, target
+            # def get_batch(source, i):
+            #     seq_len = min(bptt, len(source) - 1 - i)
+            #     data = source[i:i + seq_len]
+            #     target = source[i + 1:i + 1 + seq_len]
+            #     return data, target
 
             total_words = []
             dataset = {'train': [], 'test':[]}
-            #
+
             # with open(self.corpus, 'r') as rhandle:
             #     lines = rhandle.readlines()
-            #     sentences = []
-            #     for line in lines:
-            #         if len(line) > 10:
-            #             line = line.lower().strip()
-            #             # line = self.tokenizer(line)
-            #             line = line.split()
-            #             total_words.extend(line)
-            #             sentences.append(line)
-            #     dataset['train'].extend(sentences)
+            # sentences = []
+            # for line in train_iter:
+            #     if len(line) > 10:
+            #         line = line.lower().strip()
+            #         line = tokenizer(line)
+            #         line = line.split()
+            #         total_words.extend(line)
+            #         sentences.append(line)
+            # dataset['train'].extend(sentences)
             #
             # with open(self.corpus_test , 'r') as rhandle:
             #     lines = rhandle.readlines()
@@ -264,9 +269,12 @@ class TextData_wiki2:
             #
             #     v.close()
 
-            self.word2index = vocab.stoi
+            # self.word2index = vocab.stoi
 
-            self.index2word = vocab.itos
+            self.index2word = [w for w in vocab.itos]
+            self.index2word = ['PAD', 'START_TOKEN','END_TOKEN','UNK'] + self.index2word
+
+            self.word2index = {w:i for i,w in enumerate(self.index2word)}
             print('index2word')
 
             # with open(os.path.join(self.basedir + '/dump2.pkl'), 'wb') as handle:
@@ -282,9 +290,9 @@ class TextData_wiki2:
             print('set')
 
             # self.raw_sentences = copy.deepcopy(dataset)
-            dataset['train'] = [get_batch(train_data, i) for batch, i in enumerate(range(0, train_data.size(0) - 1, bptt))]
-            dataset['dev'] = [get_batch(val_data, i) for batch, i in enumerate(range(0, val_data.size(0) - 1, bptt))]
-            dataset['test'] = [get_batch(test_data, i) for batch, i in enumerate(range(0, test_data.size(0) - 1, bptt))]
+            dataset['train'] = [(self.TurnWordID(sen), sen)  for sen in tqdm(train_data)]
+            dataset['dev'] = [(self.TurnWordID(sen), sen)  for sen in tqdm(val_data)]
+            dataset['test'] = [(self.TurnWordID(sen), sen)  for sen in tqdm(test_data)]
 
             self.datasets = dataset
 
