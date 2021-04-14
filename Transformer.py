@@ -318,8 +318,11 @@ class EnergyTransformerEncoderLayer(Module):
 
         klq = attn_output_weights[:-1,:] / (self_attn[1:,:]+eps)
         KL = (attn_output_weights[:-1,:] * torch.log(klq + eps))
-        # print(klq, KL)
+        # # print(klq, KL)
         KL = KL.sum(2).sum(1).mean(0)
+
+        # KL= (attn_output_weights[:-1,:] - self_attn[1:,:])**2
+        # KL = KL.sum(2).sum(1).mean(0)
 
 
 
