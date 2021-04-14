@@ -111,8 +111,8 @@ class Runner:
 
         print(type(self.textData.word2index))
 
-        # optimizer = optim.Adam(self.model.parameters(), lr=learning_rate, eps=1e-3, amsgrad=True)
-        optimizer = torch.optim.SGD(self.model.parameters(), lr=5.0)
+        optimizer = optim.Adam(self.model.parameters(), lr=learning_rate, eps=1e-3, amsgrad=True)
+        # optimizer = torch.optim.SGD(self.model.parameters(), lr=5.0)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=0.95)
 
         iter = 1
