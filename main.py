@@ -17,7 +17,7 @@ import math,random
 import nltk
 from nltk.corpus import stopwords
 import argparse
-
+import GPUtil
 # import turibolt as bolt
 import pickle
 from Hyperparameters import args
@@ -124,7 +124,7 @@ class Runner:
 
         min_perplexity = -1
 
-        self.Cal_perplexity_for_dataset('test', direction)
+        # self.Cal_perplexity_for_dataset('test', direction)
 
         for epoch in range(args['numEpochs']):
             losses = []
@@ -149,17 +149,23 @@ class Runner:
 
                 optimizer.step()
 
-                print_loss_total += loss_mean.data
-                plot_loss_total += loss_mean.data
 
-                losses.append(loss_mean.data)
+                print_loss_total += loss_mean.item()
+                plot_loss_total += loss_mean.item()
 
+                losses.append(loss_mean.item())
+                GPUtil.showUtilization()
                 if iter % print_every == 0:
                     print_loss_avg = print_loss_total / print_every
                     print_loss_total = 0
                     print('%s (%d %d%%) %.4f' % (timeSince(start, iter / n_iters),
                                                  iter, iter / n_iters * 100, print_loss_avg))
-
+                    GPUtil.showUtilization()
+                    del de_output,loss,true_mean
+                    GPUtil.showUtilization()
+                    torch.cuda.empty_cache()
+                    GPUtil.showUtilization()
+                    # if args['corpus'] != '1mb' or iter % 100000 == 0:
                     perplexity = self.Cal_perplexity_for_dataset('test', direction)
                     print('Test ppl: ', perplexity)
 
@@ -193,6 +199,7 @@ class Runner:
             self.testbatches = {}
         if datasetname not in self.testbatches:
             self.testbatches[datasetname] = self.textData.getBatches(datasetname)
+        self.model.eval()
         num = 0
         ave_loss = 0
         with torch.no_grad():
@@ -203,14 +210,19 @@ class Runner:
                 x['dec_len'] = batch.decoder_lens
                 x['dec_target'] = autograd.Variable(torch.LongTensor(batch.targetSeqs))
 
+                print('here')
+                GPUtil.showUtilization()
                 de_output, recon_loss_mean, true_mean = self.model(x)
+                GPUtil.showUtilization()
                 # true_mean = recon_loss_mean
                 # print(true_mean.size())
-                ave_loss = (ave_loss * num + sum(true_mean)) / (num + len(true_mean))
+                sum_true = true_mean.sum().item()
+                ave_loss = (ave_loss * num + sum_true) / (num + len(true_mean))
 
                 num += len(true_mean)
 
-        return torch.exp(ave_loss)
+        self.model.train()
+        return np.exp(ave_loss)
 
 
     def indexesFromSentence(self,  sentence):
@@ -252,8 +264,8 @@ class Runner:
  
 
 if __name__ == '__main__':
-    args['corpus'] = 'wiki2'
-    args['LMtype'] = 'energy'
+    # args['corpus'] = 'wiki2'
+    # args['LMtype'] = 'energy'
     r = Runner()
     # r.textData = TextData('LMbenchmark')
 
