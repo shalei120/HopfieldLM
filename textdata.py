@@ -124,7 +124,7 @@ class TextData_1mb:
 
         batches = []
         print(len(self.datasets[setname]))
-        batch_size = args['batchSize'] if setname == 'train' else 64
+        batch_size = args['batchSize'] if setname == 'train' else 32
         def genNextSamples():
             """ Generator over the mini-batch training samples
             """
@@ -160,7 +160,11 @@ class TextData_1mb:
         """
         # self.corpusDir = '../Gutenberg_data/' + corpusname + '/' if args['createDataset'] else args['rootDir']
         if corpusname == 'LMbenchmark':
-            self.basedir = '../1-billion-word-language-modeling-benchmark-r13output/'
+            if args['server'] == 'dgx':
+                self.basedir = './.data/1-billion-word-language-modeling-benchmark-r13output/'
+            else:
+                self.basedir = '../1-billion-word-language-modeling-benchmark-r13output/'
+
             if not args['createDataset']:
                 self.basedir = args['rootDir']
             self.corpusDir = self.basedir + '/training-monolingual.tokenized.shuffled/'
@@ -178,7 +182,7 @@ class TextData_1mb:
             datafilenames = os.listdir(self.corpusDir)
 
             total_words = []
-            dataset = {'train': [], 'test':[]}
+            dataset = {'train': [], 'valid':[], 'test':[]}
 
             for datafile in tqdm(datafilenames):
                 with open(self.corpusDir + '/' + datafile, 'r') as rhandle:
@@ -193,16 +197,27 @@ class TextData_1mb:
                     dataset['train'].extend(sentences)
 
             for datafile in tqdm(os.listdir(self.corpusDir_test)):
-                with open(self.corpusDir_test + '/' + datafile, 'r') as rhandle:
-                    lines = rhandle.readlines()
-                    sentences = []
-                    for line in lines:
-                        line = line.lower().strip()
-                        line = line.split()
-                        sentences.append(line)
-                    dataset['test'].extend(sentences)
+                if 'heldout' in datafile:
+                    with open(self.corpusDir_test + '/' + datafile, 'r') as rhandle:
+                        lines = rhandle.readlines()
+                        sentences = []
+                        for line in lines:
+                            line = line.lower().strip()
+                            line = line.split()
+                            sentences.append(line)
+                        dataset['valid'].extend(sentences)
+                else:
+                    with open(self.corpusDir_test + '/' + datafile, 'r') as rhandle:
+                        lines = rhandle.readlines()
+                        sentences = []
+                        for line in lines:
+                            line = line.lower().strip()
+                            line = line.split()
+                            sentences.append(line)
+                        dataset['test'].extend(sentences)
 
-            print(len(dataset['train']), len(dataset['test']))
+
+            print(len(dataset['train']), len(dataset['valid']),len(dataset['test']))
 
             # with open(os.path.join(self.basedir + '/dump.pkl'), 'wb') as handle:
             #
@@ -241,7 +256,7 @@ class TextData_1mb:
             print('set')
 
             # self.raw_sentences = copy.deepcopy(dataset)
-            for setname in ['train', 'test']:
+            for setname in ['train', 'valid', 'test']:
                 dataset[setname] = [(self.TurnWordID(sen), sen) for sen in tqdm(dataset[setname])]
             self.datasets = dataset
 
@@ -252,7 +267,7 @@ class TextData_1mb:
         else:
             self.loadDataset(self.fullSamplesPath)
             print('loaded')
-            print(max([len(sen) for sid, sen in self.datasets['train']]))
+            # print(max([len(sen) for sid, sen in self.datasets['train']]))
             # self.symbols = [str(ind) for ind, w in enumerate(self.index2word) if not w.isalpha()]
             # with open(args['rootDir'] + '/symbol_index.txt','w') as handle:
             #     handle.write(' '.join(self.symbols))
