@@ -17,7 +17,7 @@ import math,random
 import nltk
 from nltk.corpus import stopwords
 import argparse
-import GPUtil
+# import GPUtil
 # import turibolt as bolt
 import pickle
 from Hyperparameters import args
@@ -34,6 +34,7 @@ parser.add_argument('--gpu', '-g')
 parser.add_argument('--batch', '-b')
 parser.add_argument('--modelarch', '-m')
 parser.add_argument('--data', '-d')
+parser.add_argument('--server', '-s')
 
 cmdargs = parser.parse_args()
 
@@ -60,6 +61,11 @@ if cmdargs.data is None:
     pass
 else:
     args['corpus'] = cmdargs.data
+
+if cmdargs.server is None:
+    args['server'] = 'other'
+else:
+    args['server'] = cmdargs.server
 
 def asMinutes(s):
     m = math.floor(s / 60)
@@ -109,7 +115,7 @@ class Runner:
         print_loss_total = 0  # Reset every print_every
         plot_loss_total = 0  # Reset every plot_every
 
-        print(type(self.textData.word2index))
+        print(type(self.textData.word2index), args['device'])
 
         # optimizer = optim.Adam(self.model.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
         optimizer = torch.optim.SGD(self.model.parameters(), lr=5.0)
@@ -154,17 +160,17 @@ class Runner:
                 plot_loss_total += loss_mean.item()
 
                 losses.append(loss_mean.item())
-                GPUtil.showUtilization()
+                # GPUtil.showUtilization()
                 if iter % print_every == 0:
                     print_loss_avg = print_loss_total / print_every
                     print_loss_total = 0
                     print('%s (%d %d%%) %.4f' % (timeSince(start, iter / n_iters),
                                                  iter, iter / n_iters * 100, print_loss_avg))
-                    GPUtil.showUtilization()
-                    del de_output,loss,true_mean
-                    GPUtil.showUtilization()
-                    torch.cuda.empty_cache()
-                    GPUtil.showUtilization()
+                    # GPUtil.showUtilization()
+                    # del de_output,loss,true_mean
+                    # GPUtil.showUtilization()
+                    # torch.cuda.empty_cache()
+                    # GPUtil.showUtilization()
                     # if args['corpus'] != '1mb' or iter % 100000 == 0:
                     perplexity = self.Cal_perplexity_for_dataset('test', direction)
                     print('Test ppl: ', perplexity)
@@ -203,6 +209,7 @@ class Runner:
         num = 0
         ave_loss = 0
         with torch.no_grad():
+            print(len(self.testbatches[datasetname][0].decoderSeqs))
             for batch in self.testbatches[datasetname]:
                 x = {}
 
@@ -210,10 +217,10 @@ class Runner:
                 x['dec_len'] = batch.decoder_lens
                 x['dec_target'] = autograd.Variable(torch.LongTensor(batch.targetSeqs))
 
-                print('here')
-                GPUtil.showUtilization()
+                # print('here')
+                # GPUtil.showUtilization()
                 de_output, recon_loss_mean, true_mean = self.model(x)
-                GPUtil.showUtilization()
+                # GPUtil.showUtilization()
                 # true_mean = recon_loss_mean
                 # print(true_mean.size())
                 sum_true = true_mean.sum().item()
