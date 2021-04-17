@@ -148,7 +148,7 @@ class Transformer(Module):
 
 
 
-class TransformerEncoder(Module):
+class EnergyTransformerEncoder(Module):
     r"""TransformerEncoder is a stack of N encoder layers
 
     Args:
@@ -165,7 +165,7 @@ class TransformerEncoder(Module):
     __constants__ = ['norm']
 
     def __init__(self, encoder_layer, num_layers, norm=None):
-        super(TransformerEncoder, self).__init__()
+        super(EnergyTransformerEncoder, self).__init__()
         self.layers = _get_clones(encoder_layer, num_layers)
         self.num_layers = num_layers
         self.norm = norm
@@ -183,13 +183,15 @@ class TransformerEncoder(Module):
         """
         output = src
 
+        Energy = 0
         for mod in self.layers:
-            output = mod(output, src_mask=mask, src_key_padding_mask=src_key_padding_mask)
+            output, E = mod(output, src_mask=mask, src_key_padding_mask=src_key_padding_mask)
+            Energy += E
 
         if self.norm is not None:
             output = self.norm(output)
 
-        return output
+        return output, Energy
 
 
 
@@ -281,7 +283,7 @@ class EnergyTransformerEncoderLayer(Module):
         self.dropout2 = Dropout(dropout)
 
         self.W = xavier_uniform_(torch.rand([d_model, d_model]))
-        self.W = Parameter(self.W).to(args['device'])
+        self.W = Parameter(self.W)
         self.all_attn_linear = Linear(d_model, 1)
         self.linear_reweight = Linear(d_model, d_model)
         self.activation = _get_activation_fn(activation)
@@ -292,7 +294,7 @@ class EnergyTransformerEncoderLayer(Module):
         super(EnergyTransformerEncoderLayer, self).__setstate__(state)
 
     def All_attn(self, X, attn_mask=None, dropout_p = 0.1, training = True, eps = 1e-6):
-
+        self.W = self.W.to(args['device'])
         M1 = torch.einsum('bse,ed->bsd',X,self.W)
         M2 = torch.einsum('bsd,btd->bst',M1,X)  # batch seq seq
 
@@ -466,6 +468,8 @@ class TransformerDecoderLayer(Module):
 
 
 def _get_clones(module, N):
+    if N == 1:
+        return ModuleList([module])
     return ModuleList([copy.deepcopy(module) for i in range(N)])
 
 
