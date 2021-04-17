@@ -22,7 +22,7 @@ class HP:
         args['vocabularySize'] = 40000
 
         args['hiddenSize'] = 100 #300
-        args['numLayers'] = 2
+        args['numLayers'] = 1
         args['softmaxSamples'] = 0
         args['initEmbeddings'] = True
         args['embeddingSize'] = 100 #300

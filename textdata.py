@@ -123,8 +123,8 @@ class TextData_1mb:
 
 
         batches = []
-        print(len(self.datasets[setname]))
         batch_size = args['batchSize'] if setname == 'train' else 32
+        print(len(self.datasets[setname]), setname, batch_size)
         def genNextSamples():
             """ Generator over the mini-batch training samples
             """

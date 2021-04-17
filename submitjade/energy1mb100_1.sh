@@ -10,4 +10,4 @@ echo $CUDA_VISIBLE_DEVICES
 nvidia-smi
 echo $PWD
 # run the application
-python3 main.py -m energy -b 64  -d 1mb -g 0 > slurm-energyLM-1mb-$SLURM_JOB_ID.out
+python3 main.py -m energy -b 64  -d 1mb -g 0 -emb 100 -layer 1 > slurm-energyLM-1mb-$SLURM_JOB_ID-100-1.out

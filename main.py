@@ -5,14 +5,14 @@ print = functools.partial(print, flush=True)
 from LanguageModel import LanguageModel
 from textdata_wiki2 import  TextData_wiki2
 from textdata import  TextData_1mb
-import time, sys
+import time, sys,datetime
 import torch
 import torch.autograd as autograd
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from tqdm import  tqdm
-import time,os
+import os
 import math,random
 import nltk
 from nltk.corpus import stopwords
@@ -35,6 +35,8 @@ parser.add_argument('--batch', '-b')
 parser.add_argument('--modelarch', '-m')
 parser.add_argument('--data', '-d')
 parser.add_argument('--server', '-s')
+parser.add_argument('--embeddingsize', '-emb')
+parser.add_argument('--layernum', '-layer')
 
 cmdargs = parser.parse_args()
 
@@ -67,6 +69,17 @@ if cmdargs.server is None:
 else:
     args['server'] = cmdargs.server
 
+if cmdargs.embeddingsize is None:
+    pass
+else:
+    args['embeddingSize'] = int(cmdargs.embeddingsize)
+
+
+if cmdargs.layernum is None:
+    pass
+else:
+    args['numLayers'] = int(cmdargs.layernum)
+
 def asMinutes(s):
     m = math.floor(s / 60)
     s -= m * 60
@@ -78,7 +91,7 @@ def timeSince(since, percent):
     s = now - since
     es = s / (percent)
     rs = es - s
-    return '%s (- %s)' % (asMinutes(s), asMinutes(rs))
+    return '%s (- %s)' % (asMinutes(s), datetime.datetime.now())
 
 class Runner:
     def __init__(self):
@@ -91,6 +104,7 @@ class Runner:
     def main(self):
         if args['corpus'] == '1mb':
             self.textData =  TextData_1mb('LMbenchmark')
+            # args['embeddingSize'] = 300
         elif  args['corpus'] == 'wiki2':
             self.textData = TextData_wiki2('LMbenchmark')
         # self.LMer = LMEr()
@@ -98,7 +112,7 @@ class Runner:
         self.end_token = self.textData.word2index['END_TOKEN']
         args['vocabularySize'] = self.textData.getVocabularySize()
         print(self.textData.getVocabularySize())
-
+        print(args)
         self.model = LanguageModel(self.textData.word2index, self.textData.index2word).to(args['device'])
         # self.model = torch.load(self.model_path.replace('model', 'model_'+'fw'), map_location=args['device'])
         params = sum([np.prod(p.size()) for p in self.model.parameters()])
@@ -117,9 +131,9 @@ class Runner:
 
         print(type(self.textData.word2index), args['device'])
 
-        # optimizer = optim.Adam(self.model.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
-        optimizer = torch.optim.SGD(self.model.parameters(), lr=5.0)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=0.95)
+        optimizer = optim.Adam(self.model.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
+        # optimizer = torch.optim.SGD(self.model.parameters(), lr=5.0)
+        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=0.95)
 
         iter = 1
         batches = self.textData.getBatches()
@@ -130,7 +144,7 @@ class Runner:
 
         min_perplexity = -1
 
-        # self.Cal_perplexity_for_dataset('test', direction)
+        self.Cal_perplexity_for_dataset('test', direction)
 
         for epoch in range(args['numEpochs']):
             losses = []
@@ -171,9 +185,9 @@ class Runner:
                     # GPUtil.showUtilization()
                     # torch.cuda.empty_cache()
                     # GPUtil.showUtilization()
-                    # if args['corpus'] != '1mb' or iter % 100000 == 0:
-                    perplexity = self.Cal_perplexity_for_dataset('test', direction)
-                    print('Test ppl: ', perplexity)
+                    if args['corpus'] != '1mb' or iter % 100000 == 0:
+                        perplexity = self.Cal_perplexity_for_dataset('test', direction)
+                        print('Test ppl: ', perplexity)
 
                 if iter % plot_every == 0:
                     plot_loss_avg = plot_loss_total / plot_every
@@ -182,7 +196,7 @@ class Runner:
 
                 iter+=1
 
-            scheduler.step()
+            # scheduler.step()
             perplexity = self.Cal_perplexity_for_dataset('test', direction)
             if perplexity < min_perplexity or min_perplexity == -1:
                 print('perplexity = ', perplexity, '>= min_perplexity (', min_perplexity, '), saving model...')
@@ -209,7 +223,7 @@ class Runner:
         num = 0
         ave_loss = 0
         with torch.no_grad():
-            print(len(self.testbatches[datasetname][0].decoderSeqs))
+            # print(len(self.testbatches[datasetname][0].decoderSeqs))
             for batch in self.testbatches[datasetname]:
                 x = {}
 

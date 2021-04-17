@@ -18,7 +18,7 @@ import copy
 
 from modules import Hopfield, HopfieldPooling, HopfieldLayer
 from modules.transformer import  HopfieldEncoderLayer
-from Transformer import EnergyTransformerEncoderLayer
+from Transformer import EnergyTransformerEncoderLayer,EnergyTransformerEncoder
 class LanguageModel(nn.Module):
     def __init__(self,w2i, i2w):
         """
@@ -77,7 +77,7 @@ class LanguageModel(nn.Module):
             # self.transformer_network = nn.Sequential(self.transformer_encoder, output_projection).to(self.device)
         elif args['LMtype'] == 'energy':
             self.trans_net = EnergyTransformerEncoderLayer(d_model=args['embeddingSize'], nhead=1).to(self.device)
-            # self.transformer_encoder = nn.TransformerEncoder(self.trans_net, num_layers=1).to(self.device)
+            self.energytransformer_encoder = EnergyTransformerEncoder(self.trans_net, num_layers=args['numLayers']).to(self.device)
             self.output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize']).to(self.device)
             # self.transformer_network = nn.Sequential(self.transformer_encoder, output_projection).to(self.device)
 
@@ -120,7 +120,7 @@ class LanguageModel(nn.Module):
             # print(de_outputs.size())
         elif args['LMtype'] == 'energy':
             src_mask = self.generate_square_subsequent_mask(self.dec_len).to(self.device)
-            de_outputs, KL = self.trans_net(dec_input_embed, src_mask = src_mask)
+            de_outputs, KL = self.energytransformer_encoder(dec_input_embed, mask = src_mask)
             de_outputs = self.output_projection(de_outputs)
             # de_outputs = de_outputs.transpose(0,1)
         # print(de_outputs.size(),self.decoderTargets.size())
@@ -132,7 +132,7 @@ class LanguageModel(nn.Module):
         recon_loss_mean = torch.mean(recon_loss, dim=-1)
         # print(recon_loss.size(), mask.size())
         if  args['LMtype'] == 'energy':
-            recon_loss_mean = recon_loss_mean.mean() + 10*KL
+            recon_loss_mean = recon_loss_mean.mean() + 100*KL
 
         true_mean = recon_loss.sum(1) / mask.sum(1)
         return de_outputs, recon_loss_mean, true_mean
