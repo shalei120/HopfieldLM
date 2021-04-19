@@ -131,15 +131,16 @@ class LanguageModel(nn.Module):
 
         recon_loss_mean = torch.mean(recon_loss, dim=-1)
         # print(recon_loss.size(), mask.size())
-        if  args['LMtype'] == 'energy':
-            recon_loss_mean = recon_loss_mean.mean() + 100*KL
-
         true_mean = recon_loss.sum(1) / mask.sum(1)
+        if  args['LMtype'] == 'energy':
+            return de_outputs, recon_loss_mean, true_mean, KL
+            # recon_loss_mean = recon_loss_mean.mean() + 100*KL
+
         return de_outputs, recon_loss_mean, true_mean
 
     def forward(self, x):
-        de_outputs, recon_loss_mean, true_mean = self.build(x)
-        return de_outputs, recon_loss_mean, true_mean
+        data = self.build(x)
+        return data
 
 
     def generate(self, init_state, senlen, assistseq = [], startseq = []):

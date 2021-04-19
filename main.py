@@ -146,6 +146,8 @@ class Runner:
 
         self.Cal_perplexity_for_dataset('test', direction)
 
+        KL_total = 0
+        KL_losses = []
         for epoch in range(args['numEpochs']):
             losses = []
 
@@ -158,9 +160,14 @@ class Runner:
 
 
                 # print(x['enc_input'][0],x['dec_input'][0],x['dec_target'][0])
-                de_output, loss, true_mean = self.model(x)    # batch seq_len outsize
-
-                loss_mean = torch.mean(loss)
+                if args['LMtype'] == 'energy':
+                    de_output, loss, true_mean, KL = self.model(x)    # batch seq_len outsize
+                    loss_mean = torch.mean(loss) + 10*KL
+                    KL_total += KL.item()
+                    KL_losses.append(KL.item())
+                else:
+                    de_output, loss, true_mean = self.model(x)    # batch seq_len outsize
+                    loss_mean = torch.mean(loss)
                 # Reward = loss_mean.data
 
                 loss_mean.backward(retain_graph=True)
@@ -174,12 +181,15 @@ class Runner:
                 plot_loss_total += loss_mean.item()
 
                 losses.append(loss_mean.item())
+
                 # GPUtil.showUtilization()
                 if iter % print_every == 0:
                     print_loss_avg = print_loss_total / print_every
                     print_loss_total = 0
-                    print('%s (%d %d%%) %.4f' % (timeSince(start, iter / n_iters),
-                                                 iter, iter / n_iters * 100, print_loss_avg))
+                    KL_avg = KL_total / print_every
+                    KL_total = 0
+                    print('%s (%d %d%%) loss = %.4f, KL = %.4f' % (timeSince(start, iter / n_iters),
+                                                 iter, iter / n_iters * 100, print_loss_avg, KL_avg))
                     # GPUtil.showUtilization()
                     # del de_output,loss,true_mean
                     # GPUtil.showUtilization()
@@ -188,6 +198,10 @@ class Runner:
                     if args['corpus'] != '1mb' or iter % 100000 == 0:
                         perplexity = self.Cal_perplexity_for_dataset('test', direction)
                         print('Test ppl: ', perplexity)
+
+                        if perplexity < min_perplexity or min_perplexity == -1:
+                            print('perplexity = ', perplexity, '>= min_perplexity (', min_perplexity, '), saving model...')
+                            min_perplexity = perplexity
 
                 if iter % plot_every == 0:
                     plot_loss_avg = plot_loss_total / plot_every
@@ -203,7 +217,12 @@ class Runner:
                 torch.save(self.model, self.model_path.replace('model', 'model_'+args['LMtype']+'_'+args['corpus'] + '_'+str(args['maxLength'])))
                 min_perplexity = perplexity
 
-            print('Epoch ', epoch, 'loss = ', sum(losses) / len(losses), 'Valid perplexity = ', perplexity)
+
+            if args['LMtype'] == 'energy':
+                print('Epoch ', epoch, 'loss = ', sum(losses) / len(losses), 'Valid perplexity = ', perplexity, 'KL loss = ', sum(KL_losses) / len(KL_losses))
+            else:
+                print('Epoch ', epoch, 'loss = ', sum(losses) / len(losses), 'Valid perplexity = ', perplexity)
+
 
         # self.test()
         # showPlot(plot_losses)
@@ -233,7 +252,10 @@ class Runner:
 
                 # print('here')
                 # GPUtil.showUtilization()
-                de_output, recon_loss_mean, true_mean = self.model(x)
+                if args['LMtype'] == 'energy':
+                    de_output, loss, true_mean, KL = self.model(x)    # batch seq_len outsize
+                else:
+                    de_output, recon_loss_mean, true_mean = self.model(x)
                 # GPUtil.showUtilization()
                 # true_mean = recon_loss_mean
                 # print(true_mean.size())
