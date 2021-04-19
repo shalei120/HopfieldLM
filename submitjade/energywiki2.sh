@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --nodes=1
-#SBATCH --partition=small
+#SBATCH --partition=devel
 #SBATCH --job-name=energyLM
 #SBATCH --gres=gpu:1
 

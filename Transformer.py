@@ -14,6 +14,9 @@ from torch.nn.modules.normalization import LayerNorm
 
 from torch.nn.parameter import Parameter
 
+from typing import Optional, Tuple, Union
+from math import *
+from modules.activation import HopfieldCore
 from Hyperparameters import args
 
 class Transformer(Module):
@@ -269,7 +272,36 @@ class EnergyTransformerEncoderLayer(Module):
         >>> out = encoder_layer(src)
     """
 
-    def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1, activation="relu"):
+    def __init__(self, d_model, nhead, dim_feedforward=2048, dropout=0.1, activation="relu",
+                 normalize_stored_pattern: bool = True,
+                 normalize_stored_pattern_affine: bool = True,
+                 normalize_state_pattern: bool = True,
+                 normalize_state_pattern_affine: bool = True,
+                 normalize_pattern_projection: bool = True,
+                 normalize_pattern_projection_affine: bool = True,
+                 hidden_size: Optional[int] = None,
+                 output_size: Optional[int] = None,
+                 pattern_size: Optional[int] = None,
+                 scaling: Optional[Union[float, Tensor]] = None,
+
+                 update_steps_max: Optional[Union[int, Tensor]] = 0,
+                 update_steps_eps: Union[float, Tensor] = 1e-4,
+                 num_heads: int = 1,
+                 normalize_hopfield_space: bool = False,
+                 normalize_hopfield_space_affine: bool = False,
+                 stored_pattern_as_static: bool = False,
+                 state_pattern_as_static: bool = False,
+                 pattern_projection_as_static: bool = False,
+                 pattern_projection_as_connected: bool = False,
+                 stored_pattern_size: Optional[int] = None,
+                 pattern_projection_size: Optional[int] = None,
+
+                 batch_first: bool = True,
+                 association_activation: Optional[str] = None,
+                 input_bias: bool = True,
+                 concat_bias_pattern: bool = False,
+                 add_zero_association: bool = False,
+                 disable_out_projection: bool = False):
         super(EnergyTransformerEncoderLayer, self).__init__()
         self.self_attn = MultiheadAttention(d_model, nhead, dropout=dropout)
         # Implementation of Feedforward model
@@ -286,32 +318,62 @@ class EnergyTransformerEncoderLayer(Module):
         self.W = Parameter(self.W)
         self.all_attn_linear = Linear(d_model, 1)
         self.linear_reweight = Linear(d_model, d_model)
+        self.linear_all2= Linear(d_model, d_model)
         self.activation = _get_activation_fn(activation)
+        self.association_core = HopfieldCore(
+            embed_dim=d_model, num_heads=num_heads, dropout=dropout, bias=input_bias,
+            add_bias_kv=concat_bias_pattern, add_zero_attn=add_zero_association, kdim=stored_pattern_size,
+            vdim=pattern_projection_size, head_dim=hidden_size, pattern_dim=pattern_size, out_dim=output_size,
+            disable_out_projection=disable_out_projection, key_as_static=stored_pattern_as_static,
+            query_as_static=state_pattern_as_static, value_as_static=pattern_projection_as_static,
+            value_as_connected=pattern_projection_as_connected, normalize_pattern=normalize_hopfield_space,
+            normalize_pattern_affine=normalize_hopfield_space_affine)
+
+
+        # Initialise remaining auxiliary properties.
+        if self.association_core.static_execution:
+            self.__scaling = 1.0 if scaling is None else scaling
+        else:
+            assert self.association_core.head_dim > 0, f'invalid hidden dimension encountered.'
+        self.__scaling = (1.0 / sqrt(self.association_core.head_dim)) if scaling is None else scaling
+
+
+        self.__update_steps_max = update_steps_max
+        self.__update_steps_eps = update_steps_eps
 
     def __setstate__(self, state):
         if 'activation' not in state:
             state['activation'] = F.relu
         super(EnergyTransformerEncoderLayer, self).__setstate__(state)
 
-    def All_attn(self, X, attn_mask=None, dropout_p = 0.1, training = True, eps = 1e-6):
-        self.W = self.W.to(args['device'])
-        M1 = torch.einsum('bse,ed->bsd',X,self.W)
-        M2 = torch.einsum('bsd,btd->bst',M1,X)  # batch seq seq
 
-        M3 = self.all_attn_linear(X) # batch seq 1
-        attn_output_weights = M2 + M3
+    def All_Hopfield_attn(self, X, attn_mask=None, dropout_p = 0.1, training = True, eps = 1e-6):
+        # self.W = self.W.to(args['device'])
+        # M1 = torch.einsum('bse,ed->bsd',X,self.W)
+        # M2 = torch.einsum('bsd,btd->bst',M1,X)  # batch seq seq
+        #
+        #
+        #
+        # M3 = self.all_attn_linear(X) # batch seq 1
+        # attn_output_weights = M2 + M3.transpose(1,2)
 
+        attn_output, _, attn_output_weights, _ = self.association_core(
+            query=X.transpose(0,1), key=X.transpose(0,1), value=X.transpose(0,1),
+            key_padding_mask=None, need_weights=True, attn_mask=attn_mask,
+            scaling=self.__scaling, update_steps_max=self.__update_steps_max, update_steps_eps=self.__update_steps_eps,
+            return_raw_associations=True, return_pattern_projections=False)
+        attn_output_weights = attn_output_weights[:,0,:,:]
         self_attn = torch.einsum('bse,bte->bst',X,X)
 
         if attn_mask is not None:
             if attn_mask.dtype == torch.bool:
-                attn_output_weights.masked_fill_(attn_mask, float("-inf"))
+                # attn_output_weights.masked_fill_(attn_mask, float("-inf"))
                 self_attn.masked_fill_(attn_mask, float("-inf"))
             else:
-                attn_output_weights += attn_mask
+                # attn_output_weights += attn_mask
                 self_attn += attn_mask
 
-        attn_output_weights = F.softmax(attn_output_weights, dim=-1)
+        # attn_output_weights = F.softmax(attn_output_weights, dim=-1)
         # print(self_attn)
         self_attn = F.softmax(self_attn,dim=-1)
         # print(self_attn)
@@ -328,13 +390,67 @@ class EnergyTransformerEncoderLayer(Module):
 
 
 
+        # attn_output_weights = F.dropout(attn_output_weights, p=dropout_p, training=training)
+        #
+        # attn_output = torch.bmm(attn_output_weights, X)
+        # attn_output = self.linear_reweight(attn_output)
+
+
+        return attn_output.transpose(0,1), KL
+
+    def All_attn(self, X, attn_mask=None, dropout_p = 0.1, training = True, eps = 1e-6):
+        self.W = self.W.to(args['device'])
+        M1 = torch.einsum('bse,ed->bsd',X,self.W)
+        M2 = torch.einsum('bsd,btd->bst',M1,X)  # batch seq seq
+
+
+
+        M3 = self.all_attn_linear(X) # batch seq 1
+        attn_output_weights = M2 + M3.transpose(1,2)
+
+
+        # self_attn = torch.einsum('bse,bte->bst',X,X)
+
+        if attn_mask is not None:
+            if attn_mask.dtype == torch.bool:
+                attn_output_weights.masked_fill_(attn_mask, float("-inf"))
+                # self_attn.masked_fill_(attn_mask, float("-inf"))
+            else:
+                attn_output_weights += attn_mask
+                # self_attn += attn_mask
+
+        attn_output_weights = F.softmax(attn_output_weights, dim=-1)
+        # print(self_attn)
+        # self_attn = F.softmax(self_attn,dim=-1)
+        # print(self_attn)
+
+        # print(attn_output_weights,self_attn)
+
+        # KL = torch.tensor([0]).to(args['device'])
+        # klq = attn_output_weights[:-1,:] / (self_attn[1:,:]+eps)
+        # KL = (attn_output_weights[:-1,:] * torch.log(klq + eps))
+        # # # print(klq, KL)
+        # KL = KL.sum(2).sum(1).mean(0)
+
+        # KL= (attn_output_weights[:-1,:] - self_attn[1:,:])**2
+        # KL = KL.sum(2).sum(1).mean(0)
+
+        # attn_output_weights = torch.cat([self_attn[1:,:],self_attn[-1,:].unsqueeze(0)], dim = 0)
+
         attn_output_weights = F.dropout(attn_output_weights, p=dropout_p, training=training)
 
         attn_output = torch.bmm(attn_output_weights, X)
         attn_output = self.linear_reweight(attn_output)
 
 
-        return attn_output, KL
+        output2 = F.tanh(attn_output)
+        output2 = self.linear_all2(output2)
+
+        # print(output2[:,-1,:].size(), X[:,1:,:].size())
+        KL = (output2[:,:-1,:] - X[:,1:,:])**2
+        KL = KL.sum(2).sum(1).mean(0)
+
+        return output2, KL
 
     def reweight_attn(self, X, attn_mask=None, dropout_p = 0.1, training = True):
         '''
@@ -383,6 +499,10 @@ class EnergyTransformerEncoderLayer(Module):
 
         # src2 = self.reweight_attn(src, attn_mask=src_mask)
         src2, KL = self.All_attn(src, attn_mask=src_mask)
+
+        # KL = torch.tensor([0]).to(args['device'])
+        # src2 = torch.Tensor(src.cpu().data).to(args['device'])
+        # src2[:,:-1,:] = src[:,1:,:]
         src = src + self.dropout1(src2)
         src = self.norm1(src)
         src2 = self.linear2(self.dropout(self.activation(self.linear1(src))))
