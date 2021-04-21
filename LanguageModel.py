@@ -39,16 +39,16 @@ class LanguageModel(nn.Module):
 
         self.embedding = nn.Embedding(args['vocabularySize'], args['embeddingSize']).to(self.device)
 
-        if args['decunit'] == 'lstm':
-            self.dec_unit = nn.LSTM(input_size=args['embeddingSize'],
-                                    hidden_size=args['hiddenSize'],
-                                    num_layers=args['dec_numlayer']).to(self.device)
-        elif args['decunit'] == 'gru':
-            self.dec_unit = nn.GRU(input_size=args['embeddingSize'],
-                                   hidden_size=args['hiddenSize'],
-                                   num_layers=args['dec_numlayer']).to(self.device)
+        # if args['decunit'] == 'lstm':
+        #     self.dec_unit = nn.LSTM(input_size=args['embeddingSize'],
+        #                             hidden_size=args['hiddenSize'],
+        #                             num_layers=args['dec_numlayer']).to(self.device)
+        # elif args['decunit'] == 'gru':
+        #     self.dec_unit = nn.GRU(input_size=args['embeddingSize'],
+        #                            hidden_size=args['hiddenSize'],
+        #                            num_layers=args['dec_numlayer']).to(self.device)
 
-        self.out_unit = nn.Linear(args['hiddenSize'], args['vocabularySize']).to(self.device)
+        # self.out_unit = nn.Linear(args['hiddenSize'], args['vocabularySize']).to(self.device)
         self.logsoftmax = nn.LogSoftmax(dim = -1)
 
         self.element_len = args['hiddenSize']
@@ -57,8 +57,8 @@ class LanguageModel(nn.Module):
         self.softmax = nn.Softmax(dim = -1)
         self.CEloss = torch.nn.CrossEntropyLoss(reduction='none')
 
-        self.init_state = (torch.rand(args['dec_numlayer'], 1, args['hiddenSize'], device=self.device),
-                           torch.rand(args['dec_numlayer'], 1, args['hiddenSize'], device=self.device))
+        # self.init_state = (torch.rand(args['dec_numlayer'], 1, args['hiddenSize'], device=self.device),
+        #                    torch.rand(args['dec_numlayer'], 1, args['hiddenSize'], device=self.device))
 
         if args['LMtype'] == 'asso':
             self.hopfield = Hopfield(
@@ -99,6 +99,7 @@ class LanguageModel(nn.Module):
         batch_size = self.decoderInputs.size()[0]
         self.dec_len = self.decoderInputs.size()[1]
         dec_input_embed = self.embedding(self.decoderInputs)
+        mask = torch.sign(self.decoderTargets.float())
 
         if args['LMtype']== 'lstm':
             init_state = (self.init_state[0].repeat([1, batch_size, 1]), self.init_state[1].repeat([1, batch_size, 1]))
@@ -108,7 +109,7 @@ class LanguageModel(nn.Module):
             de_outputs = self.hp_network(dec_input_embed)
         elif args['LMtype']== 'asso_enco':
             src_mask = self.generate_square_subsequent_mask(self.dec_len).to(self.device)
-            print(args['maxLengthDeco'], dec_input_embed.size(), src_mask.size())
+            # print(args['maxLengthDeco'], dec_input_embed.size(), src_mask.size())
             de_outputs = self.hp_network(dec_input_embed,src_mask)
             de_outputs = self.output_projection(de_outputs)
             # de_outputs = de_outputs.transpose(0,1)
@@ -120,27 +121,38 @@ class LanguageModel(nn.Module):
             # print(de_outputs.size())
         elif args['LMtype'] == 'energy':
             src_mask = self.generate_square_subsequent_mask(self.dec_len).to(self.device)
-            de_outputs, KL = self.energytransformer_encoder(dec_input_embed, mask = src_mask)
+            de_outputs, loss_tuple = self.energytransformer_encoder(dec_input_embed, mask = src_mask, src_key_padding_mask = mask)
             de_outputs = self.output_projection(de_outputs)
             # de_outputs = de_outputs.transpose(0,1)
         # print(de_outputs.size(),self.decoderTargets.size())
         # print(de_outputs.size(),self.decoderTargets.size() )
         recon_loss = self.CEloss(torch.transpose(de_outputs, 1, 2), self.decoderTargets)
-        mask = torch.sign(self.decoderTargets.float())
+
         recon_loss = torch.squeeze(recon_loss) * mask
 
         recon_loss_mean = torch.mean(recon_loss, dim=-1)
         # print(recon_loss.size(), mask.size())
         true_mean = recon_loss.sum(1) / mask.sum(1)
-        if  args['LMtype'] == 'energy':
-            return de_outputs, recon_loss_mean, true_mean, KL
+
+        data = {'de_outputs': de_outputs,
+                'loss':recon_loss_mean,
+                'true_mean':true_mean}
+
+        if args['LMtype'] == 'energy':
+            data['KL'] = loss_tuple[1]
+            data['VAE_recon']  = loss_tuple[0]
             # recon_loss_mean = recon_loss_mean.mean() + 100*KL
 
-        return de_outputs, recon_loss_mean, true_mean
+        return data
 
     def forward(self, x):
         data = self.build(x)
         return data
+
+    def predict(self, x):
+        data = self.build(x)
+
+
 
 
     def generate(self, init_state, senlen, assistseq = [], startseq = []):
