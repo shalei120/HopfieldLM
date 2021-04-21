@@ -161,7 +161,7 @@ class Runner:
 
                 # print(x['enc_input'][0],x['dec_input'][0],x['dec_target'][0])
                 if args['LMtype'] == 'energy':
-                    data = self.model(x)    # batch seq_len outsize
+                    data = self.model(x)    # batch seq_len outsiz
                     loss_mean = torch.mean(data['loss']) + 0.1 * data['KL'] + 0.5 * data['VAE_recon']
                     KL_total += data['KL'].item()
                     VAE_recon_total += data['VAE_recon'].item()
