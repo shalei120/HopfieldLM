@@ -2,7 +2,7 @@ import copy
 from typing import Optional, Any
 
 import torch, pickle
-from torch import Tensor
+from torch import Tensor,nn
 import torch.nn.functional as F
 from torch.nn.modules import Module
 from torch.nn.modules.activation import MultiheadAttention
@@ -11,6 +11,8 @@ from torch.nn.init import xavier_uniform_
 from torch.nn.modules.dropout import Dropout
 from torch.nn.modules.linear import Linear
 from torch.nn.modules.normalization import LayerNorm
+
+from torch.autograd import Variable
 
 from torch.nn.parameter import Parameter
 
@@ -341,11 +343,30 @@ class EnergyTransformerEncoderLayer(Module):
         self.__update_steps_max = update_steps_max
         self.__update_steps_eps = update_steps_eps
 
+        self.X_2_Xmean = nn.Sequential(
+            Linear(d_model,d_model),
+            nn.Tanh()
+        )
+        self.X_2_Xlogvar = nn.Sequential(
+            Linear(d_model,d_model),
+            nn.Tanh()
+        )
+
+        self.topic_2_X = nn.Sequential(
+            Linear(d_model,d_model),
+            nn.Tanh()
+        )
+
     def __setstate__(self, state):
         if 'activation' not in state:
             state['activation'] = F.relu
         super(EnergyTransformerEncoderLayer, self).__setstate__(state)
 
+    def VAE_sample_z(self, mu, log_var):
+
+        eps = Variable(torch.randn(mu.size())).to(args['device'])
+        res = mu + torch.exp(log_var / 2) * eps
+        return res
 
     def All_Hopfield_attn(self, X, attn_mask=None, dropout_p = 0.1, training = True, eps = 1e-6):
         # self.W = self.W.to(args['device'])
@@ -398,6 +419,31 @@ class EnergyTransformerEncoderLayer(Module):
 
         return attn_output.transpose(0,1), KL
 
+    def latent_attn(self, X, attn_mask=None, sentence_mask = None, dropout_p = 0.1, training = True, eps = 1e-6):
+
+        X_mu = self.X_2_Xmean(X)
+        X_logvar = self.X_2_Xlogvar(X)
+
+        X_topic = self.VAE_sample_z(X_mu, X_logvar)
+        X_prime = self.topic_2_X(X_topic)
+
+        recon = ((X-X_prime)*sentence_mask.unsqueeze(2)) **2
+        recon = recon.sum(2).mean()
+
+        KL_loss1 = ((0.5 * (torch.exp(X_logvar) + X_mu ** 2 - 1 - X_logvar)) * sentence_mask.unsqueeze(2)) ** 2
+        KL_loss1 = KL_loss1.sum(2).mean()
+
+        src = X_topic
+
+        src2 = self.self_attn(src.transpose(0, 1), src.transpose(0, 1), src.transpose(0, 1), attn_mask=attn_mask,
+                              key_padding_mask=None)[0]
+        src2 = src2.transpose(0, 1)
+
+        src3 = self.topic_2_X(src2)
+
+        return src3, torch.Tensor([recon, KL_loss1] )
+
+
     def All_attn(self, X, attn_mask=None, dropout_p = 0.1, training = True, eps = 1e-6):
         self.W = self.W.to(args['device'])
         M1 = torch.einsum('bse,ed->bsd',X,self.W)
@@ -410,7 +456,10 @@ class EnergyTransformerEncoderLayer(Module):
 
 
         # self_attn = torch.einsum('bse,bte->bst',X,X)
-
+        # src = X
+        # output2 = self.self_attn(src.transpose(0,1), src.transpose(0,1), src.transpose(0,1), attn_mask=attn_mask,
+        #                       key_padding_mask=None)[0]
+        # output2 = output2.transpose(0,1)
         if attn_mask is not None:
             if attn_mask.dtype == torch.bool:
                 attn_output_weights.masked_fill_(attn_mask, float("-inf"))
@@ -426,7 +475,7 @@ class EnergyTransformerEncoderLayer(Module):
 
         # print(attn_output_weights,self_attn)
 
-        # KL = torch.tensor([0]).to(args['device'])
+        KL = torch.tensor([0]).to(args['device'])
         # klq = attn_output_weights[:-1,:] / (self_attn[1:,:]+eps)
         # KL = (attn_output_weights[:-1,:] * torch.log(klq + eps))
         # # # print(klq, KL)
@@ -447,8 +496,8 @@ class EnergyTransformerEncoderLayer(Module):
         output2 = self.linear_all2(output2)
 
         # print(output2[:,-1,:].size(), X[:,1:,:].size())
-        KL = (output2[:,:-1,:] - X[:,1:,:])**2
-        KL = KL.sum(2).sum(1).mean(0)
+        # KL = (output2[:,:-1,:] - X[:,1:,:])**2
+        # KL = KL.sum(2).sum(1).mean(0)
 
         return output2, KL
 
@@ -494,21 +543,25 @@ class EnergyTransformerEncoderLayer(Module):
         Shape:
             see the docs in Transformer class.
         """
-        # src2 = self.self_attn(src, src, src, attn_mask=src_mask,
+        # src2 = self.self_attn(src.transpose(0,1), src.transpose(0,1), src.transpose(0,1), attn_mask=src_mask,
         #                       key_padding_mask=src_key_padding_mask)[0]
-
+        # src2 = src2.transpose(0,1)
         # src2 = self.reweight_attn(src, attn_mask=src_mask)
-        src2, KL = self.All_attn(src, attn_mask=src_mask)
+        # src2, KL = self.All_attn(src, attn_mask=src_mask)
 
         # KL = torch.tensor([0]).to(args['device'])
+        # KL = (src2[:, :-1, :] - src[:, 1:, :]) ** 2
+        # KL = KL.sum(2).sum(1).mean(0)
         # src2 = torch.Tensor(src.cpu().data).to(args['device'])
         # src2[:,:-1,:] = src[:,1:,:]
-        src = src + self.dropout1(src2)
+
+        src2, loss_tuple = self.latent_attn(src, attn_mask=src_mask, sentence_mask=src_key_padding_mask)
+        src = src + self.dropout1(src2)#.transpose(0,1))
         src = self.norm1(src)
         src2 = self.linear2(self.dropout(self.activation(self.linear1(src))))
         src = src + self.dropout2(src2)
         src = self.norm2(src)
-        return src, KL
+        return src, loss_tuple
 
 
 
