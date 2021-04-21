@@ -161,13 +161,13 @@ class Runner:
 
                 # print(x['enc_input'][0],x['dec_input'][0],x['dec_target'][0])
                 if args['LMtype'] == 'energy':
-                    de_output, loss, true_mean, KL = self.model(x)    # batch seq_len outsize
-                    loss_mean = torch.mean(loss) + 10*KL
-                    KL_total += KL.item()
-                    KL_losses.append(KL.item())
+                    data = self.model(x)    # batch seq_len outsize
+                    loss_mean = torch.mean(data['loss']) + 10 * data['KL']
+                    KL_total += data['KL'].item()
+                    KL_losses.append(data['KL'].item())
                 else:
-                    de_output, loss, true_mean = self.model(x)    # batch seq_len outsize
-                    loss_mean = torch.mean(loss)
+                    data = self.model(x)    # batch seq_len outsize
+                    loss_mean = torch.mean(data['loss'])
                 # Reward = loss_mean.data
 
                 loss_mean.backward(retain_graph=True)
@@ -252,17 +252,14 @@ class Runner:
 
                 # print('here')
                 # GPUtil.showUtilization()
-                if args['LMtype'] == 'energy':
-                    de_output, loss, true_mean, KL = self.model(x)    # batch seq_len outsize
-                else:
-                    de_output, recon_loss_mean, true_mean = self.model(x)
+                data = self.model(x)    # batch seq_len outsize
                 # GPUtil.showUtilization()
                 # true_mean = recon_loss_mean
                 # print(true_mean.size())
-                sum_true = true_mean.sum().item()
-                ave_loss = (ave_loss * num + sum_true) / (num + len(true_mean))
+                sum_true = data['true_mean'].sum().item()
+                ave_loss = (ave_loss * num + sum_true) / (num + len(data['true_mean']))
 
-                num += len(true_mean)
+                num += len(data['true_mean'])
 
         self.model.train()
         return np.exp(ave_loss)
