@@ -147,7 +147,7 @@ class Runner:
         self.Cal_perplexity_for_dataset('test', direction)
 
         KL_total = 0
-        KL_losses = []
+        VAE_recon_total = 0
         for epoch in range(args['numEpochs']):
             losses = []
 
@@ -161,10 +161,10 @@ class Runner:
 
                 # print(x['enc_input'][0],x['dec_input'][0],x['dec_target'][0])
                 if args['LMtype'] == 'energy':
-                    data = self.model(x)    # batch seq_len outsize
-                    loss_mean = torch.mean(data['loss']) + 10 * data['KL']
+                    data = self.model(x)    # batch seq_len outsiz
+                    loss_mean = torch.mean(data['loss']) + 0.1 * data['KL'] + 0.5 * data['VAE_recon']
                     KL_total += data['KL'].item()
-                    KL_losses.append(data['KL'].item())
+                    VAE_recon_total += data['VAE_recon'].item()
                 else:
                     data = self.model(x)    # batch seq_len outsize
                     loss_mean = torch.mean(data['loss'])
@@ -188,8 +188,10 @@ class Runner:
                     print_loss_total = 0
                     KL_avg = KL_total / print_every
                     KL_total = 0
-                    print('%s (%d %d%%) loss = %.4f, KL = %.4f' % (timeSince(start, iter / n_iters),
-                                                 iter, iter / n_iters * 100, print_loss_avg, KL_avg))
+                    VAE_recon_avg = VAE_recon_total / print_every
+                    VAE_recon_total = 0
+                    print('%s (%d %d%%) loss = %.4f, VAE recon = %.4f, KL = %.4f' % (timeSince(start, iter / n_iters),
+                                                 iter, iter / n_iters * 100, print_loss_avg, VAE_recon_avg, KL_avg))
                     # GPUtil.showUtilization()
                     # del de_output,loss,true_mean
                     # GPUtil.showUtilization()
@@ -218,10 +220,10 @@ class Runner:
                 min_perplexity = perplexity
 
 
-            if args['LMtype'] == 'energy':
-                print('Epoch ', epoch, 'loss = ', sum(losses) / len(losses), 'Valid perplexity = ', perplexity, 'KL loss = ', sum(KL_losses) / len(KL_losses))
-            else:
-                print('Epoch ', epoch, 'loss = ', sum(losses) / len(losses), 'Valid perplexity = ', perplexity)
+            # if args['LMtype'] == 'energy':
+            #     print('Epoch ', epoch, 'loss = ', sum(losses) / len(losses), 'Valid perplexity = ', perplexity, 'VAE recon = ', VAE_recon_avg, 'KL loss = ', KL_avg)
+            # else:
+            print('Epoch ', epoch, 'loss = ', sum(losses) / len(losses), 'Valid perplexity = ', perplexity)
 
 
         # self.test()
