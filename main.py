@@ -113,6 +113,7 @@ class Runner:
         args['vocabularySize'] = self.textData.getVocabularySize()
         print(self.textData.getVocabularySize())
         print(args)
+        torch.manual_seed(0)
         self.model = LanguageModel(self.textData.word2index, self.textData.index2word).to(args['device'])
         # self.model = torch.load(self.model_path.replace('model', 'model_'+'fw'), map_location=args['device'])
         params = sum([np.prod(p.size()) for p in self.model.parameters()])
@@ -146,8 +147,10 @@ class Runner:
 
         self.Cal_perplexity_for_dataset('test', direction)
 
+        CE_loss_total = 0
         KL_total = 0
         VAE_recon_total = 0
+        error_total = 0
         for epoch in range(args['numEpochs']):
             losses = []
 
@@ -161,10 +164,12 @@ class Runner:
 
                 # print(x['enc_input'][0],x['dec_input'][0],x['dec_target'][0])
                 if args['LMtype'] == 'energy':
-                    data = self.model(x)    # batch seq_len outsiz
-                    loss_mean = torch.mean(data['loss']) + 0.1 * data['KL'] + 0.5 * data['VAE_recon']
+                    data = self.model(x)    # batch seq_len outsize
+                    loss_mean = torch.mean(data['loss']) + 0.1 * data['KL'] + 0.01 * data['VAE_recon'] + 100 * data['error']
+                    CE_loss_total += torch.mean(data['loss']).item()
                     KL_total += data['KL'].item()
                     VAE_recon_total += data['VAE_recon'].item()
+                    error_total += data['error'].item()
                 else:
                     data = self.model(x)    # batch seq_len outsize
                     loss_mean = torch.mean(data['loss'])
@@ -188,10 +193,14 @@ class Runner:
                     print_loss_total = 0
                     KL_avg = KL_total / print_every
                     KL_total = 0
+                    CEloss_avg = CE_loss_total / print_every
+                    CE_loss_total = 0
                     VAE_recon_avg = VAE_recon_total / print_every
                     VAE_recon_total = 0
-                    print('%s (%d %d%%) loss = %.4f, VAE recon = %.4f, KL = %.4f' % (timeSince(start, iter / n_iters),
-                                                 iter, iter / n_iters * 100, print_loss_avg, VAE_recon_avg, KL_avg))
+                    error_avg = error_total / print_every
+                    error_total = 0
+                    print('%s (%d %d%%) loss = %.4f, CE_loss = %.4f, VAE recon = %.4f, KL = %.4f, error=%.4f' % (timeSince(start, iter / n_iters),
+                                                 iter, iter / n_iters * 100, print_loss_avg, CEloss_avg, VAE_recon_avg, KL_avg, error_avg))
                     # GPUtil.showUtilization()
                     # del de_output,loss,true_mean
                     # GPUtil.showUtilization()
@@ -216,7 +225,7 @@ class Runner:
             perplexity = self.Cal_perplexity_for_dataset('test', direction)
             if perplexity < min_perplexity or min_perplexity == -1:
                 print('perplexity = ', perplexity, '>= min_perplexity (', min_perplexity, '), saving model...')
-                torch.save(self.model, self.model_path.replace('model', 'model_'+args['LMtype']+'_'+args['corpus'] + '_'+str(args['maxLength'])))
+                torch.save(self.model, self.model_path.replace('model', 'model_'+args['LMtype']+'_'+args['corpus'] + '_'+str(args['maxLength'])+'_'+str(args['numLayers'])+'_'+str(args['embeddingSize'])))
                 min_perplexity = perplexity
 
 
@@ -254,7 +263,7 @@ class Runner:
 
                 # print('here')
                 # GPUtil.showUtilization()
-                data = self.model(x)    # batch seq_len outsize
+                data = self.model.predict(x)    # batch seq_len outsize
                 # GPUtil.showUtilization()
                 # true_mean = recon_loss_mean
                 # print(true_mean.size())

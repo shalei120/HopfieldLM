@@ -72,12 +72,12 @@ class LanguageModel(nn.Module):
             self.output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize'])
         elif args['LMtype'] == 'transformer':
             self.trans_net = nn.TransformerEncoderLayer(d_model=args['embeddingSize'], nhead=1).to(self.device)
-            self.transformer_encoder = nn.TransformerEncoder(self.trans_net, num_layers=1).to(self.device)
+            self.transformer_encoder = nn.TransformerEncoder(self.trans_net, num_layers=args['numLayers']).to(self.device)
             self.output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize'])
             # self.transformer_network = nn.Sequential(self.transformer_encoder, output_projection).to(self.device)
         elif args['LMtype'] == 'energy':
             self.trans_net = EnergyTransformerEncoderLayer(d_model=args['embeddingSize'], nhead=1).to(self.device)
-            self.energytransformer_encoder = EnergyTransformerEncoder(self.trans_net, num_layers=args['numLayers']).to(self.device)
+            self.energytransformer_encoder = EnergyTransformerEncoder(self.trans_net, num_layers=args['numLayers'], norm=nn.modules.normalization.LayerNorm(args['embeddingSize'])).to(self.device)
             self.output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize']).to(self.device)
             # self.transformer_network = nn.Sequential(self.transformer_encoder, output_projection).to(self.device)
 
@@ -91,7 +91,7 @@ class LanguageModel(nn.Module):
 
 
 
-    def build(self, x):
+    def build(self, x, training):
         self.decoderInputs = x['dec_input'].to(self.device)
         self.decoder_lengths = x['dec_len']
         self.decoderTargets = x['dec_target'].to(self.device)
@@ -121,7 +121,7 @@ class LanguageModel(nn.Module):
             # print(de_outputs.size())
         elif args['LMtype'] == 'energy':
             src_mask = self.generate_square_subsequent_mask(self.dec_len).to(self.device)
-            de_outputs, loss_tuple = self.energytransformer_encoder(dec_input_embed, mask = src_mask, src_key_padding_mask = mask)
+            de_outputs, loss_tuple, error = self.energytransformer_encoder(dec_input_embed, mask = src_mask, src_key_padding_mask = mask, training=training)
             de_outputs = self.output_projection(de_outputs)
             # de_outputs = de_outputs.transpose(0,1)
         # print(de_outputs.size(),self.decoderTargets.size())
@@ -141,16 +141,18 @@ class LanguageModel(nn.Module):
         if args['LMtype'] == 'energy':
             data['KL'] = loss_tuple[1]
             data['VAE_recon']  = loss_tuple[0]
+            data['error'] = error
             # recon_loss_mean = recon_loss_mean.mean() + 100*KL
 
         return data
 
     def forward(self, x):
-        data = self.build(x)
+        data = self.build(x, training=True)
         return data
 
     def predict(self, x):
-        data = self.build(x)
+        data = self.build(x, training=False)
+        return data
 
 
 
