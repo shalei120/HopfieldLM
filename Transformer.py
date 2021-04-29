@@ -20,6 +20,7 @@ from typing import Optional, Tuple, Union
 from math import *
 from modules.activation import HopfieldCore
 from Hyperparameters import args
+import numpy as np
 
 class Transformer(Module):
     r"""A transformer model. User is able to modify the attributes as needed. The architecture
@@ -175,7 +176,7 @@ class EnergyTransformerEncoder(Module):
         self.num_layers = num_layers
         self.norm = norm
 
-    def forward(self, src: Tensor, mask: Optional[Tensor] = None, src_key_padding_mask: Optional[Tensor] = None) -> Tensor:
+    def forward(self, src: Tensor, mask: Optional[Tensor] = None, src_key_padding_mask: Optional[Tensor] = None, training = None) -> Tensor:
         r"""Pass the input through the encoder layers in turn.
 
         Args:
@@ -187,16 +188,23 @@ class EnergyTransformerEncoder(Module):
             see the docs in Transformer class.
         """
         output = src
+        prev_out = None
 
         Energy = 0
+        Error = torch.Tensor([0]).to(args['device'])
         for mod in self.layers:
-            output, E = mod(output, src_mask=mask, src_key_padding_mask=src_key_padding_mask)
+            output, E = mod(output, src_mask=mask, src_key_padding_mask=src_key_padding_mask, training = training)
             Energy += E
+            if prev_out is None:
+                prev_out = output
+            else:
+                prev_out = prev_out + F.dropout(output)
+                prev_out = self.norm(prev_out)
 
         if self.norm is not None:
             output = self.norm(output)
 
-        return output, Energy
+        return output, Energy, Error
 
 
 
@@ -345,16 +353,49 @@ class EnergyTransformerEncoderLayer(Module):
 
         self.X_2_Xmean = nn.Sequential(
             Linear(d_model,d_model),
-            nn.Tanh()
+            # nn.Tanh()
         )
         self.X_2_Xlogvar = nn.Sequential(
             Linear(d_model,d_model),
-            nn.Tanh()
+            # nn.Tanh()
         )
 
         self.topic_2_X = nn.Sequential(
             Linear(d_model,d_model),
+            # nn.Tanh()
+        )
+        self.topic_2_X_mu = nn.Sequential(
+            Linear(d_model,d_model),
+            # nn.Tanh()
+        )
+        self.topic_2_X_logvar = nn.Sequential(
+            Linear(d_model,d_model),
+            # nn.Tanh()
+        )
+
+        self.topic_2_X_recon = nn.Sequential(
+            Linear(d_model,d_model),
+            # nn.Tanh()
+        )
+
+        self.X2Q = nn.Sequential(
+            Linear(d_model,d_model),
+            # nn.Tanh()
+        )
+        self.X2K = nn.Sequential(
+            Linear(d_model,d_model),
+            # nn.Tanh()
+        )
+        self.X2V = nn.Sequential(
+            Linear(d_model,d_model),
+            # nn.Tanh()
+        )
+        self.X_all_attn = nn.Sequential(
+            Linear(d_model,d_model,bias=False),
             nn.Tanh()
+        )
+        self.X_all_attn2 = nn.Sequential(
+            Linear(d_model,1,bias=False),
         )
 
     def __setstate__(self, state):
@@ -364,7 +405,7 @@ class EnergyTransformerEncoderLayer(Module):
 
     def VAE_sample_z(self, mu, log_var):
 
-        eps = Variable(torch.randn(mu.size())).to(args['device'])
+        eps = Variable(torch.FloatTensor(np.random.randn(*list(mu.size())))).to(args['device'])
         res = mu + torch.exp(log_var / 2) * eps
         return res
 
@@ -425,8 +466,12 @@ class EnergyTransformerEncoderLayer(Module):
         X_logvar = self.X_2_Xlogvar(X)
 
         X_topic = self.VAE_sample_z(X_mu, X_logvar)
-        X_prime = self.topic_2_X(X_topic)
 
+        if not training:
+            # X_topic = X
+            X_topic = X_mu
+
+        X_prime = self.topic_2_X(X_topic)
         recon = ((X-X_prime)*sentence_mask.unsqueeze(2)) **2
         recon = recon.sum(2).mean()
 
@@ -435,104 +480,99 @@ class EnergyTransformerEncoderLayer(Module):
 
         src = X_topic
 
-        src2 = self.self_attn(src.transpose(0, 1), src.transpose(0, 1), src.transpose(0, 1), attn_mask=attn_mask,
+        src2 = self.self_attn(src.transpose(0, 1), X.transpose(0, 1), X.transpose(0, 1), attn_mask=attn_mask,
                               key_padding_mask=None)[0]
         src2 = src2.transpose(0, 1)
 
-        src3 = self.topic_2_X(src2)
+        src3_mu = self.topic_2_X_mu(src2)
+        src3_logvar = self.topic_2_X_logvar(src2)
+        src3 = self.VAE_sample_z(src3_mu, src3_logvar)
 
-        return src3, torch.Tensor([recon, KL_loss1] )
+        if not training:
+            src3 = src3_mu
+            # src3 = src2
+
+        src3_prime = self.topic_2_X_recon(src3)
+        recon1 = ((src3-src3_prime)*sentence_mask.unsqueeze(2)) **2
+        recon1 = recon1.sum(2).mean()
+
+        KL_loss2 = ((0.5 * (torch.exp(src3_logvar) + src3_mu ** 2 - 1 - src3_logvar)) * sentence_mask.unsqueeze(2)) ** 2
+        KL_loss2 = KL_loss2.sum(2).mean()
+
+        return src3, torch.Tensor([recon + recon1, KL_loss2+ KL_loss1] )
 
 
     def All_attn(self, X, attn_mask=None, dropout_p = 0.1, training = True, eps = 1e-6):
-        self.W = self.W.to(args['device'])
-        M1 = torch.einsum('bse,ed->bsd',X,self.W)
-        M2 = torch.einsum('bsd,btd->bst',M1,X)  # batch seq seq
 
+        q = self.X2Q(X)
+        k = self.X2K(X)
+        v = self.X2V(X)
 
+        attn_output_weights = torch.bmm(q, k.transpose(1, 2)) # b s s
+        # attn1 = self.X_all_attn(X) # b s e
+        # attn_output_weights2 = self.X_all_attn2(attn1)
+        # attn_output_weights += attn_output_weights2
 
-        M3 = self.all_attn_linear(X) # batch seq 1
-        attn_output_weights = M2 + M3.transpose(1,2)
+        # I = torch.eye(X.size()[1]).to(args['device'])
+        # I[0,0] = 0
+        # I = I.masked_fill_(I==1, float("-inf"))
+        # attn_output_weights = - attn_output_weights
 
-
-        # self_attn = torch.einsum('bse,bte->bst',X,X)
-        # src = X
-        # output2 = self.self_attn(src.transpose(0,1), src.transpose(0,1), src.transpose(0,1), attn_mask=attn_mask,
-        #                       key_padding_mask=None)[0]
-        # output2 = output2.transpose(0,1)
         if attn_mask is not None:
             if attn_mask.dtype == torch.bool:
                 attn_output_weights.masked_fill_(attn_mask, float("-inf"))
-                # self_attn.masked_fill_(attn_mask, float("-inf"))
             else:
                 attn_output_weights += attn_mask
-                # self_attn += attn_mask
+        # attn_output_weights += I
 
         attn_output_weights = F.softmax(attn_output_weights, dim=-1)
-        # print(self_attn)
-        # self_attn = F.softmax(self_attn,dim=-1)
-        # print(self_attn)
-
-        # print(attn_output_weights,self_attn)
-
-        KL = torch.tensor([0]).to(args['device'])
-        # klq = attn_output_weights[:-1,:] / (self_attn[1:,:]+eps)
-        # KL = (attn_output_weights[:-1,:] * torch.log(klq + eps))
-        # # # print(klq, KL)
-        # KL = KL.sum(2).sum(1).mean(0)
-
-        # KL= (attn_output_weights[:-1,:] - self_attn[1:,:])**2
-        # KL = KL.sum(2).sum(1).mean(0)
-
-        # attn_output_weights = torch.cat([self_attn[1:,:],self_attn[-1,:].unsqueeze(0)], dim = 0)
-
         attn_output_weights = F.dropout(attn_output_weights, p=dropout_p, training=training)
 
-        attn_output = torch.bmm(attn_output_weights, X)
+        attn_output = torch.bmm(attn_output_weights, v)
+
+
         attn_output = self.linear_reweight(attn_output)
 
 
-        output2 = F.tanh(attn_output)
-        output2 = self.linear_all2(output2)
+        KL = torch.Tensor([0,0]).to(args['device'])
 
-        # print(output2[:,-1,:].size(), X[:,1:,:].size())
-        # KL = (output2[:,:-1,:] - X[:,1:,:])**2
-        # KL = KL.sum(2).sum(1).mean(0)
+        return attn_output, KL
 
-        return output2, KL
-
-    def reweight_attn(self, X, attn_mask=None, dropout_p = 0.1, training = True):
+    def predictcode_attn(self, X, attn_mask=None, dropout_p = 0.1, training = True, eps = 1e-6):
         '''
         :param X: batch seq emb
         :return:
         '''
 
-        M1 = torch.einsum('bse,ed->bsd',X,self.W)
-        # M2 = torch.einsum('bsd,btd->bst',M1,X)
-        # with open('./test_data.pkl', 'wb') as handle:
-        #     pickle.dump([self.W,M2], handle, -1)
-        # XXT = torch.einsum('bse,bte->bsd',X,self.W)
-        # M_inv = torch.linalg.inv(M2)
+        src = X
 
-        X_cum = torch.cumsum(X, dim = 1)
-
-        attn_output_weights = raw_attn = torch.einsum('bsd,btd->bst',M1, X_cum)
+        src2, attn_output_weights = self.self_attn(src.transpose(0, 1), src.transpose(0, 1), src.transpose(0, 1), attn_mask=attn_mask,
+                              key_padding_mask=None)
+        src2 = src2.transpose(0, 1)
         # attn_output_weights = - torch.bmm(M_inv, raw_attn)
 
-        if attn_mask is not None:
-            if attn_mask.dtype == torch.bool:
-                attn_output_weights.masked_fill_(attn_mask, float("-inf"))
-            else:
-                attn_output_weights += attn_mask
+        attn_output_weights_guide = attn_output_weights.detach()
+        attn_output_weights_guide = torch.cat([attn_output_weights_guide[1:,:], attn_output_weights_guide[-1,:].unsqueeze(0)], dim = 0)
 
-        attn_output_weights = F.softmax(attn_output_weights, dim=-1)
-        attn_output_weights = F.dropout(attn_output_weights, p=dropout_p, training=training)
+        attn_mask_01 = (attn_mask == 0)
 
-        attn_output = torch.bmm(attn_output_weights, X)
-        attn_output = self.linear_reweight(attn_output)
-        return attn_output
+        attn_output_weights_guide *= attn_mask_01
+        # print(attn_output_weights_guide,attn_output_weights_guide.sum(dim=-1,keepdim=True))
+        attn_output_weights_guide = attn_output_weights_guide / (attn_output_weights_guide.sum(dim=-1,keepdim=True)+eps)
+        # attn_output_weights = F.dropout(attn_output_weights, p=dropout_p, training=training)
+        # print(attn_output_weights, attn_output_weights_guide)
+        # attn_output = torch.bmm(attn_output_weights, X)
+        # attn_output = self.linear_reweight(attn_output)
 
-    def forward(self, src: Tensor, src_mask: Optional[Tensor] = None, src_key_padding_mask: Optional[Tensor] = None) -> Tensor:
+        klq = attn_output_weights / (attn_output_weights_guide+eps)
+        # print(klq)
+        KL = (attn_output_weights * torch.log(klq + eps))
+        # print('KL', KL)
+        # # print(klq, KL)
+        KL = KL.sum(2).sum(1).mean(0)
+        return src2, torch.Tensor([0, KL] )
+
+    def forward(self, src: Tensor, src_mask: Optional[Tensor] = None, src_key_padding_mask: Optional[Tensor] = None, training = None) -> Tensor:
         r"""Pass the input through the encoder layer.
 
         Args:
@@ -547,16 +587,18 @@ class EnergyTransformerEncoderLayer(Module):
         #                       key_padding_mask=src_key_padding_mask)[0]
         # src2 = src2.transpose(0,1)
         # src2 = self.reweight_attn(src, attn_mask=src_mask)
-        # src2, KL = self.All_attn(src, attn_mask=src_mask)
+        src2, loss_tuple = self.All_attn(src, attn_mask=src_mask)
 
+        # src2, loss_tuple = self.predictcode_attn(src, attn_mask=src_mask)
         # KL = torch.tensor([0]).to(args['device'])
         # KL = (src2[:, :-1, :] - src[:, 1:, :]) ** 2
         # KL = KL.sum(2).sum(1).mean(0)
         # src2 = torch.Tensor(src.cpu().data).to(args['device'])
         # src2[:,:-1,:] = src[:,1:,:]
-
-        src2, loss_tuple = self.latent_attn(src, attn_mask=src_mask, sentence_mask=src_key_padding_mask)
+        # src_1 = src[:, :-1,:]
+        # src2, loss_tuple = self.latent_attn(src, attn_mask=src_mask, sentence_mask=src_key_padding_mask, training=training)
         src = src + self.dropout1(src2)#.transpose(0,1))
+        # src[:,1:,:] += src_1
         src = self.norm1(src)
         src2 = self.linear2(self.dropout(self.activation(self.linear1(src))))
         src = src + self.dropout2(src2)

@@ -1,0 +1,192 @@
+Wed Apr 21 15:20:19 2021       
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 450.80.02    Driver Version: 450.80.02    CUDA Version: 11.1     |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|                               |                      |               MIG M. |
+|===============================+======================+======================|
+|   0  Tesla V100-SXM2...  On   | 00000000:85:00.0 Off |                  Off |
+| N/A   34C    P0    42W / 300W |      3MiB / 16160MiB |      0%      Default |
+|                               |                      |                  N/A |
++-------------------------------+----------------------+----------------------+
+                                                                               
++-----------------------------------------------------------------------------+
+| Processes:                                                                  |
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+|        ID   ID                                                   Usage      |
+|=============================================================================|
+|  No running processes found                                                 |
++-----------------------------------------------------------------------------+
+Collecting nltk
+  Downloading nltk-3.6.2-py3-none-any.whl (1.5 MB)
+Collecting torch==1.7.1
+  Downloading torch-1.7.1-cp38-cp38-manylinux1_x86_64.whl (776.8 MB)
+Collecting torchtext==0.8
+  Downloading torchtext-0.8.0-cp38-cp38-manylinux1_x86_64.whl (7.0 MB)
+Collecting click
+  Downloading click-7.1.2-py2.py3-none-any.whl (82 kB)
+Requirement already satisfied: tqdm in /home/user/miniconda/lib/python3.8/site-packages (from nltk->-r requirements.txt (line 1)) (4.46.0)
+Collecting joblib
+  Downloading joblib-1.0.1-py3-none-any.whl (303 kB)
+Collecting regex
+  Downloading regex-2021.4.4-cp38-cp38-manylinux2014_x86_64.whl (733 kB)
+Requirement already satisfied: numpy in /home/user/miniconda/lib/python3.8/site-packages (from torch==1.7.1->-r requirements.txt (line 2)) (1.19.2)
+Requirement already satisfied: typing-extensions in /home/user/miniconda/lib/python3.8/site-packages (from torch==1.7.1->-r requirements.txt (line 2)) (3.7.4.3)
+Requirement already satisfied: requests in /home/user/miniconda/lib/python3.8/site-packages (from torchtext==0.8->-r requirements.txt (line 3)) (2.23.0)
+Requirement already satisfied: chardet<4,>=3.0.2 in /home/user/miniconda/lib/python3.8/site-packages (from requests->torchtext==0.8->-r requirements.txt (line 3)) (3.0.4)
+Requirement already satisfied: certifi>=2017.4.17 in /home/user/miniconda/lib/python3.8/site-packages (from requests->torchtext==0.8->-r requirements.txt (line 3)) (2020.12.5)
+Requirement already satisfied: idna<3,>=2.5 in /home/user/miniconda/lib/python3.8/site-packages (from requests->torchtext==0.8->-r requirements.txt (line 3)) (2.9)
+Requirement already satisfied: urllib3!=1.25.0,!=1.25.1,<1.26,>=1.21.1 in /home/user/miniconda/lib/python3.8/site-packages (from requests->torchtext==0.8->-r requirements.txt (line 3)) (1.25.8)
+Installing collected packages: click, joblib, regex, nltk, torch, torchtext
+  Attempting uninstall: torch
+    Found existing installation: torch 1.8.1
+    Uninstalling torch-1.8.1:
+      Successfully uninstalled torch-1.8.1
+Successfully installed click-7.1.2 joblib-1.0.1 nltk-3.6.2 regex-2021.4.4 torch-1.7.1 torchtext-0.8.0
+./artifacts//LMdata.pkl
+Loading dataset from ./artifacts//LMdata.pkl
+loaded
+Loaded LMbenchmark: 30004 words, 0 QA
+30004
+{'test': None, 'createDataset': True, 'playDataset': 10, 'reset': True, 'device': 'cuda:0', 'rootDir': './artifacts/', 'retrain_model': 'No', 'maxLength': 100, 'vocabularySize': 30004, 'hiddenSize': 100, 'numLayers': 3, 'softmaxSamples': 0, 'initEmbeddings': True, 'embeddingSize': 1024, 'numEpochs': 1000, 'saveEvery': 2000, 'batchSize': 64, 'learningRate': 0.001, 'dropout': 0.9, 'clip': 5.0, 'encunit': 'lstm', 'decunit': 'lstm', 'enc_numlayer': 2, 'dec_numlayer': 2, 'maxLengthEnco': 100, 'maxLengthDeco': 101, 'temperature': 1.0, 'LMtype': 'energy', 'corpus': '1mb', 'server': 'dgx'}
+LanguageModel creation...
+137061688 548.253416 m
+<class 'dict'> cuda:0
+Shuffling the dataset...
+30301028 train 64
+niters  473454
+Shuffling the dataset...
+306688 test 32
+85m 19s (- 2021-04-21 16:55:21.281302) (10000 2%) loss = 776.8585, VAE recon = 1528.5061, KL = 104.1823
+141m 24s (- 2021-04-21 17:51:25.971730) (20000 4%) loss = 809.5595, VAE recon = 1580.0398, KL = 175.4658
+197m 20s (- 2021-04-21 18:47:21.968321) (30000 6%) loss = 853.4715, VAE recon = 1660.8026, KL = 211.3932
+253m 42s (- 2021-04-21 19:43:43.810250) (40000 8%) loss = 889.2716, VAE recon = 1727.8779, KL = 234.4859
+310m 14s (- 2021-04-21 20:40:16.017257) (50000 10%) loss = 924.7513, VAE recon = 1795.3230, KL = 252.3006
+366m 23s (- 2021-04-21 21:36:25.219542) (60000 12%) loss = 956.0177, VAE recon = 1855.1569, KL = 266.0197
+423m 37s (- 2021-04-21 22:33:38.736664) (70000 14%) loss = 991.7353, VAE recon = 1924.0672, KL = 278.7139
+481m 29s (- 2021-04-21 23:31:30.911086) (80000 16%) loss = 1015.0766, VAE recon = 1969.1663, KL = 286.8450
+539m 6s (- 2021-04-22 00:29:08.625736) (90000 19%) loss = 1046.2070, VAE recon = 2029.5651, KL = 296.2034
+597m 1s (- 2021-04-22 01:27:02.881828) (100000 21%) loss = 1070.0146, VAE recon = 2075.8776, KL = 302.8302
+Test ppl:  76.18369076255621
+perplexity =  76.18369076255621 >= min_perplexity ( -1 ), saving model...
+671m 24s (- 2021-04-22 02:41:25.818090) (110000 23%) loss = 1095.2373, VAE recon = 2125.0123, KL = 309.4624
+728m 50s (- 2021-04-22 03:38:52.002925) (120000 25%) loss = 1116.4147, VAE recon = 2166.3545, KL = 314.6218
+786m 8s (- 2021-04-22 04:36:10.600890) (130000 27%) loss = 1141.4247, VAE recon = 2215.2097, KL = 320.4533
+843m 33s (- 2021-04-22 05:33:35.177708) (140000 29%) loss = 1161.6552, VAE recon = 2254.7940, KL = 324.9030
+901m 6s (- 2021-04-22 06:31:08.514081) (150000 31%) loss = 1179.2792, VAE recon = 2289.3388, KL = 328.4993
+958m 23s (- 2021-04-22 07:28:25.074642) (160000 33%) loss = 1200.6601, VAE recon = 2331.1632, KL = 333.1908
+1015m 49s (- 2021-04-22 08:25:51.494055) (170000 35%) loss = 1216.4623, VAE recon = 2362.2187, KL = 336.0059
+1073m 33s (- 2021-04-22 09:23:34.868834) (180000 38%) loss = 1232.4156, VAE recon = 2393.5599, KL = 338.8910
+1131m 44s (- 2021-04-22 10:21:46.134116) (190000 40%) loss = 1248.8639, VAE recon = 2425.8540, KL = 341.9299
+1189m 40s (- 2021-04-22 11:19:42.409399) (200000 42%) loss = 1266.9946, VAE recon = 2461.4680, KL = 345.1784
+Test ppl:  67.3157031514824
+perplexity =  67.3157031514824 >= min_perplexity ( 76.18369076255621 ), saving model...
+1265m 17s (- 2021-04-22 12:35:18.973807) (210000 44%) loss = 1277.2257, VAE recon = 2481.7090, KL = 346.3893
+1323m 39s (- 2021-04-22 13:33:40.901900) (220000 46%) loss = 1292.7435, VAE recon = 2512.2022, KL = 349.1028
+1381m 25s (- 2021-04-22 14:31:27.339993) (230000 48%) loss = 1308.9744, VAE recon = 2544.0536, KL = 352.1471
+1438m 58s (- 2021-04-22 15:29:00.130696) (240000 50%) loss = 1324.2510, VAE recon = 2574.0772, KL = 354.7862
+1496m 39s (- 2021-04-22 16:26:41.018276) (250000 52%) loss = 1333.4677, VAE recon = 2592.2810, KL = 356.0047
+1554m 12s (- 2021-04-22 17:24:14.673237) (260000 54%) loss = 1346.8647, VAE recon = 2618.6370, KL = 358.1950
+1611m 16s (- 2021-04-22 18:21:18.674324) (270000 57%) loss = 1363.8222, VAE recon = 2651.9203, KL = 361.3067
+1668m 46s (- 2021-04-22 19:18:48.035741) (280000 59%) loss = 1369.1844, VAE recon = 2662.6389, KL = 361.4339
+1726m 10s (- 2021-04-22 20:16:12.217364) (290000 61%) loss = 1380.4150, VAE recon = 2684.7247, KL = 363.3148
+1784m 6s (- 2021-04-22 21:14:08.649806) (300000 63%) loss = 1386.5139, VAE recon = 2696.8935, KL = 363.5327
+Test ppl:  63.37109799120153
+perplexity =  63.37109799120153 >= min_perplexity ( 67.3157031514824 ), saving model...
+1859m 7s (- 2021-04-22 22:29:09.670007) (310000 65%) loss = 1398.7755, VAE recon = 2720.9673, KL = 365.7682
+1917m 2s (- 2021-04-22 23:27:04.147814) (320000 67%) loss = 1409.0289, VAE recon = 2741.1495, KL = 367.3871
+1974m 51s (- 2021-04-23 00:24:53.625557) (330000 69%) loss = 1419.5312, VAE recon = 2761.8327, KL = 369.0012
+2032m 47s (- 2021-04-23 01:22:48.748260) (340000 71%) loss = 1424.4658, VAE recon = 2771.6445, KL = 369.3563
+2090m 40s (- 2021-04-23 02:20:41.967283) (350000 73%) loss = 1434.3556, VAE recon = 2791.1034, KL = 370.9543
+2148m 18s (- 2021-04-23 03:18:20.402679) (360000 76%) loss = 1447.8423, VAE recon = 2817.5141, KL = 373.7131
+2206m 11s (- 2021-04-23 04:16:13.481735) (370000 78%) loss = 1451.4125, VAE recon = 2824.6164, KL = 373.9648
+2264m 22s (- 2021-04-23 05:14:23.928806) (380000 80%) loss = 1453.9769, VAE recon = 2829.8283, KL = 373.6284
+2321m 58s (- 2021-04-23 06:12:00.248587) (390000 82%) loss = 1472.2660, VAE recon = 2865.6144, KL = 377.4742
+2379m 47s (- 2021-04-23 07:09:48.845439) (400000 84%) loss = 1473.2194, VAE recon = 2867.6140, KL = 377.0829
+Test ppl:  61.202593602371735
+perplexity =  61.202593602371735 >= min_perplexity ( 63.37109799120153 ), saving model...
+2454m 47s (- 2021-04-23 08:24:49.573921) (410000 86%) loss = 1479.6458, VAE recon = 2880.3294, KL = 377.7917
+2513m 2s (- 2021-04-23 09:23:04.409106) (420000 88%) loss = 1481.9329, VAE recon = 2884.9168, KL = 377.7940
+2571m 20s (- 2021-04-23 10:21:22.022105) (430000 90%) loss = 1494.5716, VAE recon = 2909.6808, KL = 380.3037
+2629m 30s (- 2021-04-23 11:19:32.371650) (440000 92%) loss = 1493.9969, VAE recon = 2908.6799, KL = 379.6405
+2687m 13s (- 2021-04-23 12:17:14.768571) (450000 95%) loss = 1507.1596, VAE recon = 2934.4742, KL = 382.2372
+2744m 54s (- 2021-04-23 13:14:56.102399) (460000 97%) loss = 1511.9126, VAE recon = 2943.8336, KL = 382.9872
+2802m 39s (- 2021-04-23 14:12:41.495313) (470000 99%) loss = 1516.8728, VAE recon = 2953.6050, KL = 383.7539
+perplexity =  60.0165507674451 >= min_perplexity ( 61.202593602371735 ), saving model...
+Epoch  0 loss =  1266.7304115183415 Valid perplexity =  60.0165507674451
+2878m 0s (- 2021-04-23 15:28:01.792074) (480000 101%) loss = 1523.8161, VAE recon = 2967.2567, KL = 384.9288
+2935m 31s (- 2021-04-23 16:25:33.284478) (490000 103%) loss = 1533.7790, VAE recon = 2986.8153, KL = 386.7304
+2993m 16s (- 2021-04-23 17:23:18.458075) (500000 105%) loss = 1535.8259, VAE recon = 2990.9943, KL = 386.3500
+Test ppl:  59.635014814553585
+perplexity =  59.635014814553585 >= min_perplexity ( 60.0165507674451 ), saving model...
+3068m 11s (- 2021-04-23 18:38:12.704082) (510000 107%) loss = 1539.1042, VAE recon = 2997.4644, KL = 386.8191
+3126m 7s (- 2021-04-23 19:36:09.420791) (520000 109%) loss = 1542.6862, VAE recon = 3004.5779, KL = 387.1079
+3184m 1s (- 2021-04-23 20:34:03.097037) (530000 111%) loss = 1549.5288, VAE recon = 3018.0089, KL = 388.3668
+3241m 40s (- 2021-04-23 21:31:42.300223) (540000 114%) loss = 1559.7367, VAE recon = 3037.9631, KL = 390.6220
+3299m 37s (- 2021-04-23 22:29:39.089653) (550000 116%) loss = 1558.6290, VAE recon = 3035.9396, KL = 389.7363
+3357m 20s (- 2021-04-23 23:27:22.412829) (560000 118%) loss = 1569.0971, VAE recon = 3056.4536, KL = 391.7960
+3414m 52s (- 2021-04-24 00:24:53.954214) (570000 120%) loss = 1574.0363, VAE recon = 3066.1484, KL = 392.7113
+3472m 43s (- 2021-04-24 01:22:45.282028) (580000 122%) loss = 1573.4319, VAE recon = 3065.0753, KL = 392.0999
+3530m 29s (- 2021-04-24 02:20:30.991163) (590000 124%) loss = 1579.1048, VAE recon = 3076.2166, KL = 393.1141
+3588m 5s (- 2021-04-24 03:18:07.584059) (600000 126%) loss = 1586.5042, VAE recon = 3090.7274, KL = 394.5258
+Test ppl:  58.582231406693474
+perplexity =  58.582231406693474 >= min_perplexity ( 59.635014814553585 ), saving model...
+3662m 56s (- 2021-04-24 04:32:57.808346) (610000 128%) loss = 1588.5935, VAE recon = 3094.8872, KL = 394.6439
+3720m 38s (- 2021-04-24 05:30:40.667493) (620000 130%) loss = 1595.3267, VAE recon = 3108.1169, KL = 395.8108
+3778m 15s (- 2021-04-24 06:28:17.015148) (630000 133%) loss = 1598.5774, VAE recon = 3114.5242, KL = 396.2946
+3835m 59s (- 2021-04-24 07:26:01.311358) (640000 135%) loss = 1599.1227, VAE recon = 3115.6470, KL = 396.1749
+3893m 34s (- 2021-04-24 08:23:35.845120) (650000 137%) loss = 1604.5518, VAE recon = 3126.3204, KL = 397.0871
+3951m 4s (- 2021-04-24 09:21:06.665682) (660000 139%) loss = 1609.7857, VAE recon = 3136.6212, KL = 397.9086
+4008m 45s (- 2021-04-24 10:18:47.320295) (670000 141%) loss = 1611.5725, VAE recon = 3140.1725, KL = 398.0433
+4066m 29s (- 2021-04-24 11:16:31.655696) (680000 143%) loss = 1612.6383, VAE recon = 3142.3090, KL = 398.0498
+4124m 28s (- 2021-04-24 12:14:29.894396) (690000 145%) loss = 1615.0005, VAE recon = 3147.0221, KL = 398.1248
+4182m 12s (- 2021-04-24 13:12:14.422752) (700000 147%) loss = 1619.3820, VAE recon = 3155.6215, KL = 398.9400
+Test ppl:  57.80663646171955
+perplexity =  57.80663646171955 >= min_perplexity ( 58.582231406693474 ), saving model...
+4256m 55s (- 2021-04-24 14:26:57.676762) (710000 149%) loss = 1625.7846, VAE recon = 3168.1904, KL = 400.0883
+4314m 13s (- 2021-04-24 15:24:14.797901) (720000 152%) loss = 1634.0565, VAE recon = 3184.3779, KL = 401.8318
+4371m 43s (- 2021-04-24 16:21:45.042087) (730000 154%) loss = 1631.7420, VAE recon = 3179.9290, KL = 400.9868
+4429m 14s (- 2021-04-24 17:19:16.038877) (740000 156%) loss = 1638.9325, VAE recon = 3194.0152, KL = 402.4202
+4486m 44s (- 2021-04-24 18:16:46.501131) (750000 158%) loss = 1641.4706, VAE recon = 3199.0106, KL = 402.8422
+4544m 26s (- 2021-04-24 19:14:28.176530) (760000 160%) loss = 1641.3211, VAE recon = 3198.7771, KL = 402.5445
+4602m 2s (- 2021-04-24 20:12:04.036671) (770000 162%) loss = 1643.5731, VAE recon = 3203.2214, KL = 402.8590
+4659m 44s (- 2021-04-24 21:09:45.864895) (780000 164%) loss = 1644.8201, VAE recon = 3205.6948, KL = 402.9790
+4717m 21s (- 2021-04-24 22:07:23.050449) (790000 166%) loss = 1649.4210, VAE recon = 3214.7578, KL = 403.6588
+4774m 57s (- 2021-04-24 23:04:59.667268) (800000 168%) loss = 1654.1971, VAE recon = 3224.1222, KL = 404.5848
+Test ppl:  57.10466326981492
+perplexity =  57.10466326981492 >= min_perplexity ( 57.80663646171955 ), saving model...
+4849m 34s (- 2021-04-25 00:19:35.718894) (810000 171%) loss = 1656.2240, VAE recon = 3228.1421, KL = 404.7703
+4907m 10s (- 2021-04-25 01:17:11.769442) (820000 173%) loss = 1657.5790, VAE recon = 3230.8275, KL = 404.9113
+4964m 37s (- 2021-04-25 02:14:39.270812) (830000 175%) loss = 1662.0657, VAE recon = 3239.6119, KL = 405.8330
+5022m 5s (- 2021-04-25 03:12:07.018519) (840000 177%) loss = 1665.7423, VAE recon = 3246.8364, KL = 406.4732
+5079m 59s (- 2021-04-25 04:10:01.539838) (850000 179%) loss = 1659.2668, VAE recon = 3234.2273, KL = 404.8664
+5137m 23s (- 2021-04-25 05:07:25.211268) (860000 181%) loss = 1671.0731, VAE recon = 3257.2733, KL = 407.6000
+5194m 54s (- 2021-04-25 06:04:55.883117) (870000 183%) loss = 1672.1788, VAE recon = 3259.4739, KL = 407.6580
+5252m 30s (- 2021-04-25 07:02:31.770608) (880000 185%) loss = 1671.4922, VAE recon = 3258.1893, KL = 407.2528
+5310m 13s (- 2021-04-25 08:00:15.121057) (890000 187%) loss = 1671.7223, VAE recon = 3258.6470, KL = 407.2823
+5367m 54s (- 2021-04-25 08:57:55.794650) (900000 190%) loss = 1673.7977, VAE recon = 3262.7305, KL = 407.6336
+Traceback (most recent call last):
+  File "main.py", line 315, in <module>
+    r.main()
+  File "main.py", line 120, in main
+    self.trainLM()     # contain  model saving
+  File "main.py", line 201, in trainLM
+    perplexity = self.Cal_perplexity_for_dataset('test', direction)
+  File "main.py", line 257, in Cal_perplexity_for_dataset
+    data = self.model(x)    # batch seq_len outsize
+  File "/home/user/miniconda/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
+    result = self.forward(*input, **kwargs)
+  File "/home/lei/HopfieldLM/LanguageModel.py", line 149, in forward
+    data = self.build(x)
+  File "/home/lei/HopfieldLM/LanguageModel.py", line 129, in build
+    recon_loss = self.CEloss(torch.transpose(de_outputs, 1, 2), self.decoderTargets)
+  File "/home/user/miniconda/lib/python3.8/site-packages/torch/nn/modules/module.py", line 727, in _call_impl
+    result = self.forward(*input, **kwargs)
+  File "/home/user/miniconda/lib/python3.8/site-packages/torch/nn/modules/loss.py", line 961, in forward
+    return F.cross_entropy(input, target, weight=self.weight,
+  File "/home/user/miniconda/lib/python3.8/site-packages/torch/nn/functional.py", line 2468, in cross_entropy
+    return nll_loss(log_softmax(input, 1), target, weight, None, ignore_index, None, reduction)
+  File "/home/user/miniconda/lib/python3.8/site-packages/torch/nn/functional.py", line 1605, in log_softmax
+    ret = input.log_softmax(dim)
+RuntimeError: CUDA out of memory. Tried to allocate 1.83 GiB (GPU 0; 15.78 GiB total capacity; 8.24 GiB already allocated; 173.75 MiB free; 14.40 GiB reserved in total by PyTorch)
