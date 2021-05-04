@@ -1,0 +1,374 @@
+Fri Apr 30 21:38:47 2021       
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 450.80.02    Driver Version: 450.80.02    CUDA Version: 11.1     |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|                               |                      |               MIG M. |
+|===============================+======================+======================|
+|   0  Tesla V100-SXM2...  On   | 00000000:86:00.0 Off |                  Off |
+| N/A   38C    P0    42W / 300W |      3MiB / 16160MiB |      0%      Default |
+|                               |                      |                  N/A |
++-------------------------------+----------------------+----------------------+
+                                                                               
++-----------------------------------------------------------------------------+
+| Processes:                                                                  |
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+|        ID   ID                                                   Usage      |
+|=============================================================================|
+|  No running processes found                                                 |
++-----------------------------------------------------------------------------+
+Collecting nltk
+  Downloading nltk-3.6.2-py3-none-any.whl (1.5 MB)
+Collecting torch==1.7.1
+  Downloading torch-1.7.1-cp38-cp38-manylinux1_x86_64.whl (776.8 MB)
+Collecting torchtext==0.8
+  Downloading torchtext-0.8.0-cp38-cp38-manylinux1_x86_64.whl (7.0 MB)
+Collecting click
+  Downloading click-7.1.2-py2.py3-none-any.whl (82 kB)
+Requirement already satisfied: tqdm in /home/user/miniconda/lib/python3.8/site-packages (from nltk->-r requirements.txt (line 1)) (4.46.0)
+Collecting regex
+  Downloading regex-2021.4.4-cp38-cp38-manylinux2014_x86_64.whl (733 kB)
+Collecting joblib
+  Downloading joblib-1.0.1-py3-none-any.whl (303 kB)
+Requirement already satisfied: typing-extensions in /home/user/miniconda/lib/python3.8/site-packages (from torch==1.7.1->-r requirements.txt (line 2)) (3.7.4.3)
+Requirement already satisfied: numpy in /home/user/miniconda/lib/python3.8/site-packages (from torch==1.7.1->-r requirements.txt (line 2)) (1.19.2)
+Requirement already satisfied: requests in /home/user/miniconda/lib/python3.8/site-packages (from torchtext==0.8->-r requirements.txt (line 3)) (2.23.0)
+Requirement already satisfied: urllib3!=1.25.0,!=1.25.1,<1.26,>=1.21.1 in /home/user/miniconda/lib/python3.8/site-packages (from requests->torchtext==0.8->-r requirements.txt (line 3)) (1.25.8)
+Requirement already satisfied: idna<3,>=2.5 in /home/user/miniconda/lib/python3.8/site-packages (from requests->torchtext==0.8->-r requirements.txt (line 3)) (2.9)
+Requirement already satisfied: certifi>=2017.4.17 in /home/user/miniconda/lib/python3.8/site-packages (from requests->torchtext==0.8->-r requirements.txt (line 3)) (2020.12.5)
+Requirement already satisfied: chardet<4,>=3.0.2 in /home/user/miniconda/lib/python3.8/site-packages (from requests->torchtext==0.8->-r requirements.txt (line 3)) (3.0.4)
+Installing collected packages: click, regex, joblib, nltk, torch, torchtext
+  Attempting uninstall: torch
+    Found existing installation: torch 1.8.1
+    Uninstalling torch-1.8.1:
+      Successfully uninstalled torch-1.8.1
+Successfully installed click-7.1.2 joblib-1.0.1 nltk-3.6.2 regex-2021.4.4 torch-1.7.1 torchtext-0.8.0
+./artifacts//LMdata_wiki.pkl
+Loading dataset from ./artifacts//LMdata_wiki.pkl
+loaded
+Loaded LMbenchmark: 28903 words, 0 QA
+28903
+{'test': None, 'createDataset': True, 'playDataset': 10, 'reset': True, 'device': 'cuda:0', 'rootDir': './artifacts/', 'retrain_model': 'No', 'maxLength': 100, 'vocabularySize': 28903, 'hiddenSize': 100, 'numLayers': 3, 'softmaxSamples': 0, 'initEmbeddings': True, 'embeddingSize': 100, 'numEpochs': 1000, 'saveEvery': 2000, 'batchSize': 128, 'learningRate': 0.001, 'dropout': 0.9, 'clip': 5.0, 'encunit': 'lstm', 'decunit': 'lstm', 'enc_numlayer': 2, 'dec_numlayer': 2, 'maxLengthEnco': 100, 'maxLengthDeco': 101, 'temperature': 1.0, 'LMtype': 'energy', 'corpus': 'wiki2', 'server': 'dgx'}
+LanguageModel creation...
+7902499 31.615316 m
+<class 'dict'> cuda:0
+23627
+niters  185
+2870
+perplexity =  174.9632757673268 >= min_perplexity ( -1 ), saving model...
+Epoch  0 loss =  4.424749460735836 Valid perplexity =  174.9632757673268
+perplexity =  141.119883741682 >= min_perplexity ( 174.9632757673268 ), saving model...
+Epoch  1 loss =  3.8710825146855536 Valid perplexity =  141.119883741682
+perplexity =  121.18337365404153 >= min_perplexity ( 141.119883741682 ), saving model...
+Epoch  2 loss =  3.757578785355027 Valid perplexity =  121.18337365404153
+perplexity =  111.15405905894444 >= min_perplexity ( 121.18337365404153 ), saving model...
+Epoch  3 loss =  3.6848851880511724 Valid perplexity =  111.15405905894444
+perplexity =  104.88742618290917 >= min_perplexity ( 111.15405905894444 ), saving model...
+Epoch  4 loss =  3.6332000912846745 Valid perplexity =  104.88742618290917
+perplexity =  99.9964338684157 >= min_perplexity ( 104.88742618290917 ), saving model...
+Epoch  5 loss =  3.5921202459850825 Valid perplexity =  99.9964338684157
+perplexity =  96.03508547318539 >= min_perplexity ( 99.9964338684157 ), saving model...
+Epoch  6 loss =  3.556917677054534 Valid perplexity =  96.03508547318539
+perplexity =  92.22508243489972 >= min_perplexity ( 96.03508547318539 ), saving model...
+Epoch  7 loss =  3.5261695874703896 Valid perplexity =  92.22508243489972
+perplexity =  89.33566890390712 >= min_perplexity ( 92.22508243489972 ), saving model...
+Epoch  8 loss =  3.497706564052685 Valid perplexity =  89.33566890390712
+perplexity =  86.59177664280473 >= min_perplexity ( 89.33566890390712 ), saving model...
+Epoch  9 loss =  3.472235251117397 Valid perplexity =  86.59177664280473
+perplexity =  84.27669435850588 >= min_perplexity ( 86.59177664280473 ), saving model...
+Epoch  10 loss =  3.4492952617439063 Valid perplexity =  84.27669435850588
+perplexity =  82.39871930656182 >= min_perplexity ( 84.27669435850588 ), saving model...
+Epoch  11 loss =  3.428045789615528 Valid perplexity =  82.39871930656182
+perplexity =  80.80564025618948 >= min_perplexity ( 82.39871930656182 ), saving model...
+Epoch  12 loss =  3.4083606893951828 Valid perplexity =  80.80564025618948
+perplexity =  79.50382405021887 >= min_perplexity ( 80.80564025618948 ), saving model...
+Epoch  13 loss =  3.3901750519468976 Valid perplexity =  79.50382405021887
+perplexity =  78.54795840517065 >= min_perplexity ( 79.50382405021887 ), saving model...
+Epoch  14 loss =  3.3737755169739594 Valid perplexity =  78.54795840517065
+perplexity =  77.15904269584998 >= min_perplexity ( 78.54795840517065 ), saving model...
+Epoch  15 loss =  3.3574640718666284 Valid perplexity =  77.15904269584998
+perplexity =  76.46767481159358 >= min_perplexity ( 77.15904269584998 ), saving model...
+Epoch  16 loss =  3.3427940394427327 Valid perplexity =  76.46767481159358
+perplexity =  75.57964311733623 >= min_perplexity ( 76.46767481159358 ), saving model...
+Epoch  17 loss =  3.3280012021193635 Valid perplexity =  75.57964311733623
+perplexity =  74.65525778660616 >= min_perplexity ( 75.57964311733623 ), saving model...
+Epoch  18 loss =  3.3147235135774356 Valid perplexity =  74.65525778660616
+perplexity =  74.14235597733287 >= min_perplexity ( 74.65525778660616 ), saving model...
+Epoch  19 loss =  3.3017223332379317 Valid perplexity =  74.14235597733287
+perplexity =  73.35485978101867 >= min_perplexity ( 74.14235597733287 ), saving model...
+Epoch  20 loss =  3.2885675230541747 Valid perplexity =  73.35485978101867
+perplexity =  72.58224459635619 >= min_perplexity ( 73.35485978101867 ), saving model...
+Epoch  21 loss =  3.2761795031057823 Valid perplexity =  72.58224459635619
+perplexity =  72.06875534217899 >= min_perplexity ( 72.58224459635619 ), saving model...
+Epoch  22 loss =  3.263671605651443 Valid perplexity =  72.06875534217899
+perplexity =  71.50145510836003 >= min_perplexity ( 72.06875534217899 ), saving model...
+Epoch  23 loss =  3.2520575149639233 Valid perplexity =  71.50145510836003
+perplexity =  71.07640922654979 >= min_perplexity ( 71.50145510836003 ), saving model...
+Epoch  24 loss =  3.2410951253530143 Valid perplexity =  71.07640922654979
+perplexity =  70.77029064301662 >= min_perplexity ( 71.07640922654979 ), saving model...
+Epoch  25 loss =  3.2298510332365296 Valid perplexity =  70.77029064301662
+perplexity =  69.7972664281407 >= min_perplexity ( 70.77029064301662 ), saving model...
+Epoch  26 loss =  3.2189596865628216 Valid perplexity =  69.7972664281407
+perplexity =  69.79454789242416 >= min_perplexity ( 69.7972664281407 ), saving model...
+Epoch  27 loss =  3.208383649748725 Valid perplexity =  69.79454789242416
+perplexity =  69.5561809768177 >= min_perplexity ( 69.79454789242416 ), saving model...
+Epoch  28 loss =  3.198695314252699 Valid perplexity =  69.5561809768177
+perplexity =  69.18316487833584 >= min_perplexity ( 69.5561809768177 ), saving model...
+Epoch  29 loss =  3.1882525115399747 Valid perplexity =  69.18316487833584
+Epoch  30 loss =  3.178501050536697 Valid perplexity =  69.19325204934752
+perplexity =  68.43694246300902 >= min_perplexity ( 69.18316487833584 ), saving model...
+Epoch  31 loss =  3.1693452686876866 Valid perplexity =  68.43694246300902
+perplexity =  67.78468777430012 >= min_perplexity ( 68.43694246300902 ), saving model...
+Epoch  32 loss =  3.1590268837439046 Valid perplexity =  67.78468777430012
+perplexity =  67.22835097808517 >= min_perplexity ( 67.78468777430012 ), saving model...
+Epoch  33 loss =  3.149229661194054 Valid perplexity =  67.22835097808517
+perplexity =  67.02165752819256 >= min_perplexity ( 67.22835097808517 ), saving model...
+Epoch  34 loss =  3.1394517151085104 Valid perplexity =  67.02165752819256
+perplexity =  66.19188615689545 >= min_perplexity ( 67.02165752819256 ), saving model...
+Epoch  35 loss =  3.129649666837744 Valid perplexity =  66.19188615689545
+Epoch  36 loss =  3.1209412548993085 Valid perplexity =  66.4404328296408
+perplexity =  65.96321014516808 >= min_perplexity ( 66.19188615689545 ), saving model...
+Epoch  37 loss =  3.112349534034729 Valid perplexity =  65.96321014516808
+perplexity =  65.95753951521966 >= min_perplexity ( 65.96321014516808 ), saving model...
+Epoch  38 loss =  3.1043313960771304 Valid perplexity =  65.95753951521966
+Epoch  39 loss =  3.09594864007589 Valid perplexity =  66.13534986564811
+Epoch  40 loss =  3.0876993449958596 Valid perplexity =  66.48396173352958
+Epoch  41 loss =  3.0795535061810466 Valid perplexity =  66.70686926655115
+Epoch  42 loss =  3.0721640271109503 Valid perplexity =  66.89023101585735
+Epoch  43 loss =  3.0643549674266093 Valid perplexity =  67.51069905617935
+Epoch  44 loss =  3.056942014436464 Valid perplexity =  67.13996743790253
+Epoch  45 loss =  3.049160001084611 Valid perplexity =  66.447994021865
+perplexity =  65.78047896370218 >= min_perplexity ( 65.95753951521966 ), saving model...
+Epoch  46 loss =  3.042494206170778 Valid perplexity =  65.78047896370218
+perplexity =  65.56748565390362 >= min_perplexity ( 65.78047896370218 ), saving model...
+Epoch  47 loss =  3.034589768744804 Valid perplexity =  65.56748565390362
+perplexity =  65.18329957972345 >= min_perplexity ( 65.56748565390362 ), saving model...
+Epoch  48 loss =  3.026785407839595 Valid perplexity =  65.18329957972345
+perplexity =  64.98055642968271 >= min_perplexity ( 65.18329957972345 ), saving model...
+Epoch  49 loss =  3.019005216134561 Valid perplexity =  64.98055642968271
+Epoch  50 loss =  3.010976380915255 Valid perplexity =  65.05806625741819
+perplexity =  64.87819709608392 >= min_perplexity ( 64.98055642968271 ), saving model...
+Epoch  51 loss =  3.004544789082295 Valid perplexity =  64.87819709608392
+perplexity =  64.45852812496592 >= min_perplexity ( 64.87819709608392 ), saving model...
+Epoch  52 loss =  2.999009317320746 Valid perplexity =  64.45852812496592
+perplexity =  64.10555221619033 >= min_perplexity ( 64.45852812496592 ), saving model...
+Epoch  53 loss =  2.9936535500191352 Valid perplexity =  64.10555221619033
+23m 28s (- 2021-04-30 22:04:01.816900) (10000 5405%) loss = 3.2771, CE_loss = 3.2771, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  58.93426322834425
+perplexity =  58.93426322834425 >= min_perplexity ( 64.10555221619033 ), saving model...
+Epoch  54 loss =  2.986994082218892 Valid perplexity =  63.74425715647743
+Epoch  55 loss =  2.9800433197536984 Valid perplexity =  63.39632510525384
+Epoch  56 loss =  2.972764254905082 Valid perplexity =  63.40447868076176
+Epoch  57 loss =  2.9661166951463027 Valid perplexity =  62.96657117163909
+Epoch  58 loss =  2.960644305074537 Valid perplexity =  62.78315417206263
+Epoch  59 loss =  2.9547138832710886 Valid perplexity =  62.76006072919603
+Epoch  60 loss =  2.94850203668749 Valid perplexity =  62.885611956324226
+Epoch  61 loss =  2.943104955312368 Valid perplexity =  62.49601543718903
+Epoch  62 loss =  2.9359713290188765 Valid perplexity =  62.040768189740355
+Epoch  63 loss =  2.9312886405635523 Valid perplexity =  61.47023973770115
+Epoch  64 loss =  2.9249235958666415 Valid perplexity =  60.4158088127403
+Epoch  65 loss =  2.921395935883393 Valid perplexity =  60.51681920105461
+Epoch  66 loss =  2.915755844116211 Valid perplexity =  60.648678072010505
+Epoch  67 loss =  2.910005916775884 Valid perplexity =  60.36061903760393
+Epoch  68 loss =  2.904907180811908 Valid perplexity =  60.23495658866465
+Epoch  69 loss =  2.8983042207924097 Valid perplexity =  59.908481339168304
+Epoch  70 loss =  2.8913452573724694 Valid perplexity =  60.456555802561255
+Epoch  71 loss =  2.885305256456942 Valid perplexity =  59.81098572713296
+Epoch  72 loss =  2.8784176923133233 Valid perplexity =  59.673057954642935
+Epoch  73 loss =  2.8735152437880234 Valid perplexity =  59.774055752355565
+Epoch  74 loss =  2.8677461727245435 Valid perplexity =  59.642548753849475
+Epoch  75 loss =  2.862607586706007 Valid perplexity =  59.644945433454495
+Epoch  76 loss =  2.8572385878176303 Valid perplexity =  59.913009165475444
+Epoch  77 loss =  2.8519979721791033 Valid perplexity =  59.81379495343777
+Epoch  78 loss =  2.847110987353969 Valid perplexity =  59.667637482173305
+Epoch  79 loss =  2.8416844342205976 Valid perplexity =  59.5041245342806
+perplexity =  58.77182510066244 >= min_perplexity ( 58.93426322834425 ), saving model...
+Epoch  80 loss =  2.8372889905362517 Valid perplexity =  58.77182510066244
+Epoch  81 loss =  2.83281224160581 Valid perplexity =  59.239230670795294
+Epoch  82 loss =  2.829418613459613 Valid perplexity =  58.90762341926464
+perplexity =  58.679107430369854 >= min_perplexity ( 58.77182510066244 ), saving model...
+Epoch  83 loss =  2.825496344308595 Valid perplexity =  58.679107430369854
+Epoch  84 loss =  2.8213063246495014 Valid perplexity =  59.287499123386105
+Epoch  85 loss =  2.8181094060073026 Valid perplexity =  59.64528125534407
+Epoch  86 loss =  2.8145825444041073 Valid perplexity =  58.70197819279119
+Epoch  87 loss =  2.810897770443478 Valid perplexity =  59.049597852565874
+Epoch  88 loss =  2.8055236719750067 Valid perplexity =  59.009971062211115
+Epoch  89 loss =  2.8016834871189014 Valid perplexity =  58.77541985738516
+perplexity =  57.97572858070095 >= min_perplexity ( 58.679107430369854 ), saving model...
+Epoch  90 loss =  2.7955036698160947 Valid perplexity =  57.97572858070095
+Epoch  91 loss =  2.7915905359629036 Valid perplexity =  58.08932632635198
+Epoch  92 loss =  2.7859273330585377 Valid perplexity =  58.549046580842045
+Epoch  93 loss =  2.7819393035527824 Valid perplexity =  58.42758456586485
+Epoch  94 loss =  2.778338275728999 Valid perplexity =  58.17320031509532
+Epoch  95 loss =  2.773419827383918 Valid perplexity =  58.48730312270059
+Epoch  96 loss =  2.7674855322451206 Valid perplexity =  58.0333469108724
+Epoch  97 loss =  2.763316448959144 Valid perplexity =  58.15440181960069
+Epoch  98 loss =  2.7608875886814013 Valid perplexity =  58.63699513463204
+Epoch  99 loss =  2.755816566621935 Valid perplexity =  58.39773201225688
+Epoch  100 loss =  2.7520155307408927 Valid perplexity =  58.45409585910001
+Epoch  101 loss =  2.7473153997111965 Valid perplexity =  57.986054197585794
+perplexity =  57.32928494711347 >= min_perplexity ( 57.97572858070095 ), saving model...
+Epoch  102 loss =  2.7427565465102326 Valid perplexity =  57.32928494711347
+perplexity =  57.12815979948544 >= min_perplexity ( 57.32928494711347 ), saving model...
+Epoch  103 loss =  2.738393222319113 Valid perplexity =  57.12815979948544
+Epoch  104 loss =  2.7335039712287283 Valid perplexity =  57.326350104828535
+Epoch  105 loss =  2.7293213940955496 Valid perplexity =  57.99329056185683
+Epoch  106 loss =  2.724838040970467 Valid perplexity =  59.362956278888745
+Epoch  107 loss =  2.7211365686880575 Valid perplexity =  59.487947629927675
+46m 48s (- 2021-04-30 22:27:21.800360) (20000 10810%) loss = 2.8430, CE_loss = 2.8430, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  53.021184999074485
+perplexity =  53.021184999074485 >= min_perplexity ( 57.12815979948544 ), saving model...
+Epoch  108 loss =  2.7183350704811713 Valid perplexity =  59.30010764129486
+Epoch  109 loss =  2.7150505239899094 Valid perplexity =  59.05207682314497
+Epoch  110 loss =  2.712051168003598 Valid perplexity =  58.59768729056842
+Epoch  111 loss =  2.7081334616686847 Valid perplexity =  58.736348049680345
+Epoch  112 loss =  2.704770184207607 Valid perplexity =  59.04794840270115
+Epoch  113 loss =  2.701059664906682 Valid perplexity =  59.08313681905771
+Epoch  114 loss =  2.6986030720375678 Valid perplexity =  58.86106558496414
+Epoch  115 loss =  2.695263437322668 Valid perplexity =  59.63356063628196
+Epoch  116 loss =  2.6939255430891706 Valid perplexity =  59.8143845451912
+Epoch  117 loss =  2.6937492989205025 Valid perplexity =  58.69699919333994
+Epoch  118 loss =  2.6902805772987572 Valid perplexity =  57.57578744386075
+Epoch  119 loss =  2.6849284938863804 Valid perplexity =  57.825608550836336
+Epoch  120 loss =  2.680808241947277 Valid perplexity =  57.98764315440163
+Epoch  121 loss =  2.6778727254352055 Valid perplexity =  57.82270548107329
+Epoch  122 loss =  2.6736738552918307 Valid perplexity =  57.87420241051401
+Epoch  123 loss =  2.6675665939176403 Valid perplexity =  58.01125388000518
+Epoch  124 loss =  2.664941165898297 Valid perplexity =  57.73593037934163
+Epoch  125 loss =  2.660200506287652 Valid perplexity =  58.01912173383205
+Epoch  126 loss =  2.657151506398175 Valid perplexity =  57.96280442245758
+Epoch  127 loss =  2.6535081025716423 Valid perplexity =  58.020677047488576
+Epoch  128 loss =  2.649442078616168 Valid perplexity =  57.26062056463164
+Epoch  129 loss =  2.646842174916654 Valid perplexity =  57.047625980926895
+Epoch  130 loss =  2.643020520339141 Valid perplexity =  57.02461391948705
+Epoch  131 loss =  2.640510600322002 Valid perplexity =  57.19283813280781
+Epoch  132 loss =  2.636941717122052 Valid perplexity =  57.182621842342755
+Epoch  133 loss =  2.634315068657334 Valid perplexity =  57.03893430160087
+Epoch  134 loss =  2.632187559797957 Valid perplexity =  56.84087576862221
+Epoch  135 loss =  2.631283039660067 Valid perplexity =  57.53160512675286
+Epoch  136 loss =  2.630085362614812 Valid perplexity =  57.32729738198101
+Epoch  137 loss =  2.627790121130041 Valid perplexity =  57.424102978445866
+Epoch  138 loss =  2.6251310374285723 Valid perplexity =  56.99352552905625
+Epoch  139 loss =  2.62314782400389 Valid perplexity =  56.78825243215978
+Epoch  140 loss =  2.6227332224717013 Valid perplexity =  56.551756361199274
+Epoch  141 loss =  2.6190508352743613 Valid perplexity =  56.89565198067694
+Epoch  142 loss =  2.615321562741254 Valid perplexity =  56.73353950174602
+Epoch  143 loss =  2.610933166581231 Valid perplexity =  56.75110839009183
+Epoch  144 loss =  2.606285050108626 Valid perplexity =  57.090574281348765
+Epoch  145 loss =  2.6023039057448103 Valid perplexity =  56.630960887884726
+Epoch  146 loss =  2.5986401570809856 Valid perplexity =  56.76239436069974
+Epoch  147 loss =  2.5955031369183517 Valid perplexity =  56.71353755834793
+Epoch  148 loss =  2.5918051468359455 Valid perplexity =  56.54602355316115
+Epoch  149 loss =  2.589084593025414 Valid perplexity =  56.76457058021217
+Epoch  150 loss =  2.5846782510345045 Valid perplexity =  56.564269358176084
+Epoch  151 loss =  2.5806593308577668 Valid perplexity =  56.370140595735904
+Epoch  152 loss =  2.5778603495778265 Valid perplexity =  56.56432649737869
+Epoch  153 loss =  2.574455477095939 Valid perplexity =  56.65990997795599
+Epoch  154 loss =  2.571533437677332 Valid perplexity =  56.5471804103462
+Epoch  155 loss =  2.5680401640969355 Valid perplexity =  56.11449709506468
+Epoch  156 loss =  2.5656770905932866 Valid perplexity =  56.19069709797237
+Epoch  157 loss =  2.563436692469829 Valid perplexity =  56.37324347914468
+Epoch  158 loss =  2.5613331324345356 Valid perplexity =  56.2693669179763
+Epoch  159 loss =  2.558155039194468 Valid perplexity =  56.001894527706874
+Epoch  160 loss =  2.556461986335548 Valid perplexity =  55.69571231058503
+Epoch  161 loss =  2.554812324369276 Valid perplexity =  56.04141979786767
+70m 9s (- 2021-04-30 22:50:43.156321) (30000 16216%) loss = 2.6334, CE_loss = 2.6334, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  55.98284552067179
+Epoch  162 loss =  2.5519745098577964 Valid perplexity =  56.3527813265951
+Epoch  163 loss =  2.5490892307178394 Valid perplexity =  56.14724064212609
+Epoch  164 loss =  2.5461754515364365 Valid perplexity =  56.668765648561404
+Epoch  165 loss =  2.5421406816791845 Valid perplexity =  56.69379314722539
+Epoch  166 loss =  2.538974932722143 Valid perplexity =  56.99132780582404
+Epoch  167 loss =  2.535687198510041 Valid perplexity =  56.53033436154325
+Epoch  168 loss =  2.533749281393515 Valid perplexity =  56.38148359792663
+Epoch  169 loss =  2.5302528909734776 Valid perplexity =  56.28499385620607
+Epoch  170 loss =  2.5282215337495546 Valid perplexity =  56.39926640695576
+Epoch  171 loss =  2.525690998902192 Valid perplexity =  56.665486825428395
+Epoch  172 loss =  2.524556390659229 Valid perplexity =  56.18865251522354
+Epoch  173 loss =  2.521742682843595 Valid perplexity =  57.01540163032148
+Epoch  174 loss =  2.5196771982553843 Valid perplexity =  56.725125787058474
+Epoch  175 loss =  2.517193455953856 Valid perplexity =  56.80410229744836
+Epoch  176 loss =  2.5148355677321153 Valid perplexity =  56.45740379661614
+Epoch  177 loss =  2.5127591571292363 Valid perplexity =  56.696446619489095
+Epoch  178 loss =  2.510227039698008 Valid perplexity =  56.721224281025954
+Epoch  179 loss =  2.5090671307331807 Valid perplexity =  56.6319746571182
+Epoch  180 loss =  2.505881807610795 Valid perplexity =  57.0796564165489
+Epoch  181 loss =  2.5043720973504557 Valid perplexity =  56.73596769487575
+Epoch  182 loss =  2.5030667040799117 Valid perplexity =  56.708452247152714
+Epoch  183 loss =  2.5018015719748834 Valid perplexity =  56.613589624502985
+Epoch  184 loss =  2.501062176034257 Valid perplexity =  56.70423503507653
+Epoch  185 loss =  2.4990998010377625 Valid perplexity =  56.87118545078739
+Epoch  186 loss =  2.497994248287098 Valid perplexity =  57.61903289088861
+Epoch  187 loss =  2.4961107524665627 Valid perplexity =  57.0419117479044
+Epoch  188 loss =  2.4941502616212174 Valid perplexity =  57.07591108027945
+Epoch  189 loss =  2.491798554884421 Valid perplexity =  57.22434161348625
+Epoch  190 loss =  2.489408996942881 Valid perplexity =  56.922546451939134
+Epoch  191 loss =  2.487648726154018 Valid perplexity =  57.097648198360886
+Epoch  192 loss =  2.4843521923632235 Valid perplexity =  57.18925716101796
+Epoch  193 loss =  2.4840827194420068 Valid perplexity =  57.06783525769849
+Epoch  194 loss =  2.485047678689699 Valid perplexity =  56.78560402244296
+Epoch  195 loss =  2.4810940607174023 Valid perplexity =  56.90894604228636
+Epoch  196 loss =  2.4799347355559065 Valid perplexity =  57.06064793271413
+Epoch  197 loss =  2.478454888189161 Valid perplexity =  57.15554007023723
+Epoch  198 loss =  2.476792240787197 Valid perplexity =  57.310655257287536
+Epoch  199 loss =  2.4764260852659072 Valid perplexity =  56.94085834978665
+Epoch  200 loss =  2.474871223681682 Valid perplexity =  57.23574877788262
+Epoch  201 loss =  2.4772117672739804 Valid perplexity =  57.527353920534765
+Epoch  202 loss =  2.4750668886545544 Valid perplexity =  57.46778384595005
+Epoch  203 loss =  2.473252036764815 Valid perplexity =  57.51600514566737
+Epoch  204 loss =  2.4702962282541634 Valid perplexity =  57.662279549604996
+Epoch  205 loss =  2.466934314933983 Valid perplexity =  57.402416756787886
+Epoch  206 loss =  2.4638906008488424 Valid perplexity =  57.73341334740048
+Epoch  207 loss =  2.4621628619529106 Valid perplexity =  57.66566050521824
+Epoch  208 loss =  2.4601820262702736 Valid perplexity =  57.82078995909927
+Epoch  209 loss =  2.456799762957805 Valid perplexity =  57.80980559994322
+Epoch  210 loss =  2.4551706520286767 Valid perplexity =  57.65541707682192
+Epoch  211 loss =  2.4519748204463236 Valid perplexity =  57.56083099689719
+Epoch  212 loss =  2.45033062213176 Valid perplexity =  57.58869572877746
+Epoch  213 loss =  2.4473504079354775 Valid perplexity =  57.78391278180045
+Epoch  214 loss =  2.4451468867224615 Valid perplexity =  57.960752676120855
+Epoch  215 loss =  2.442977987109004 Valid perplexity =  58.45561683640972
+93m 31s (- 2021-04-30 23:14:04.793329) (40000 21621%) loss = 2.4944, CE_loss = 2.4944, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  57.86686122692888
+Epoch  216 loss =  2.4424894848385375 Valid perplexity =  58.15729958929045
+Epoch  217 loss =  2.4399546668336196 Valid perplexity =  58.42753082532703
+Epoch  218 loss =  2.437986723152367 Valid perplexity =  58.699934923105126
+Epoch  219 loss =  2.4367014292124156 Valid perplexity =  58.59001914990474
+Epoch  220 loss =  2.435566431767232 Valid perplexity =  59.28638486312823
+Epoch  221 loss =  2.433881391061319 Valid perplexity =  59.136784399902275
+Epoch  222 loss =  2.431048881041037 Valid perplexity =  59.090402021461884
+Epoch  223 loss =  2.4295043996862464 Valid perplexity =  59.422774381856456
+Epoch  224 loss =  2.429001725686563 Valid perplexity =  59.094864562053814
+Epoch  225 loss =  2.4264273205318965 Valid perplexity =  59.21647266411499
+Epoch  226 loss =  2.425693796132062 Valid perplexity =  59.65032769050822
+Epoch  227 loss =  2.4234669801351187 Valid perplexity =  60.00970211736677
+Epoch  228 loss =  2.4221393379005227 Valid perplexity =  59.69076119679339
+Epoch  229 loss =  2.4202175642993 Valid perplexity =  59.709071260068335
+Epoch  230 loss =  2.4179736137390138 Valid perplexity =  60.001339744242976
+Epoch  231 loss =  2.41681261900309 Valid perplexity =  60.378153244628095
+Epoch  232 loss =  2.415596580505371 Valid perplexity =  60.05574857466737
+Epoch  233 loss =  2.4136158840076343 Valid perplexity =  60.22411107696119
+Epoch  234 loss =  2.412403747197744 Valid perplexity =  60.09753781080153
+Epoch  235 loss =  2.4124582400193084 Valid perplexity =  59.62708078615725
+Epoch  236 loss =  2.412786278209171 Valid perplexity =  60.005887030883734
+Epoch  237 loss =  2.411482854147215 Valid perplexity =  59.400665911386255
+Epoch  238 loss =  2.4105980434933225 Valid perplexity =  59.94051888269379
+Epoch  239 loss =  2.4097665090818663 Valid perplexity =  59.684212936410255
+Epoch  240 loss =  2.407579814421164 Valid perplexity =  60.2659649188081
+Epoch  241 loss =  2.40490302072989 Valid perplexity =  59.13269092783515
+Epoch  242 loss =  2.402806308462813 Valid perplexity =  59.95948893013075
+Epoch  243 loss =  2.401186339275257 Valid perplexity =  60.55321745598923
+Epoch  244 loss =  2.3997405496803488 Valid perplexity =  59.88141070939802
+Epoch  245 loss =  2.399229661194054 Valid perplexity =  60.39505002182627
+Epoch  246 loss =  2.3973195179088695 Valid perplexity =  60.035198722627115
+Epoch  247 loss =  2.3953125521943375 Valid perplexity =  59.817246087609796
+Epoch  248 loss =  2.3933281730961156 Valid perplexity =  59.77305120192661
+Epoch  249 loss =  2.39212949211533 Valid perplexity =  59.83378770918412
+Epoch  250 loss =  2.390383784835403 Valid perplexity =  59.91178217515459
+Epoch  251 loss =  2.3886414753424154 Valid perplexity =  60.141696987556045
+Epoch  252 loss =  2.387611402047647 Valid perplexity =  60.202713339825486
+Epoch  253 loss =  2.3858669783618 Valid perplexity =  60.1082144827636
+Epoch  254 loss =  2.3843831816235106 Valid perplexity =  60.08049396152878
+Epoch  255 loss =  2.382195771707071 Valid perplexity =  60.25932760619506
+Epoch  256 loss =  2.380507951813775 Valid perplexity =  60.27982277708965

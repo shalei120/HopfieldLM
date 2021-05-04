@@ -5,19 +5,19 @@ print = functools.partial(print, flush=True)
 from LanguageModel import LanguageModel
 from textdata_wiki2 import  TextData_wiki2
 from textdata import  TextData_1mb
-import time, sys
+import time, sys,datetime
 import torch
 import torch.autograd as autograd
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from tqdm import  tqdm
-import time,os
+import os
 import math,random
 import nltk
 from nltk.corpus import stopwords
 import argparse
-
+# import GPUtil
 # import turibolt as bolt
 import pickle
 from Hyperparameters import args
@@ -34,6 +34,10 @@ parser.add_argument('--gpu', '-g')
 parser.add_argument('--batch', '-b')
 parser.add_argument('--modelarch', '-m')
 parser.add_argument('--data', '-d')
+parser.add_argument('--server', '-s')
+parser.add_argument('--embeddingsize', '-emb')
+parser.add_argument('--layernum', '-layer')
+parser.add_argument('--nhead', '-nhead')
 
 cmdargs = parser.parse_args()
 
@@ -61,6 +65,26 @@ if cmdargs.data is None:
 else:
     args['corpus'] = cmdargs.data
 
+if cmdargs.server is None:
+    args['server'] = 'other'
+else:
+    args['server'] = cmdargs.server
+
+if cmdargs.embeddingsize is None:
+    pass
+else:
+    args['embeddingSize'] = int(cmdargs.embeddingsize)
+
+
+if cmdargs.layernum is None:
+    pass
+else:
+    args['numLayers'] = int(cmdargs.layernum)
+if cmdargs.nhead is None:
+    args['nhead'] = 1
+else:
+    args['nhead'] = int(cmdargs.nhead)
+
 def asMinutes(s):
     m = math.floor(s / 60)
     s -= m * 60
@@ -72,7 +96,7 @@ def timeSince(since, percent):
     s = now - since
     es = s / (percent)
     rs = es - s
-    return '%s (- %s)' % (asMinutes(s), asMinutes(rs))
+    return '%s (- %s)' % (asMinutes(s), datetime.datetime.now())
 
 class Runner:
     def __init__(self):
@@ -85,6 +109,7 @@ class Runner:
     def main(self):
         if args['corpus'] == '1mb':
             self.textData =  TextData_1mb('LMbenchmark')
+            # args['embeddingSize'] = 300
         elif  args['corpus'] == 'wiki2':
             self.textData = TextData_wiki2('LMbenchmark')
         # self.LMer = LMEr()
@@ -92,7 +117,8 @@ class Runner:
         self.end_token = self.textData.word2index['END_TOKEN']
         args['vocabularySize'] = self.textData.getVocabularySize()
         print(self.textData.getVocabularySize())
-
+        print(args)
+        torch.manual_seed(0)
         self.model = LanguageModel(self.textData.word2index, self.textData.index2word).to(args['device'])
         # self.model = torch.load(self.model_path.replace('model', 'model_'+'fw'), map_location=args['device'])
         params = sum([np.prod(p.size()) for p in self.model.parameters()])
@@ -109,11 +135,11 @@ class Runner:
         print_loss_total = 0  # Reset every print_every
         plot_loss_total = 0  # Reset every plot_every
 
-        print(type(self.textData.word2index))
+        print(type(self.textData.word2index), args['device'])
 
-        # optimizer = optim.Adam(self.model.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
-        optimizer = torch.optim.SGD(self.model.parameters(), lr=5.0)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=0.95)
+        optimizer = optim.Adam(self.model.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
+        # optimizer = torch.optim.SGD(self.model.parameters(), lr=5.0)
+        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=0.95)
 
         iter = 1
         batches = self.textData.getBatches()
@@ -126,6 +152,10 @@ class Runner:
 
         self.Cal_perplexity_for_dataset('test', direction)
 
+        CE_loss_total = 0
+        KL_total = 0
+        VAE_recon_total = 0
+        error_total = 0
         for epoch in range(args['numEpochs']):
             losses = []
 
@@ -138,9 +168,16 @@ class Runner:
 
 
                 # print(x['enc_input'][0],x['dec_input'][0],x['dec_target'][0])
-                de_output, loss, true_mean = self.model(x)    # batch seq_len outsize
-
-                loss_mean = torch.mean(loss)
+                if args['LMtype'] == 'energy':
+                    data = self.model(x)    # batch seq_len outsize
+                    loss_mean = torch.mean(data['loss']) + 0.1 * data['KL'] + 0.01 * data['VAE_recon'] + 1 * data['error']
+                    CE_loss_total += torch.mean(data['loss']).item()
+                    KL_total += data['KL'].item()
+                    VAE_recon_total += data['VAE_recon'].item()
+                    error_total += data['error'].item()
+                else:
+                    data = self.model(x)    # batch seq_len outsize
+                    loss_mean = torch.mean(data['loss'])
                 # Reward = loss_mean.data
 
                 loss_mean.backward(retain_graph=True)
@@ -149,19 +186,38 @@ class Runner:
 
                 optimizer.step()
 
-                print_loss_total += loss_mean.data
-                plot_loss_total += loss_mean.data
 
-                losses.append(loss_mean.data)
+                print_loss_total += loss_mean.item()
+                plot_loss_total += loss_mean.item()
 
+                losses.append(loss_mean.item())
+
+                # GPUtil.showUtilization()
                 if iter % print_every == 0:
                     print_loss_avg = print_loss_total / print_every
                     print_loss_total = 0
-                    print('%s (%d %d%%) %.4f' % (timeSince(start, iter / n_iters),
-                                                 iter, iter / n_iters * 100, print_loss_avg))
+                    KL_avg = KL_total / print_every
+                    KL_total = 0
+                    CEloss_avg = CE_loss_total / print_every
+                    CE_loss_total = 0
+                    VAE_recon_avg = VAE_recon_total / print_every
+                    VAE_recon_total = 0
+                    error_avg = error_total / print_every
+                    error_total = 0
+                    print('%s (%d %d%%) loss = %.4f, CE_loss = %.4f, VAE recon = %.4f, KL = %.4f, error=%.4f' % (timeSince(start, iter / n_iters),
+                                                 iter, iter / n_iters * 100, print_loss_avg, CEloss_avg, VAE_recon_avg, KL_avg, error_avg))
+                    # GPUtil.showUtilization()
+                    # del de_output,loss,true_mean
+                    # GPUtil.showUtilization()
+                    # torch.cuda.empty_cache()
+                    # GPUtil.showUtilization()
+                    if args['corpus'] != '1mb' or iter % 100000 == 0:
+                        perplexity = self.Cal_perplexity_for_dataset('test', direction)
+                        print('Test ppl: ', perplexity)
 
-                    perplexity = self.Cal_perplexity_for_dataset('test', direction)
-                    print('Test ppl: ', perplexity)
+                        if perplexity < min_perplexity or min_perplexity == -1:
+                            print('perplexity = ', perplexity, '>= min_perplexity (', min_perplexity, '), saving model...')
+                            min_perplexity = perplexity
 
                 if iter % plot_every == 0:
                     plot_loss_avg = plot_loss_total / plot_every
@@ -170,14 +226,19 @@ class Runner:
 
                 iter+=1
 
-            scheduler.step()
+            # scheduler.step()
             perplexity = self.Cal_perplexity_for_dataset('test', direction)
             if perplexity < min_perplexity or min_perplexity == -1:
                 print('perplexity = ', perplexity, '>= min_perplexity (', min_perplexity, '), saving model...')
-                torch.save(self.model, self.model_path.replace('model', 'model_'+args['LMtype']+'_'+args['corpus'] + '_'+str(args['maxLength'])))
+                torch.save(self.model, self.model_path.replace('model', 'model_'+args['LMtype']+'_'+args['corpus'] + '_'+str(args['maxLength'])+'_'+str(args['numLayers'])+'_'+str(args['embeddingSize'])))
                 min_perplexity = perplexity
 
+
+            # if args['LMtype'] == 'energy':
+            #     print('Epoch ', epoch, 'loss = ', sum(losses) / len(losses), 'Valid perplexity = ', perplexity, 'VAE recon = ', VAE_recon_avg, 'KL loss = ', KL_avg)
+            # else:
             print('Epoch ', epoch, 'loss = ', sum(losses) / len(losses), 'Valid perplexity = ', perplexity)
+
 
         # self.test()
         # showPlot(plot_losses)
@@ -193,9 +254,11 @@ class Runner:
             self.testbatches = {}
         if datasetname not in self.testbatches:
             self.testbatches[datasetname] = self.textData.getBatches(datasetname)
+        self.model.eval()
         num = 0
         ave_loss = 0
         with torch.no_grad():
+            # print(len(self.testbatches[datasetname][0].decoderSeqs))
             for batch in self.testbatches[datasetname]:
                 x = {}
 
@@ -203,14 +266,19 @@ class Runner:
                 x['dec_len'] = batch.decoder_lens
                 x['dec_target'] = autograd.Variable(torch.LongTensor(batch.targetSeqs))
 
-                de_output, recon_loss_mean, true_mean = self.model(x)
+                # print('here')
+                # GPUtil.showUtilization()
+                data = self.model.predict(x)    # batch seq_len outsize
+                # GPUtil.showUtilization()
                 # true_mean = recon_loss_mean
                 # print(true_mean.size())
-                ave_loss = (ave_loss * num + sum(true_mean)) / (num + len(true_mean))
+                sum_true = data['true_mean'].sum().item()
+                ave_loss = (ave_loss * num + sum_true) / (num + len(data['true_mean']))
 
-                num += len(true_mean)
+                num += len(data['true_mean'])
 
-        return torch.exp(ave_loss)
+        self.model.train()
+        return np.exp(ave_loss)
 
 
     def indexesFromSentence(self,  sentence):
@@ -252,8 +320,9 @@ class Runner:
  
 
 if __name__ == '__main__':
-    args['corpus'] = 'wiki2'
-    args['LMtype'] = 'transformer'
+    # args['corpus'] = 'wiki2'
+    # args['LMtype'] = 'energy'
+    args['norm_attn'] = True
     r = Runner()
     # r.textData = TextData('LMbenchmark')
 

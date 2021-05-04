@@ -9,14 +9,10 @@ import random
 import string, copy
 from nltk.tokenize import word_tokenize
 from Hyperparameters import args
-from nltk.corpus import brown
-import torch
-from torchtext.datasets import WikiText2
-from torchtext.data.utils import get_tokenizer
-from collections import Counter
-from torchtext.vocab import Vocab
-nltk.download('punkt')
-
+import requests, tarfile
+from learn_bpe import learn_bpe
+from apply_bpe import BPE
+from bs4 import BeautifulSoup
 class Batch:
     """Struct containing batches info
     """
@@ -29,7 +25,7 @@ class Batch:
         self.decoder_lens = []
 
 
-class TextData_wiki2:
+class TextData_MT:
     """Dataset class
     Warning: No vocabulary limit
     """
@@ -68,7 +64,7 @@ class TextData_wiki2:
         print('Shuffling the dataset...')
         random.shuffle(self.datasets['train'])
 
-    def _createBatch(self, samples):
+    def _createBatch(self, samples, setname):
         """Create a single batch from the list of sample. The batch size is automatically defined by the number of
         samples given.
         The inputs should already be inverted. The target should already have <go> and <eos>
@@ -82,18 +78,20 @@ class TextData_wiki2:
         batch = Batch()
         batchSize = len(samples)
 
+        maxlen_def = args['maxLengthEnco'] if setname == 'train' else 511
+
         # Create the batch tensor
         for i in range(batchSize):
             # Unpack the sample
             sample, raw_sentence = samples[i]
 
-            if len(sample) > args['maxLengthEnco']:
-                sample = sample[:args['maxLengthEnco']]
+            if len(sample) > maxlen_def:
+                sample = sample[:maxlen_def]
 
             batch.decoderSeqs.append([self.word2index['START_TOKEN']] + sample)  # Add the <go> and <eos> tokens
             batch.targetSeqs.append(sample + [self.word2index['END_TOKEN']])  # Same as decoder, but shifted to the left (ignore the <go>)
 
-            assert len(batch.decoderSeqs[i]) <= args['maxLengthDeco']
+            assert len(batch.decoderSeqs[i]) <= maxlen_def +1
 
             # TODO: Should use tf batch function to automatically add padding and batch samples
             # Add padding & define weight
@@ -123,31 +121,26 @@ class TextData_wiki2:
         Return:
             list<Batch>: Get a list of the batches for the next epoch
         """
-        # self.shuffle()
-        #
-        #
+        self.shuffle()
+
+
         batches = []
-        print(len(self.datasets[setname]))
+        batch_size = args['batchSize'] if setname == 'train' else 32
+        print(len(self.datasets[setname]), setname, batch_size)
         def genNextSamples():
             """ Generator over the mini-batch training samples
             """
-            for i in range(0, self.getSampleSize(setname), args['batchSize']):
-                yield self.datasets[setname][i:min(i + args['batchSize'], self.getSampleSize(setname))]
+            for i in range(0, self.getSampleSize(setname), batch_size):
+                yield self.datasets[setname][i:min(i + batch_size, self.getSampleSize(setname))]
 
         # TODO: Should replace that by generator (better: by tf.queue)
 
         for index, samples in enumerate(genNextSamples()):
             # print([self.index2word[id] for id in samples[5][0]], samples[5][2])
-            batch = self._createBatch(samples)
+            batch = self._createBatch(samples, setname)
             batches.append(batch)
 
         # print([self.index2word[id] for id in batches[2].encoderSeqs[5]], batches[2].raws[5])
-        # for data, targets in self.datasets[setname]:
-        #     batch = Batch()
-        #     batch.decoderSeqs = data.transpose(0,1)
-        #     batch.decoder_lens = data.shape[0]
-        #     batch.targetSeqs = targets.transpose(0,1)
-        #     batches.append(batch)
         return batches
 
     def getSampleSize(self, setname = 'train'):
@@ -164,20 +157,45 @@ class TextData_wiki2:
         """
         return len(self.word2index)
 
+    def extract(self, tar_url, extract_path='.'):
+        print(tar_url)
+        tar = tarfile.open(tar_url, 'r')
+        for item in tar:
+            tar.extract(item, extract_path)
+
     def loadCorpus(self, corpusname):
         """Load/create the conversations data
         """
+        # self.corpusDir = '../Gutenberg_data/' + corpusname + '/' if args['createDataset'] else args['rootDir']
+        if corpusname == 'MT':
+            if args['server'] == 'dgx':
+                self.basedir = './.data/MT/'
+            else:
+                self.basedir = '../MT/'
 
-        if args['server'] == 'dgx':
-            self.basedir = './.data/wikitext-2/'
-        else:
-            self.basedir = '../wikitext-2/'
+            self.corpusDir_train = {'EN_DE.en': self.basedir + 'europarl-v7.de-en.en',
+                                    'EN_DE.de': self.basedir + 'europarl-v7.de-en.de',
+                                    'EN_FR.en': self.basedir + 'europarl-v7.fr-en.en',
+                                    'EN_FR.fr': self.basedir + 'europarl-v7.fr-en.fr'}
+            self.corpusDir_test =  {'EN_DE.en': self.basedir + 'newstest2014-deen-src.en.sgm',
+                                    'EN_DE.de': self.basedir + 'newstest2014-deen-ref.de.sgm',
+                                    'EN_FR.en': self.basedir + 'newstest2014-fren-src.en.sgm',
+                                    'EN_FR.fr': self.basedir + 'newstest2014-fren-ref.fr.sgm'}
+            if not os.path.exists(self.basedir):
+                os.mkdir(self.basedir)
 
-        self.corpus = self.basedir + '/wiki.train.tokens'
+            if not os.path.exists(self.corpusDir_train['En_DE.en']):
+                r = requests.get('http://www.statmt.org/wmt13/training-parallel-europarl-v7.tgz', allow_redirects=True)
+                open(self.basedir + 'train.tgz', 'wb').write(r.content)
+                self.extract(self.basedir + 'train.tgz', self.basedir)
+                r = requests.get('http://www.statmt.org/wmt14/test-full.tgz', allow_redirects=True)
+                open(self.basedir + 'test.tgz', 'wb').write(r.content)
+                self.extract(self.basedir + 'test.tgz', self.basedir)
 
-        self.corpus_test =  self.basedir + '/wiki.test.tokens'
+            if not args['createDataset']:
+                self.basedir = args['rootDir']
 
-        self.fullSamplesPath = args['rootDir'] + '/LMdata_wiki.pkl'  # Full sentences length/vocab
+            self.fullSamplesPath = args['rootDir'] + '/LMdata.pkl'  # Full sentences length/vocab
 
 
 
@@ -186,39 +204,59 @@ class TextData_wiki2:
         if not datasetExist:  # First time we load the database: creating all files
             print('Training data not found. Creating dataset...')
 
-            total_words = []
-            dataset = {'train': [], 'test':[]}
+            dataset = {'EN_DE': {'train': [], 'valid':[], 'test':[]},
+                       'EN_FR': {'train': [], 'valid':[], 'test':[]}}
 
-            with open(self.corpus, 'r') as rhandle:
-                lines = rhandle.readlines()
-                sentences = []
-                for line in lines:
-                    if len(line) > 10:
-                        line = line.lower().strip()
-                        line = self.tokenizer(line)
-                        # line = line.split().
-                        total_words.extend(line)
-                        sentences.append(line)
-                dataset['train'].extend(sentences)
+            learn_bpe([self.corpusDir_train['EN_DE.en'], self.corpusDir_train['EN_DE.de']], args['rootDir'] + 'EN_DE.bpe', 37000, 6, True)
+            for type in ['EN_DE', 'EN_FR']:
+                total_words = []
+                codes = codecs.open(args['rootDir'] + type +'.bpe', encoding='utf-8')
+                bpe = BPE(codes, separator='@@')
+                with open(self.corpusDir_train[type + '.en'], 'r') as src_handle:
+                    with open(self.corpusDir_train[type + '.' + type[-2:].lower()], 'r') as tgt_handle:
+                        src_lines = src_handle.readlines()
+                        tgt_lines = tgt_handle.readlines()
+                        for src_line, tgt_line in zip(src_lines, tgt_lines):
+                            if len(src_line) < 5 or len(tgt_line) < 5:
+                                continue
+                            src_line = src_line.lower().strip()
+                            tgt_line = tgt_line.lower().strip()
+                            src_bpe_line = bpe.process_line(src_line)
+                            tgt_bpe_line = bpe.process_line(tgt_line)
+                            total_words.extend(src_bpe_line)
+                            total_words.extend(tgt_bpe_line)
+                            dataset[type]['train'].extend([src_bpe_line, tgt_bpe_line])
 
-            with open(self.corpus_test , 'r') as rhandle:
-                lines = rhandle.readlines()
-                sentences = []
-                for line in lines:
-                    if len(line) > 10:
-                        line = line.lower().strip()
-                        line = self.tokenizer(line)
-                        # line = line.split()
-                        sentences.append(line)
-                dataset['test'].extend(sentences)
-            #
-            print(len(dataset['train']), len(dataset['test']))
+                with open(self.corpusDir_test[type + '.en'], 'r') as src_handle:
+                    with open(self.corpusDir_test[type + '.' + type[-2:].lower()], 'r') as tgt_handle:
+                        src_content = src_handle.read()
+                        tgt_content = tgt_handle.read()
+                        src_soup = BeautifulSoup(src_content)
+                        tgt_soup = BeautifulSoup(tgt_content)
+                        src_docs = src_soup.find_all('doc')
+                        tgt_docs = tgt_soup.find_all('doc')
+                        assert len(src_docs) == len(tgt_docs)
 
-            fdist = nltk.FreqDist(total_words)
-            sort_count = fdist.most_common(30000)
+                        for srcd, tgtd in zip(src_docs, tgt_docs):
+                            assert srcd.attrs['docid'] == tgtd.attrs['docid']
+                            src_segs = srcd.find_all('seg')
+                            tgt_segs = tgtd.find_all('seg')
+                            for srcseg, tgtseg in zip(src_segs, tgt_segs):
+                                src_sen = srcseg.text
+                                tgt_sen = tgtseg.text
+                                src_bpe_line = bpe.process_line(src_sen)
+                                tgt_bpe_line = bpe.process_line(tgt_sen)
+                                dataset[type]['test'].extend([src_bpe_line, tgt_bpe_line])
+
+
+
+                print(type, len(dataset[type]['train']), len(dataset[type]['valid']),len(dataset[type]['test']))
+
+                fdist = nltk.FreqDist(total_words)
+                sort_count = fdist.most_common(37000)
             print('sort_count: ', len(sort_count))
 
-            with open(args['rootDir'] + "/voc_wiki2.txt", "w") as v:
+            with open(self.basedir + "/voc.txt", "w") as v:
                 for w, c in tqdm(sort_count):
                     if w not in [' ', '', '\n']:
                         v.write(w)
@@ -228,20 +266,27 @@ class TextData_wiki2:
 
                 v.close()
 
-
-            self.word2index = self.read_word2vec(args['rootDir'] + '/voc_wiki2.txt')
+            self.word2index = self.read_word2vec(self.basedir + '/voc.txt')
             self.sorted_word_index = sorted(self.word2index.items(), key=lambda item: item[1])
             print('sorted')
             self.index2word = [w for w, n in self.sorted_word_index]
             print('index2word')
+
+            # with open(os.path.join(self.basedir + '/dump2.pkl'), 'wb') as handle:
+            #     data = {
+            #         'word2index': self.word2index,
+            #         'index2word': self.index2word,
+            #         'datasets': datasets
+            #     }
+            #     pickle.dump(data, handle, -1)
+
+
             self.index2word_set = set(self.index2word)
             print('set')
 
             # self.raw_sentences = copy.deepcopy(dataset)
-
-            for setname in ['train', 'test']:
+            for setname in ['train', 'valid', 'test']:
                 dataset[setname] = [(self.TurnWordID(sen), sen) for sen in tqdm(dataset[setname])]
-
             self.datasets = dataset
 
 
@@ -251,6 +296,7 @@ class TextData_wiki2:
         else:
             self.loadDataset(self.fullSamplesPath)
             print('loaded')
+            # print(max([len(sen) for sid, sen in self.datasets['train']]))
             # self.symbols = [str(ind) for ind, w in enumerate(self.index2word) if not w.isalpha()]
             # with open(args['rootDir'] + '/symbol_index.txt','w') as handle:
             #     handle.write(' '.join(self.symbols))
