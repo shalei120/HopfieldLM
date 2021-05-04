@@ -37,6 +37,7 @@ parser.add_argument('--data', '-d')
 parser.add_argument('--server', '-s')
 parser.add_argument('--embeddingsize', '-emb')
 parser.add_argument('--layernum', '-layer')
+parser.add_argument('--nhead', '-nhead')
 
 cmdargs = parser.parse_args()
 
@@ -79,6 +80,10 @@ if cmdargs.layernum is None:
     pass
 else:
     args['numLayers'] = int(cmdargs.layernum)
+if cmdargs.nhead is None:
+    args['nhead'] = 1
+else:
+    args['nhead'] = int(cmdargs.nhead)
 
 def asMinutes(s):
     m = math.floor(s / 60)
@@ -165,7 +170,7 @@ class Runner:
                 # print(x['enc_input'][0],x['dec_input'][0],x['dec_target'][0])
                 if args['LMtype'] == 'energy':
                     data = self.model(x)    # batch seq_len outsize
-                    loss_mean = torch.mean(data['loss']) + 0.1 * data['KL'] + 0.01 * data['VAE_recon'] + 100 * data['error']
+                    loss_mean = torch.mean(data['loss']) + 0.1 * data['KL'] + 0.01 * data['VAE_recon'] + 1 * data['error']
                     CE_loss_total += torch.mean(data['loss']).item()
                     KL_total += data['KL'].item()
                     VAE_recon_total += data['VAE_recon'].item()
@@ -317,6 +322,7 @@ class Runner:
 if __name__ == '__main__':
     # args['corpus'] = 'wiki2'
     # args['LMtype'] = 'energy'
+    args['norm_attn'] = True
     r = Runner()
     # r.textData = TextData('LMbenchmark')
 
