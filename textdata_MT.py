@@ -17,11 +17,11 @@ class Batch:
     """Struct containing batches info
     """
     def __init__(self):
-        self.encoderSeqs1 = []
-        self.encoderSeqs2 = []
+        self.encoderSeqs = []
         self.label = []
         self.decoderSeqs = []
         self.targetSeqs = []
+        self.encoder_lens = []
         self.decoder_lens = []
 
 
@@ -48,11 +48,6 @@ class TextData_MT:
 
         self.loadCorpus(corpusname)
 
-        # Plot some stats:
-        self._printStats()
-
-        # if args['playDataset']:
-        #     self.playDataset()
 
     def _printStats(self):
         print('Loaded {}: {} words, {} QA'.format('LMbenchmark', len(self.word2index), len(self.trainingSamples)))
@@ -78,45 +73,51 @@ class TextData_MT:
         batch = Batch()
         batchSize = len(samples)
 
-        maxlen_def = args['maxLengthEnco'] if setname == 'train' else 511
+        maxlen_def = args['maxLengthEnco'] #if setname == 'train' else 511
 
         # Create the batch tensor
         for i in range(batchSize):
             # Unpack the sample
-            sample, raw_sentence = samples[i]
+            src_sample, tgt_sample, raw_src, raw_tgt = samples[i]
 
-            if len(sample) > maxlen_def:
-                sample = sample[:maxlen_def]
+            if len(src_sample) > maxlen_def:
+                src_sample = src_sample[:maxlen_def]
+            if len(tgt_sample) > maxlen_def:
+                tgt_sample = tgt_sample[:maxlen_def]
 
-            batch.decoderSeqs.append([self.word2index['START_TOKEN']] + sample)  # Add the <go> and <eos> tokens
-            batch.targetSeqs.append(sample + [self.word2index['END_TOKEN']])  # Same as decoder, but shifted to the left (ignore the <go>)
+            batch.encoderSeqs.append(src_sample)
+            batch.decoderSeqs.append([self.word2index['START_TOKEN']] + tgt_sample)  # Add the <go> and <eos> tokens
+            batch.targetSeqs.append(tgt_sample + [self.word2index['END_TOKEN']])  # Same as decoder, but shifted to the left (ignore the <go>)
 
             assert len(batch.decoderSeqs[i]) <= maxlen_def +1
 
             # TODO: Should use tf batch function to automatically add padding and batch samples
             # Add padding & define weight
+            batch.encoder_lens.append(len(batch.encoderSeqs[i]))
             batch.decoder_lens.append(len(batch.targetSeqs[i]))
 
         maxlen_dec = max(batch.decoder_lens)
+        maxlen_enc = max(batch.encoder_lens)
 
 
         for i in range(batchSize):
+            batch.encoderSeqs[i] = batch.encoderSeqs[i] + [self.word2index['PAD']] * (maxlen_enc - len(batch.encoderSeqs[i]))
             batch.decoderSeqs[i] = batch.decoderSeqs[i] + [self.word2index['PAD']] * (maxlen_dec - len(batch.decoderSeqs[i]))
             batch.targetSeqs[i]  = batch.targetSeqs[i]  + [self.word2index['PAD']] * (maxlen_dec - len(batch.targetSeqs[i]))
 
-        pre_sort_list = [(a, b, c) for a, b, c  in
-                         zip( batch.decoderSeqs, batch.decoder_lens,
-                             batch.targetSeqs)]
-
-        post_sorted_list = sorted(pre_sort_list, key=lambda x: x[1], reverse=True)
-
-        batch.decoderSeqs = [a[0] for a in post_sorted_list]
-        batch.decoder_lens = [a[1] for a in post_sorted_list]
-        batch.targetSeqs = [a[2] for a in post_sorted_list]
+        # pre_sort_list = [(a, b, c) for a, b, c  in
+        #                  zip( batch.decoderSeqs, batch.decoder_lens,
+        #                      batch.targetSeqs)]
+        #
+        # post_sorted_list = sorted(pre_sort_list, key=lambda x: x[1], reverse=True)
+        #
+        # batch.decoderSeqs = [a[0] for a in post_sorted_list]
+        # batch.decoder_lens = [a[1] for a in post_sorted_list]
+        # batch.targetSeqs = [a[2] for a in post_sorted_list]
 
         return batch
 
-    def getBatches(self, setname = 'train'):
+    def getBatches(self, typename, setname = 'train'):
         """Prepare the batches for the current epoch
         Return:
             list<Batch>: Get a list of the batches for the next epoch
@@ -125,13 +126,13 @@ class TextData_MT:
 
 
         batches = []
-        batch_size = args['batchSize'] if setname == 'train' else 32
-        print(len(self.datasets[setname]), setname, batch_size)
+        batch_size = args['batchSize'] #if setname == 'train' else 32
+        print(len(self.datasets[typename][setname]), typename, setname, batch_size)
         def genNextSamples():
             """ Generator over the mini-batch training samples
             """
-            for i in range(0, self.getSampleSize(setname), batch_size):
-                yield self.datasets[setname][i:min(i + batch_size, self.getSampleSize(setname))]
+            for i in range(0, self.getSampleSize(typename, setname), batch_size):
+                yield self.datasets[typename][setname][i:min(i + batch_size, self.getSampleSize(typename, setname))]
 
         # TODO: Should replace that by generator (better: by tf.queue)
 
@@ -143,12 +144,12 @@ class TextData_MT:
         # print([self.index2word[id] for id in batches[2].encoderSeqs[5]], batches[2].raws[5])
         return batches
 
-    def getSampleSize(self, setname = 'train'):
+    def getSampleSize(self, typename, setname = 'train'):
         """Return the size of the dataset
         Return:
             int: Number of training samples
         """
-        return len(self.datasets[setname])
+        return len(self.datasets[typename][setname])
 
     def getVocabularySize(self):
         """Return the number of words present in the dataset
@@ -177,6 +178,10 @@ class TextData_MT:
                                     'EN_DE.de': self.basedir + 'europarl-v7.de-en.de',
                                     'EN_FR.en': self.basedir + 'europarl-v7.fr-en.en',
                                     'EN_FR.fr': self.basedir + 'europarl-v7.fr-en.fr'}
+            self.corpusDir_dev =  {'EN_DE.en': self.basedir + 'news-test2008-src.en.sgm',
+                                    'EN_DE.de': self.basedir + 'news-test2008-ref.de.sgm',
+                                    'EN_FR.en': self.basedir + 'news-test2008-src.en.sgm',
+                                    'EN_FR.fr': self.basedir + 'news-test2008-ref.fr.sgm'}
             self.corpusDir_test =  {'EN_DE.en': self.basedir + 'newstest2014-deen-src.en.sgm',
                                     'EN_DE.de': self.basedir + 'newstest2014-deen-ref.de.sgm',
                                     'EN_FR.en': self.basedir + 'newstest2014-fren-src.en.sgm',
@@ -188,6 +193,9 @@ class TextData_MT:
                 r = requests.get('http://www.statmt.org/wmt13/training-parallel-europarl-v7.tgz', allow_redirects=True)
                 open(self.basedir + 'train.tgz', 'wb').write(r.content)
                 self.extract(self.basedir + 'train.tgz', self.basedir)
+                r = requests.get('http://www.statmt.org/wmt14/dev.tgz', allow_redirects=True)
+                open(self.basedir + 'test.tgz', 'wb').write(r.content)
+                self.extract(self.basedir + 'test.tgz', self.basedir)
                 r = requests.get('http://www.statmt.org/wmt14/test-full.tgz', allow_redirects=True)
                 open(self.basedir + 'test.tgz', 'wb').write(r.content)
                 self.extract(self.basedir + 'test.tgz', self.basedir)
@@ -197,8 +205,6 @@ class TextData_MT:
 
             self.fullSamplesPath = args['rootDir'] + '/LMdata.pkl'  # Full sentences length/vocab
 
-
-
         print(self.fullSamplesPath)
         datasetExist = os.path.isfile(self.fullSamplesPath)
         if not datasetExist:  # First time we load the database: creating all files
@@ -206,14 +212,18 @@ class TextData_MT:
 
             dataset = {'EN_DE': {'train': [], 'valid':[], 'test':[]},
                        'EN_FR': {'train': [], 'valid':[], 'test':[]}}
+            self.word2index = {'EN_DE': {}, 'EN_FR':{}}
+            self.sorted_word_index = {'EN_DE': {}, 'EN_FR':{}}
+            self.index2word = {'EN_DE': {}, 'EN_FR':{}}
+            self.index2word_set = {'EN_DE': {}, 'EN_FR':{}}
 
             learn_bpe([self.corpusDir_train['EN_DE.en'], self.corpusDir_train['EN_DE.de']], args['rootDir'] + 'EN_DE.bpe', 37000, 6, True)
-            for type in ['EN_DE', 'EN_FR']:
+            for typename in ['EN_DE', 'EN_FR']:
                 total_words = []
-                codes = codecs.open(args['rootDir'] + type +'.bpe', encoding='utf-8')
+                codes = codecs.open(args['rootDir'] + typename +'.bpe', encoding='utf-8')
                 bpe = BPE(codes, separator='@@')
-                with open(self.corpusDir_train[type + '.en'], 'r') as src_handle:
-                    with open(self.corpusDir_train[type + '.' + type[-2:].lower()], 'r') as tgt_handle:
+                with open(self.corpusDir_train[typename + '.en'], 'r') as src_handle:
+                    with open(self.corpusDir_train[typename + '.' + typename[-2:].lower()], 'r') as tgt_handle:
                         src_lines = src_handle.readlines()
                         tgt_lines = tgt_handle.readlines()
                         for src_line, tgt_line in zip(src_lines, tgt_lines):
@@ -225,10 +235,10 @@ class TextData_MT:
                             tgt_bpe_line = bpe.process_line(tgt_line)
                             total_words.extend(src_bpe_line)
                             total_words.extend(tgt_bpe_line)
-                            dataset[type]['train'].extend([src_bpe_line, tgt_bpe_line])
+                            dataset[typename]['train'].append([src_bpe_line, tgt_bpe_line])
 
-                with open(self.corpusDir_test[type + '.en'], 'r') as src_handle:
-                    with open(self.corpusDir_test[type + '.' + type[-2:].lower()], 'r') as tgt_handle:
+                with open(self.corpusDir_test[typename + '.en'], 'r') as src_handle:
+                    with open(self.corpusDir_test[typename + '.' + typename[-2:].lower()], 'r') as tgt_handle:
                         src_content = src_handle.read()
                         tgt_content = tgt_handle.read()
                         src_soup = BeautifulSoup(src_content)
@@ -246,47 +256,36 @@ class TextData_MT:
                                 tgt_sen = tgtseg.text
                                 src_bpe_line = bpe.process_line(src_sen)
                                 tgt_bpe_line = bpe.process_line(tgt_sen)
-                                dataset[type]['test'].extend([src_bpe_line, tgt_bpe_line])
+                                dataset[typename]['test'].append([src_bpe_line, tgt_bpe_line])
 
-
-
-                print(type, len(dataset[type]['train']), len(dataset[type]['valid']),len(dataset[type]['test']))
+                print(typename, len(dataset[typename]['train']), len(dataset[typename]['valid']),len(dataset[typename]['test']))
 
                 fdist = nltk.FreqDist(total_words)
                 sort_count = fdist.most_common(37000)
-            print('sort_count: ', len(sort_count))
+                print('sort_count: ', len(sort_count))
 
-            with open(self.basedir + "/voc.txt", "w") as v:
-                for w, c in tqdm(sort_count):
-                    if w not in [' ', '', '\n']:
-                        v.write(w)
-                        v.write(' ')
-                        v.write(str(c))
-                        v.write('\n')
+                with open(args['rootDir'] + "/" +typename + "_voc.txt", "w") as v:
+                    for w, c in tqdm(sort_count):
+                        if w not in [' ', '', '\n']:
+                            v.write(w)
+                            v.write(' ')
+                            v.write(str(c))
+                            v.write('\n')
 
-                v.close()
+                    v.close()
 
-            self.word2index = self.read_word2vec(self.basedir + '/voc.txt')
-            self.sorted_word_index = sorted(self.word2index.items(), key=lambda item: item[1])
-            print('sorted')
-            self.index2word = [w for w, n in self.sorted_word_index]
-            print('index2word')
-
-            # with open(os.path.join(self.basedir + '/dump2.pkl'), 'wb') as handle:
-            #     data = {
-            #         'word2index': self.word2index,
-            #         'index2word': self.index2word,
-            #         'datasets': datasets
-            #     }
-            #     pickle.dump(data, handle, -1)
-
-
-            self.index2word_set = set(self.index2word)
-            print('set')
+                self.word2index[typename] = self.read_word2vec(args['rootDir'] + "/" +typename + '_/voc.txt')
+                self.sorted_word_index[typename] = sorted(self.word2index[typename].items(), key=lambda item: item[1])
+                print('sorted')
+                self.index2word[typename] = [w for w, n in self.sorted_word_index[typename]]
+                print('index2word')
+                self.index2word_set[typename] = set(self.index2word[typename])
+                print('set')
 
             # self.raw_sentences = copy.deepcopy(dataset)
-            for setname in ['train', 'valid', 'test']:
-                dataset[setname] = [(self.TurnWordID(sen), sen) for sen in tqdm(dataset[setname])]
+
+                for setname in ['train', 'valid', 'test']:
+                    dataset[typename][setname] = [(self.TurnWordID(src, typename), self.TurnWordID(tgt, typename), src, tgt) for src,tgt in tqdm(dataset[typename][setname])]
             self.datasets = dataset
 
 
@@ -296,12 +295,6 @@ class TextData_MT:
         else:
             self.loadDataset(self.fullSamplesPath)
             print('loaded')
-            # print(max([len(sen) for sid, sen in self.datasets['train']]))
-            # self.symbols = [str(ind) for ind, w in enumerate(self.index2word) if not w.isalpha()]
-            # with open(args['rootDir'] + '/symbol_index.txt','w') as handle:
-            #     handle.write(' '.join(self.symbols))
-            # self.saveDataset(self.fullSamplesPath + 're')
-            # print('resaved')
 
 
 
@@ -311,10 +304,16 @@ class TextData_MT:
             filename (str): pickle filename
         """
         with open(os.path.join(filename), 'wb') as handle:
-            data = {  # Warning: If adding something here, also modifying loadDataset
-                'word2index': self.word2index,
-                'index2word': self.index2word,
-                'datasets': self.datasets
+            data = {'EN_DE': {  # Warning: If adding something here, also modifying loadDataset
+                    'word2index': self.word2index['EN_DE'],
+                    'index2word': self.index2word['EN_DE'],
+                    'datasets': self.datasets['EN_DE']
+                },
+                'EN_FR': {  # Warning: If adding something here, also modifying loadDataset
+                    'word2index': self.word2index['EN_FR'],
+                    'index2word': self.index2word['EN_FR'],
+                    'datasets': self.datasets['EN_FR']
+                }
             }
             pickle.dump(data, handle, -1)  # Using the highest protocol available
 
@@ -327,9 +326,12 @@ class TextData_MT:
         print('Loading dataset from {}'.format(dataset_path))
         with open(dataset_path, 'rb') as handle:
             data = pickle.load(handle)  # Warning: If adding something here, also modifying saveDataset
-            self.word2index = data['word2index']
-            self.index2word = data['index2word']
-            self.datasets = data['datasets']
+            self.word2index['EN_DE'] = data['EN_DE']['word2index']
+            self.index2word['EN_DE'] = data['EN_DE']['index2word']
+            self.datasets['EN_DE'] = data['EN_DE']['datasets']
+            self.word2index['EN_FR'] = data['EN_FR']['word2index']
+            self.index2word['EN_FR'] = data['EN_FR']['index2word']
+            self.datasets['EN_FR'] = data['EN_FR']['datasets']
 
 
     def read_word2vec(self, vocfile ):
@@ -352,146 +354,15 @@ class TextData_MT:
         print ('Dictionary Got!')
         return word2index
 
-    def TurnWordID(self, words):
+    def TurnWordID(self, words, type):
         res = []
         for w in words:
             w = w.lower()
-            if w in self.index2word_set:
-                id = self.word2index[w]
+            if w in self.index2word_set[type]:
+                id = self.word2index[type][w]
                 # if id > 20000:
                 #     print('id>20000:', w,id)
                 res.append(id)
             else:
-                res.append(self.word2index['UNK'])
+                res.append(self.word2index[type]['UNK'])
         return res
-
-
-    def printBatch(self, batch):
-        """Print a complete batch, useful for debugging
-        Args:
-            batch (Batch): a batch object
-        """
-        print('----- Print batch -----')
-        for i in range(len(batch.encoderSeqs[0])):  # Batch size
-            print('Encoder: {}'.format(self.batchSeq2str(batch.encoderSeqs, seqId=i)))
-            print('Decoder: {}'.format(self.batchSeq2str(batch.decoderSeqs, seqId=i)))
-            print('Targets: {}'.format(self.batchSeq2str(batch.targetSeqs, seqId=i)))
-            print('Weights: {}'.format(' '.join([str(weight) for weight in [batchWeight[i] for batchWeight in batch.weights]])))
-
-    def sequence2str(self, sequence, clean=False, reverse=False):
-        """Convert a list of integer into a human readable string
-        Args:
-            sequence (list<int>): the sentence to print
-            clean (Bool): if set, remove the <go>, <pad> and <eos> tokens
-            reverse (Bool): for the input, option to restore the standard order
-        Return:
-            str: the sentence
-        """
-
-        if not sequence:
-            return ''
-
-        if not clean:
-            return ' '.join([self.index2word[idx] for idx in sequence])
-
-        sentence = []
-        for wordId in sequence:
-            if wordId == self.word2index['END_TOKEN']:  # End of generated sentence
-                break
-            elif wordId != self.word2index['PAD'] and wordId != self.word2index['START_TOKEN']:
-                sentence.append(self.index2word[wordId])
-
-        if reverse:  # Reverse means input so no <eos> (otherwise pb with previous early stop)
-            sentence.reverse()
-
-        return self.detokenize(sentence)
-
-    def detokenize(self, tokens):
-        """Slightly cleaner version of joining with spaces.
-        Args:
-            tokens (list<string>): the sentence to print
-        Return:
-            str: the sentence
-        """
-        return ''.join([
-            ' ' + t if not t.startswith('\'') and
-                       t not in string.punctuation
-                    else t
-            for t in tokens]).strip().capitalize()
-
-    def batchSeq2str(self, batchSeq, seqId=0, **kwargs):
-        """Convert a list of integer into a human readable string.
-        The difference between the previous function is that on a batch object, the values have been reorganized as
-        batch instead of sentence.
-        Args:
-            batchSeq (list<list<int>>): the sentence(s) to print
-            seqId (int): the position of the sequence inside the batch
-            kwargs: the formatting options( See sequence2str() )
-        Return:
-            str: the sentence
-        """
-        sequence = []
-        for i in range(len(batchSeq)):  # Sequence length
-            sequence.append(batchSeq[i][seqId])
-        return self.sequence2str(sequence, **kwargs)
-
-    def sentence2enco(self, sentence):
-        """Encode a sequence and return a batch as an input for the model
-        Return:
-            Batch: a batch object containing the sentence, or none if something went wrong
-        """
-
-        if sentence == '':
-            return None
-
-        # First step: Divide the sentence in token
-        tokens = nltk.word_tokenize(sentence)
-        if len(tokens) > args['maxLength']:
-            return None
-
-        # Second step: Convert the token in word ids
-        wordIds = []
-        for token in tokens:
-            wordIds.append(self.getWordId(token, create=False))  # Create the vocabulary and the training sentences
-
-        # Third step: creating the batch (add padding, reverse)
-        batch = self._createBatch([[wordIds, []]])  # Mono batch, no target output
-
-        return batch
-
-    def deco2sentence(self, decoderOutputs):
-        """Decode the output of the decoder and return a human friendly sentence
-        decoderOutputs (list<np.array>):
-        """
-        sequence = []
-
-        # Choose the words with the highest prediction score
-        for out in decoderOutputs:
-            sequence.append(np.argmax(out))  # Adding each predicted word ids
-
-        return sequence  # We return the raw sentence. Let the caller do some cleaning eventually
-
-    def playDataset(self):
-        """Print a random dialogue from the dataset
-        """
-        print('Randomly play samples:')
-        print(len(self.datasets['train']))
-        for i in range(args['playDataset']):
-            idSample = random.randint(0, len(self.datasets['train']) - 1)
-            print('sen: {} {}'.format(self.sequence2str(self.datasets['train'][idSample][0], clean=True), self.datasets['train'][idSample][1]))
-            print()
-        pass
-
-
-def tqdm_wrap(iterable, *args, **kwargs):
-    """Forward an iterable eventually wrapped around a tqdm decorator
-    The iterable is only wrapped if the iterable contains enough elements
-    Args:
-        iterable (list): An iterable object which define the __len__ method
-        *args, **kwargs: the tqdm parameters
-    Return:
-        iter: The iterable eventually decorated
-    """
-    if len(iterable) > 100:
-        return tqdm(iterable, *args, **kwargs)
-    return iterable
