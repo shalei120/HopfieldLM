@@ -71,15 +71,17 @@ class LanguageModel(nn.Module):
             self.hp_network = HopfieldEncoderLayer(self.hopfield)
             self.output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize'])
         elif args['LMtype'] == 'transformer':
-            self.trans_net = nn.TransformerEncoderLayer(d_model=args['embeddingSize'], nhead=1).to(self.device)
+            self.trans_net = nn.TransformerEncoderLayer(d_model=args['embeddingSize'], nhead=args['nhead']).to(self.device)
             self.transformer_encoder = nn.TransformerEncoder(self.trans_net, num_layers=args['numLayers']).to(self.device)
             self.output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize'])
             # self.transformer_network = nn.Sequential(self.transformer_encoder, output_projection).to(self.device)
         elif args['LMtype'] == 'energy':
-            self.trans_net = EnergyTransformerEncoderLayer(d_model=args['embeddingSize'], nhead=1).to(self.device)
-            self.energytransformer_encoder = EnergyTransformerEncoder(self.trans_net, num_layers=args['numLayers'], norm=nn.modules.normalization.LayerNorm(args['embeddingSize'])).to(self.device)
+            self.trans_net = EnergyTransformerEncoderLayer(d_model=args['embeddingSize'], nhead=args['nhead']).to(self.device)
+            self.energytransformer_encoder = EnergyTransformerEncoder(self.trans_net, num_layers=args['numLayers']).to(self.device)
             self.output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize']).to(self.device)
             # self.transformer_network = nn.Sequential(self.transformer_encoder, output_projection).to(self.device)
+            # self.energytransformer_encoder_neg = EnergyTransformerEncoder(self.trans_net, num_layers=args['numLayers'], choice = 0).to(self.device)
+            # self.output_projection_neg = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize']).to(self.device)
 
 
     def generate_square_subsequent_mask(self, sz):
@@ -121,16 +123,21 @@ class LanguageModel(nn.Module):
             # print(de_outputs.size())
         elif args['LMtype'] == 'energy':
             src_mask = self.generate_square_subsequent_mask(self.dec_len).to(self.device)
-            de_outputs, loss_tuple, error = self.energytransformer_encoder(dec_input_embed, mask = src_mask, src_key_padding_mask = mask, training=training)
-            de_outputs = self.output_projection(de_outputs)
+            _, loss_tuple, error, de_outputs_list = self.energytransformer_encoder(dec_input_embed, mask = src_mask, src_key_padding_mask = mask, training=training)
+            de_outputs = self.output_projection(de_outputs_list[-1])
+            # de_outputs_neg, loss_tuple_neg, error_neg = self.energytransformer_encoder_neg(dec_input_embed, mask = src_mask, src_key_padding_mask = mask, training=training)
+            # de_outputs_neg = self.output_projection(de_outputs_neg)
             # de_outputs = de_outputs.transpose(0,1)
         # print(de_outputs.size(),self.decoderTargets.size())
         # print(de_outputs.size(),self.decoderTargets.size() )
         recon_loss = self.CEloss(torch.transpose(de_outputs, 1, 2), self.decoderTargets)
-
         recon_loss = torch.squeeze(recon_loss) * mask
-
         recon_loss_mean = torch.mean(recon_loss, dim=-1)
+
+
+        # recon_loss_neg = self.CEloss(torch.transpose(de_outputs_neg, 1, 2), self.decoderTargets)
+        # recon_loss_neg = torch.squeeze(recon_loss_neg) * mask
+        # recon_loss_mean_neg = torch.mean(recon_loss_neg, dim=-1)
         # print(recon_loss.size(), mask.size())
         true_mean = recon_loss.sum(1) / mask.sum(1)
 
@@ -139,10 +146,20 @@ class LanguageModel(nn.Module):
                 'true_mean':true_mean}
 
         if args['LMtype'] == 'energy':
+            targetvector = self.embedding(self.decoderTargets)
             data['KL'] = loss_tuple[1]
             data['VAE_recon']  = loss_tuple[0]
-            data['error'] = error
             # recon_loss_mean = recon_loss_mean.mean() + 100*KL
+            # c_loss = 0
+            # for out in de_outputs_list[:-1]:
+            #     dots = torch.einsum('bse,bse->bs',out, targetvector)
+            #     # dots1 = torch.exp(-dots.clone())
+            #     dots *= mask
+            #     c_loss += torch.exp(-dots.mean())
+
+            data['error'] = error
+
+
 
         return data
 
