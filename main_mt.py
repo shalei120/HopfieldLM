@@ -39,7 +39,6 @@ parser.add_argument('--server', '-s')
 parser.add_argument('--embeddingsize', '-emb')
 parser.add_argument('--layernum', '-layer')
 parser.add_argument('--nhead', '-nhead')
-parser.add_argument('--typename', '-t')
 
 cmdargs = parser.parse_args()
 
@@ -86,10 +85,7 @@ if cmdargs.nhead is None:
     args['nhead'] = 1
 else:
     args['nhead'] = int(cmdargs.nhead)
-if cmdargs.typename is None:
-    args['typename'] = 1
-else:
-    args['typename'] = int(cmdargs.typename)
+args['typename'] = args['corpus']
 
 def asMinutes(s):
     m = math.floor(s / 60)
