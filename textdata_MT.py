@@ -23,6 +23,7 @@ class Batch:
         self.targetSeqs = []
         self.encoder_lens = []
         self.decoder_lens = []
+        self.raw_target = []
 
 
 class TextData_MT:
@@ -95,6 +96,7 @@ class TextData_MT:
             # Add padding & define weight
             batch.encoder_lens.append(len(batch.encoderSeqs[i]))
             batch.decoder_lens.append(len(batch.targetSeqs[i]))
+            batch.raw_target.append(raw_tgt)
 
         maxlen_dec = max(batch.decoder_lens)
         maxlen_enc = max(batch.encoder_lens)
@@ -151,12 +153,12 @@ class TextData_MT:
         """
         return len(self.datasets[typename][setname])
 
-    def getVocabularySize(self):
+    def getVocabularySize(self, typename):
         """Return the number of words present in the dataset
         Return:
             int: Number of word on the loader corpus
         """
-        return len(self.word2index)
+        return len(self.word2index[typename])
 
     def extract(self, tar_url, extract_path='.'):
         print(tar_url)
