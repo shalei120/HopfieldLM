@@ -65,6 +65,7 @@ if cmdargs.data is None:
     pass
 else:
     args['corpus'] = cmdargs.data
+    args['typename'] = args['corpus']
 
 if cmdargs.server is None:
     args['server'] = 'other'
@@ -85,7 +86,6 @@ if cmdargs.nhead is None:
     args['nhead'] = 1
 else:
     args['nhead'] = int(cmdargs.nhead)
-args['typename'] = args['corpus']
 
 def asMinutes(s):
     m = math.floor(s / 60)
@@ -135,7 +135,8 @@ class Runner:
 
         print(type(self.textData.word2index[args['typename']]), args['device'])
 
-        optimizer = optim.Adam(self.model.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
+        learning_rate =
+        optimizer = optim.Adam(self.model.parameters(), lr=0.001,betas=(0.9, 0.98), eps=1e-09, amsgrad=True)
         # optimizer = torch.optim.SGD(self.model.parameters(), lr=5.0)
         # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=0.95)
 
@@ -227,6 +228,8 @@ class Runner:
                 iter+=1
 
             # scheduler.step()
+            for g in optimizer.param_groups:
+                g['lr'] = args['embeddingSize'] ** (-0.5) * min(iter ** (-0.5), iter*(4000**(-1.5)))
             BLEU = self.Cal_BLEU_for_dataset('test')
             if BLEU < min_BLEU or min_BLEU == -1:
                 print('BLEU = ', BLEU, '>= min_BLEU (', min_BLEU, '), saving model...')
@@ -285,8 +288,9 @@ class Runner:
  
 
 if __name__ == '__main__':
-    # args['corpus'] = 'wiki2'
-    # args['LMtype'] = 'energy'
+    # args['corpus'] = 'EN_DE'
+    # args['typename'] = args['corpus']
+    # args['LMtype'] = 'transformer'
     args['norm_attn'] = True
     r = Runner()
     r.main()
