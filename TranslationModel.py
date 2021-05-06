@@ -101,6 +101,7 @@ class TranslationModel(nn.Module):
         self.decoder_lengths = x['dec_len']
         self.decoderTargets = x['dec_target'].to(self.device)
 
+        print(self.encoderInputs[0], self.decoderInputs[0], self.decoderTargets[0])
         batch_size = self.decoderInputs.size()[0]
         self.dec_len = self.decoderInputs.size()[1]
         enc_input_embed = self.embedding(self.encoderInputs)
