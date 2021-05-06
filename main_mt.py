@@ -2,7 +2,7 @@
 # Author : Lei Sha
 import functools
 print = functools.partial(print, flush=True)
-# from LanguageModel import LanguageModel
+from TranslationModel import TranslationModel
 
 from textdata_MT import  TextData_MT
 import time, sys,datetime
@@ -111,8 +111,8 @@ class Runner:
     def main(self):
         self.textData =  TextData_MT('MT')
 
-        self.start_token = self.textData.word2index['START_TOKEN']
-        self.end_token = self.textData.word2index['END_TOKEN']
+        self.start_token = self.textData.word2index[args['typename']]['START_TOKEN']
+        self.end_token = self.textData.word2index[args['typename']]['END_TOKEN']
         args['vocabularySize'] = self.textData.getVocabularySize(args['typename'])
         print(self.textData.getVocabularySize(args['typename']))
         print(args)
@@ -146,14 +146,15 @@ class Runner:
 
         args['trainseq2seq'] = False
 
-        min_perplexity = -1
+        min_BLEU = -1
 
-        self.Cal_BLEU_for_dataset('test', direction)
+        # self.Cal_BLEU_for_dataset('test')
 
         CE_loss_total = 0
         KL_total = 0
         VAE_recon_total = 0
         error_total = 0
+        print('begin training...')
         for epoch in range(args['numEpochs']):
             losses = []
 
@@ -211,7 +212,7 @@ class Runner:
                     # torch.cuda.empty_cache()
                     # GPUtil.showUtilization()
                     if args['corpus'] != '1mb' or iter % 100000 == 0:
-                        BLEU = self.Cal_BLEU_for_dataset('test', direction)
+                        BLEU = self.Cal_BLEU_for_dataset('test')
                         print('Test ppl: ', BLEU)
 
                         if BLEU < min_BLEU or min_BLEU == -1:
@@ -226,7 +227,7 @@ class Runner:
                 iter+=1
 
             # scheduler.step()
-            BLEU = self.Cal_BLEU_for_dataset('test', direction)
+            BLEU = self.Cal_BLEU_for_dataset('test')
             if BLEU < min_BLEU or min_BLEU == -1:
                 print('BLEU = ', BLEU, '>= min_BLEU (', min_BLEU, '), saving model...')
                 torch.save(self.model, self.model_path.replace('model', 'model_'+args['LMtype']+'_'+args['corpus'] + '_'+str(args['maxLength'])+'_'+str(args['numLayers'])+'_'+str(args['embeddingSize'])))
@@ -250,6 +251,7 @@ class Runner:
         ave_loss = 0
         pred_ans = []  # bleu
         gold_ans = []
+        rec = None
         with torch.no_grad():
             # print(len(self.testbatches[datasetname][0].decoderSeqs))
             for batch in self.testbatches[datasetname]:
@@ -262,15 +264,20 @@ class Runner:
 
                 decoded_words = self.model.predict(x)    # batch seq_len outsize
                 pred_ans.extend(decoded_words)
-                gold_ans.extend([[r] for r in batch.raw_target])
+                gold_ans.extend([[r] for r in batch.raw_source])
+
+                if rec is None:
+                    rec = (decoded_words[0], batch.raw_source[0], batch.raw_target[0])
                 # GPUtil.showUtilization()
                 # true_mean = recon_loss_mean
                 # print(true_mean.size())
-                sum_true = data['true_mean'].sum().item()
-                ave_loss = (ave_loss * num + sum_true) / (num + len(data['true_mean']))
+                # sum_true = data['true_mean'].sum().item()
+                # ave_loss = (ave_loss * num + sum_true) / (num + len(data['true_mean']))
+                #
+                # num += len(data['true_mean'])
 
-                num += len(data['true_mean'])
 
+            print(rec)
             bleu = corpus_bleu(gold_ans, pred_ans)
 
         self.model.train()
