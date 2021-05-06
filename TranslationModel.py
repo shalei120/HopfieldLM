@@ -101,6 +101,8 @@ class TranslationModel(nn.Module):
         self.decoder_lengths = x['dec_len']
         self.decoderTargets = x['dec_target'].to(self.device)
 
+        # print(self.encoderInputs[0], self.decoderInputs[0], self.decoderTargets[0])
+
         batch_size = self.decoderInputs.size()[0]
         self.dec_len = self.decoderInputs.size()[1]
         enc_input_embed = self.embedding(self.encoderInputs)
@@ -180,24 +182,25 @@ class TranslationModel(nn.Module):
         bs = x['dec_target'].size()[0]
         data = self.build(x, training=False)
         # for a single batch x
-        encoder_output = data['enc_output']  # (bs, input_len, d_model)
-
+        # encoder_output = data['enc_output']  # (bs, input_len, d_model)
+        #
         decoded_words = []
-        # initialized the input of the decoder with sos_idx (start of sentence token idx)
-        output = torch.ones(bs, self.max_length).long().to(args['device']) * self.word2index['START_TOKEN']
-        for t in range(1, self.max_length):
-            tgt_emb = self.embedding(output[:, :t]).transpose(0, 1)
-            # tgt_mask = torch.nn.Transformer().generate_square_subsequent_mask(
-            #     t).to(device).transpose(0, 1)
-            decoder_output = self.decoder(tgt=tgt_emb,
-                                     memory=encoder_output,
-                                     tgt_mask=None)
-
-            pred_proba_t = self.output_projection(decoder_output)[-1, :, :]
-            output_t = pred_proba_t.data.topk(1)[1].squeeze()
-            output[:, t] = output_t
+        # # initialized the input of the decoder with sos_idx (start of sentence token idx)
+        # output = torch.ones(bs, self.max_length).long().to(args['device']) * self.word2index['START_TOKEN']
+        # for t in range(1, self.max_length):
+        #     tgt_emb = self.embedding(output[:, :t]).transpose(0, 1)
+        #     # tgt_mask = torch.nn.Transformer().generate_square_subsequent_mask(
+        #     #     t).to(device).transpose(0, 1)
+        #     decoder_output = self.decoder(tgt=tgt_emb,
+        #                              memory=encoder_output,
+        #                              tgt_mask=None)  # s b e
+        #
+        #     pred_proba_t = self.output_projection(decoder_output)[-1, :, :]
+        #     output_t = pred_proba_t.data.topk(1)[1].squeeze()
+        #     output[:, t] = output_t
             # print(output)
-
+        output = torch.argmax(data['de_outputs'], dim= 2)
+        # print(data['de_outputs'].size())
         for b in range(bs):
             decode_id_list = list(output[b, :])
             # print(decode_id_list)
