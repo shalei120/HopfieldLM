@@ -265,16 +265,21 @@ def prune_stats(stats, big_stats, threshold):
                 big_stats[item] = freq
 
 
-def learn_bpe(infile, outfile, num_symbols, min_frequency=2, verbose=False, is_dict=False, total_symbols=False, num_workers=1):
+def learn_bpe(infiles, outfilename, num_symbols, min_frequency=2, verbose=False, is_dict=False, total_symbols=False, num_workers=1):
     """Learn num_symbols BPE operations from vocabulary, and write to outfile.
     """
 
     # version 0.2 changes the handling of the end-of-word token ('</w>');
     # version numbering allows bckward compatibility
+    outfile = open(outfilename, 'w')
     outfile.write('#version: 0.2\n')
 
-    vocab = get_vocabulary(infile, is_dict, num_workers)
-    vocab = dict([(tuple(x[:-1])+(x[-1]+'</w>',) ,y) for (x,y) in vocab.items()])
+    vocab = {}
+    for infilename in infiles:
+        infile = open(infilename, 'r')
+        vocab1 = get_vocabulary(infile, is_dict, num_workers)
+        vocab1 = dict([(tuple(x[:-1])+(x[-1]+'</w>',) ,y) for (x,y) in vocab1.items()])
+        vocab.update(vocab1)
     sorted_vocab = sorted(vocab.items(), key=lambda x: x[1], reverse=True)
 
     stats, indices = get_pair_statistics(sorted_vocab)

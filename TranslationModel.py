@@ -196,13 +196,16 @@ class TranslationModel(nn.Module):
             pred_proba_t = self.output_projection(decoder_output)[-1, :, :]
             output_t = pred_proba_t.data.topk(1)[1].squeeze()
             output[:, t] = output_t
+            # print(output)
 
         for b in range(bs):
             decode_id_list = list(output[b, :])
+            # print(decode_id_list)
             if self.word2index['END_TOKEN'] in decode_id_list:
-                decode_id_list = decode_id_list[:decode_id_list.index(self.word2index['END_TOKEN'])] \
+                decode_id_list = decode_id_list[1:decode_id_list.index(self.word2index['END_TOKEN'])] \
                     if decode_id_list[0] != self.word2index['END_TOKEN'] else [self.word2index['END_TOKEN']]
             decoded_words.append([self.index2word[id] for id in decode_id_list])
+            # print(decoded_words)
         return decoded_words
 
 
