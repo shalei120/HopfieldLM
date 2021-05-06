@@ -233,8 +233,8 @@ class TextData_MT:
             self.index2word = {'EN_DE': {}, 'EN_FR':{}}
             self.index2word_set = {'EN_DE': {}, 'EN_FR':{}}
 
-            learn_bpe([self.corpusDir_train['EN_DE.en'], self.corpusDir_train['EN_DE.de']], args['rootDir'] + 'EN_DE.bpe', 37000, 6, True)
-            learn_bpe([self.corpusDir_train['EN_FR.en'], self.corpusDir_train['EN_FR.fr']], args['rootDir'] + 'EN_FR.bpe', 37000, 6, True)
+            # learn_bpe([self.corpusDir_train['EN_DE.en'], self.corpusDir_train['EN_DE.de']], args['rootDir'] + 'EN_DE.bpe', 37000, 6, True)
+            # learn_bpe([self.corpusDir_train['EN_FR.en'], self.corpusDir_train['EN_FR.fr']], args['rootDir'] + 'EN_FR.bpe', 37000, 6, True)
             for typename in ['EN_DE', 'EN_FR']:
                 total_words = []
                 codes = codecs.open(args['rootDir'] + typename +'.bpe', encoding='utf-8')
