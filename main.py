@@ -5,6 +5,7 @@ print = functools.partial(print, flush=True)
 from LanguageModel import LanguageModel
 from textdata_wiki2 import  TextData_wiki2
 from textdata import  TextData_1mb
+from textdata_enwiki8 import  TextData_enwiki8
 import time, sys,datetime
 import torch
 import torch.autograd as autograd
@@ -120,6 +121,8 @@ class Runner:
             self.textData = TextData_wiki2('wiki2')
         elif  args['corpus'] == 'wiki103':
             self.textData = TextData_wiki2('wiki103')
+        elif  args['corpus'] == 'enwiki8':
+            self.textData = TextData_enwiki8('enwiki8')
         # self.LMer = LMEr()
         self.start_token = self.textData.word2index['START_TOKEN']
         self.end_token = self.textData.word2index['END_TOKEN']
