@@ -814,14 +814,18 @@ class EnergyTransformerEncoderLayer(Module):
         attn_output_weights = torch.bmm(q, k.transpose(1, 2))
         assert list(attn_output_weights.size()) == [bsz * num_heads, tgt_len, src_len]
 
-        if args['norm_attn']:
+        if args['choose'] == 'norm_attn' or args['choose'] == 'NADM':
+            attn_output_weights = F.layer_norm(attn_output_weights, (attn_output_weights.size()[-1],))
+
+        if args['choose'] == 'BET':
             # attn_output_weights = F.layer_norm(attn_output_weights,(attn_output_weights.size()[-1],))
             attn_output_weights_beta = attn_output_weights.clone()
-            # I = torch.eye(query.size()[0]).to(args['device'])
-            # I[0,0] = 0
-            # I = I.masked_fill_(I==1, float("-inf"))
-            # attn_output_weights += I
 
+        if args['choose']=='Diagmask' or args['choose'] == 'NADM':
+            I = torch.eye(query.size()[0]).to(args['device'])
+            I[0,0] = 0
+            I = I.masked_fill_(I==1, float("-inf"))
+            attn_output_weights += I
         # selfdot = torch.einsum('bse,bse->bs',q,k).unsqueeze(2)
 
 
@@ -854,7 +858,7 @@ class EnergyTransformerEncoderLayer(Module):
         attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
         attn_output = F.linear(attn_output, out_proj_weight, out_proj_bias)
 
-        if args['norm_attn']:
+        if  args['choose'] == 'BET':
             cat = torch.cat([q, attn_output.transpose(0,1)], dim = 2) # N S 2E
             high = self.f(cat).squeeze() # N S (1)
             fixed_weight = attn_output_weights_beta * high.unsqueeze(1)

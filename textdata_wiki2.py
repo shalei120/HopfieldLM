@@ -167,17 +167,17 @@ class TextData_wiki2:
     def loadCorpus(self, corpusname):
         """Load/create the conversations data
         """
-
+        dataname = 'wikitext-2' if corpusname == 'wiki2' else 'wikitext-103'
         if args['server'] == 'dgx':
-            self.basedir = './.data/wikitext-2/'
+            self.basedir = './.data/'+dataname+'/'
         else:
-            self.basedir = '../wikitext-2/'
+            self.basedir = '../'+dataname+'/'
 
         self.corpus = self.basedir + '/wiki.train.tokens'
 
         self.corpus_test =  self.basedir + '/wiki.test.tokens'
 
-        self.fullSamplesPath = args['rootDir'] + '/LMdata_wiki.pkl'  # Full sentences length/vocab
+        self.fullSamplesPath = args['rootDir'] + '/LMdata_'+dataname+'.pkl'  # Full sentences length/vocab
 
 
 
@@ -218,7 +218,7 @@ class TextData_wiki2:
             sort_count = fdist.most_common(30000)
             print('sort_count: ', len(sort_count))
 
-            with open(args['rootDir'] + "/voc_wiki2.txt", "w") as v:
+            with open(args['rootDir'] + "/voc_"+dataname+".txt", "w") as v:
                 for w, c in tqdm(sort_count):
                     if w not in [' ', '', '\n']:
                         v.write(w)
@@ -229,7 +229,7 @@ class TextData_wiki2:
                 v.close()
 
 
-            self.word2index = self.read_word2vec(args['rootDir'] + '/voc_wiki2.txt')
+            self.word2index = self.read_word2vec(args['rootDir'] + '/voc_'+dataname+'.txt')
             self.sorted_word_index = sorted(self.word2index.items(), key=lambda item: item[1])
             print('sorted')
             self.index2word = [w for w, n in self.sorted_word_index]

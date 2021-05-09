@@ -22,7 +22,8 @@ import argparse
 import pickle
 from Hyperparameters import args
 from nltk.translate.bleu_score import corpus_bleu, SmoothingFunction
-
+# import seaborn
+# seaborn.set_context(context="talk")
 # import matplotlib.pyplot as plt
 import numpy as np
 import copy
@@ -38,6 +39,7 @@ parser.add_argument('--server', '-s')
 parser.add_argument('--embeddingsize', '-emb')
 parser.add_argument('--layernum', '-layer')
 parser.add_argument('--nhead', '-nhead')
+parser.add_argument('--choose', '-c')
 
 cmdargs = parser.parse_args()
 
@@ -84,6 +86,10 @@ if cmdargs.nhead is None:
     args['nhead'] = 1
 else:
     args['nhead'] = int(cmdargs.nhead)
+if cmdargs.choose is None:
+    args['choose'] = None
+else:
+    args['choose'] = cmdargs.choose
 
 def asMinutes(s):
     m = math.floor(s / 60)
@@ -111,7 +117,9 @@ class Runner:
             self.textData =  TextData_1mb('LMbenchmark')
             # args['embeddingSize'] = 300
         elif  args['corpus'] == 'wiki2':
-            self.textData = TextData_wiki2('LMbenchmark')
+            self.textData = TextData_wiki2('wiki2')
+        elif  args['corpus'] == 'wiki103':
+            self.textData = TextData_wiki2('wiki103')
         # self.LMer = LMEr()
         self.start_token = self.textData.word2index['START_TOKEN']
         self.end_token = self.textData.word2index['END_TOKEN']
@@ -212,8 +220,12 @@ class Runner:
                     # torch.cuda.empty_cache()
                     # GPUtil.showUtilization()
                     if args['corpus'] != '1mb' or iter % 100000 == 0:
-                        perplexity = self.Cal_perplexity_for_dataset('test', direction)
+                        perplexity= self.Cal_perplexity_for_dataset('test', direction)
                         print('Test ppl: ', perplexity)
+                        # print('Attention prop: ', attn)
+                        # print('Attention other: ', other_attn)
+                        # print('std other: ', std)
+                        # print('KLC kln: ', klc,kln)
 
                         if perplexity < min_perplexity or min_perplexity == -1:
                             print('perplexity = ', perplexity, '>= min_perplexity (', min_perplexity, '), saving model...')
@@ -227,7 +239,7 @@ class Runner:
                 iter+=1
 
             # scheduler.step()
-            perplexity = self.Cal_perplexity_for_dataset('test', direction)
+            perplexity= self.Cal_perplexity_for_dataset('test', direction)
             if perplexity < min_perplexity or min_perplexity == -1:
                 print('perplexity = ', perplexity, '>= min_perplexity (', min_perplexity, '), saving model...')
                 torch.save(self.model, self.model_path.replace('model', 'model_'+args['LMtype']+'_'+args['corpus'] + '_'+str(args['maxLength'])+'_'+str(args['numLayers'])+'_'+str(args['embeddingSize'])))
@@ -237,7 +249,7 @@ class Runner:
             # if args['LMtype'] == 'energy':
             #     print('Epoch ', epoch, 'loss = ', sum(losses) / len(losses), 'Valid perplexity = ', perplexity, 'VAE recon = ', VAE_recon_avg, 'KL loss = ', KL_avg)
             # else:
-            print('Epoch ', epoch, 'loss = ', sum(losses) / len(losses), 'Valid perplexity = ', perplexity)
+            print('Epoch ', epoch, 'loss = ', sum(losses) / len(losses), 'Valid perplexity = ', perplexity)#, 'Attention prop: ', attn, 'Attention other: ', other_attn,'std other: ', std, 'KLC kln: ', klc,kln)
 
 
         # self.test()
@@ -259,6 +271,11 @@ class Runner:
         ave_loss = 0
         with torch.no_grad():
             # print(len(self.testbatches[datasetname][0].decoderSeqs))
+            attns = []
+            other_attns = []
+            stds = []
+            klcs = []
+            klns = []
             for batch in self.testbatches[datasetname]:
                 x = {}
 
@@ -277,8 +294,14 @@ class Runner:
 
                 num += len(data['true_mean'])
 
+                # attn, other_attn, std, klc,kln = self.analysis_attn(data['attn_list'], x['dec_input'], self.model.embedding)
+                # attns.append(attn)
+                # other_attns.append(other_attn)
+                # stds.append(std)
+                # klcs.append(klc)
+                # klns.append(kln)
         self.model.train()
-        return np.exp(ave_loss)
+        return np.exp(ave_loss)#, sum(attns) / len(attns), sum(other_attns) / len(other_attns), sum(stds) / len(stds), sum(klcs) / len(klcs), sum(klns) / len(klns)
 
 
     def indexesFromSentence(self,  sentence):
@@ -316,6 +339,99 @@ class Runner:
             output_sentence = ' '.join(output_words[0])  # batch=1
             print('<', output_sentence, label)
             print('')
+
+    def draw_attn(self, attn, sentences, id=1):
+        import matplotlib.pyplot as plt
+        from matplotlib import colors
+
+        fontsize = 5
+        pwargs = {'interpolation': 'nearest'}
+        sen = sentences[id]
+        sen = list(sen)
+        # print(sen)
+        # sen = sen[:10]
+        num = len(sen)
+        sen = [self.textData.index2word[ii] for ii in sen]
+        plt.imshow(attn[2].cpu()[id,:num,:num], cmap=plt.get_cmap('Reds'), interpolation='nearest')  # cmap=plt.cm.jet,**pwargs)
+        plt.locator_params(axis='y', nbins=num)
+        plt.locator_params(axis='x', nbins=num)
+        plt.gca().set_xticklabels(tuple(sen), rotation=-15, ha='left',
+                                  minor=False, fontsize=fontsize)
+        plt.gca().set_yticklabels(tuple(sen), rotation=0, ha='right',
+                                  minor=False, fontsize=fontsize)
+
+        plt.savefig(args['rootDir'] + 'attn.png')
+
+
+    def analysis_attn(self, attn_list, sentences, embedding):
+        probs_list = []
+        seq_len = attn_list[0].size()[1]
+        ones = torch.diag(torch.ones(seq_len)).unsqueeze(0).to(args['device'])
+
+        utriu = 1- torch.triu(torch.ones(seq_len,seq_len))
+        utriu = utriu.unsqueeze(0).to(args['device'])
+        other_list = []
+        std_list = []
+
+        bigtriu = torch.triu(torch.ones(seq_len,seq_len)).transpose(0,1).unsqueeze(0).to(args['device'])
+        sen_embed = embedding(sentences.to(args['device'])) # bse
+        sa = torch.einsum('bse,bte->bst', sen_embed, sen_embed)
+
+        current_comp = sa + bigtriu.float().masked_fill(bigtriu == 0, float('-inf')).masked_fill(bigtriu == 1, float(0.0))
+        next_comp = torch.clone(sa)
+        next_comp[:,:-1,:] = next_comp[:,1:,:]
+        next_comp = next_comp + bigtriu.float().masked_fill(bigtriu == 0, float('-inf')).masked_fill(bigtriu == 1, float(0.0))
+        # print(current_comp)
+        current_comp = F.softmax(current_comp, dim = -1)
+        next_comp = F.softmax(next_comp, dim = -1)
+        # print(current_comp)
+
+        klcs=[]
+        klns = []
+
+        for attn in attn_list:
+            probs = attn * ones
+            probs = probs.sum(2).mean()
+            probs_list.append(probs)
+
+            other_ori = attn * utriu
+            tri_num = (seq_len**2 -seq_len) / 2
+            tri_mean = other_ori.sum(2).sum(1) / tri_num
+            other = tri_mean.mean()
+            other_list.append(other)
+
+            mean = other_ori.sum(2)[:,1:] / utriu.sum(2)[:,1:]
+            res1 = ((attn[:,1:,:] - mean.unsqueeze(2))**2) * utriu[:,1:,:]
+            res1 = res1.sum(2) / utriu.sum(2)[:,1:]
+            # print(res1)
+            std = torch.sqrt(res1).mean()
+            std_list.append(std)
+
+            # for a in attn[5,:,:]:
+            #     for b in a:
+            #         print(b.cpu().numpy(), end=',')
+            #     print()
+            # print(attn[5,:,:])
+            # print(attn,current_comp)
+            klc = attn * torch.log(attn / (current_comp+1e-6) + 1e-6)
+            # print('klc',klc)
+            klc = klc.sum(2).mean()
+
+            kln = attn * torch.log(attn / (next_comp+1e-6) + 1e-6)
+            kln = kln.sum(2).mean()
+
+            klcs.append(klc)
+            klns.append(kln)
+
+
+
+
+
+
+
+
+        return torch.stack(probs_list), torch.stack(other_list), torch.stack(std_list), torch.stack(klcs), torch.stack(klns)
+
 
  
 

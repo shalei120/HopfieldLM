@@ -135,7 +135,7 @@ class Runner:
 
         print(type(self.textData.word2index[args['typename']]), args['device'])
 
-        learning_rate =
+        # learning_rate =
         optimizer = optim.Adam(self.model.parameters(), lr=0.001,betas=(0.9, 0.98), eps=1e-09, amsgrad=True)
         # optimizer = torch.optim.SGD(self.model.parameters(), lr=5.0)
         # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=0.95)
@@ -267,7 +267,7 @@ class Runner:
 
                 decoded_words = self.model.predict(x)    # batch seq_len outsize
                 pred_ans.extend(decoded_words)
-                gold_ans.extend([[r] for r in batch.raw_source])
+                gold_ans.extend([[r] for r in batch.raw_target])
 
                 if rec is None:
                     rec = (decoded_words[0], batch.raw_source[0], batch.raw_target[0])
