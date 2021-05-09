@@ -89,8 +89,8 @@ class TextData_MT:
                 tgt_sample = tgt_sample[:maxlen_def]
 
             batch.encoderSeqs.append(src_sample)
-            batch.decoderSeqs.append([self.word2index[args['typename']]['START_TOKEN']] + src_sample)  # Add the <go> and <eos> tokens
-            batch.targetSeqs.append(src_sample + [self.word2index[args['typename']]['END_TOKEN']])  # Same as decoder, but shifted to the left (ignore the <go>)
+            batch.decoderSeqs.append([self.word2index[args['typename']]['START_TOKEN']] + tgt_sample)  # Add the <go> and <eos> tokens
+            batch.targetSeqs.append(tgt_sample + [self.word2index[args['typename']]['END_TOKEN']])  # Same as decoder, but shifted to the left (ignore the <go>)
 
             assert len(batch.decoderSeqs[i]) <= maxlen_def +1
 
