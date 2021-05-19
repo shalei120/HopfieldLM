@@ -130,12 +130,12 @@ class Runner:
         print(self.textData.getVocabularySize())
         print(args)
         torch.manual_seed(0)
-        self.model = LanguageModel(self.textData.word2index, self.textData.index2word).to(args['device'])
-        # self.model = torch.load(self.model_path.replace('model', 'model_'+'fw'), map_location=args['device'])
+        # self.model = LanguageModel(self.textData.word2index, self.textData.index2word).to(args['device'])
+        self.model = torch.load(args['rootDir']+ 'model_energy_wiki2_100_6_300.pth', map_location=args['device'])
         params = sum([np.prod(p.size()) for p in self.model.parameters()])
         print(params, sum([sys.getsizeof(p.storage()) for p in self.model.parameters()])/1000000, 'm')
-        self.trainLM()     # contain  model saving
-        self.evaluateRandomly()
+        # self.trainLM()     # contain  model saving
+        # self.evaluateRandomly()
         self.testLM()
 
      
@@ -260,11 +260,11 @@ class Runner:
 
     def testLM(self):
         start = time.time()
-        print('Test set BLEU = ', self.Cal_BLEU_for_dataset('test'))
+        print('Test set BLEU = ', self.Cal_perplexity_for_dataset('test', printlog = True))
         end = time.time()
         print('Test time: ', time.strftime("%H:%M:%S", time.gmtime(end-start )))
 
-    def Cal_perplexity_for_dataset(self, datasetname, direction = 'fw'):
+    def Cal_perplexity_for_dataset(self, datasetname, printlog = False):
         if not hasattr(self, 'testbatches' ):
             self.testbatches = {}
         if datasetname not in self.testbatches:
@@ -272,6 +272,8 @@ class Runner:
         self.model.eval()
         num = 0
         ave_loss = 0
+        if printlog:
+            filepointer = open(args['rootDir'] + 'attn_log.txt', 'w')
         with torch.no_grad():
             # print(len(self.testbatches[datasetname][0].decoderSeqs))
             attns = []
@@ -279,7 +281,7 @@ class Runner:
             stds = []
             klcs = []
             klns = []
-            for batch in self.testbatches[datasetname]:
+            for batch in tqdm(self.testbatches[datasetname]):
                 x = {}
 
                 x['dec_input'] = autograd.Variable(torch.LongTensor(batch.decoderSeqs))
@@ -303,6 +305,8 @@ class Runner:
                 # stds.append(std)
                 # klcs.append(klc)
                 # klns.append(kln)
+                if printlog:
+                    self.printattn(data['attns'], batch.raw, filepointer)
         self.model.train()
         return np.exp(ave_loss)#, sum(attns) / len(attns), sum(other_attns) / len(other_attns), sum(stds) / len(stds), sum(klcs) / len(klcs), sum(klns) / len(klns)
 
@@ -425,23 +429,42 @@ class Runner:
 
             klcs.append(klc)
             klns.append(kln)
-
-
-
-
-
-
-
-
         return torch.stack(probs_list), torch.stack(other_list), torch.stack(std_list), torch.stack(klcs), torch.stack(klns)
+
+    def printattn(self, attn_list, raw_sentence_list, fp):
+        res   = []
+        for ind, sen in enumerate(raw_sentence_list):
+            res.append([])
+            for layer_index, attn_layer in enumerate(attn_list):
+                res[ind].append({'sen': sen, 'pos':[]})
+                matrix = attn_layer[ind,:,:]
+                for p in range(10, len(sen)):
+                    attn_sen = matrix[p,:]
+                    _, indices = torch.topk(attn_sen, 5)
+                    high = [sen[i] for i in indices]
+                    res[ind][layer_index]['pos'].append((p,sen[p],','.join(high)))
+
+
+                    fp.write(str(layer_index) + '\t' + sen + '\t')
+                    fp.write(str(p) + ' ' + sen[p] + '\t' + ','.join(high)+'\n')
+
+
+
+
+
+
+
+
+
 
 
  
 
 if __name__ == '__main__':
-    # args['corpus'] = 'wiki2'
-    # args['LMtype'] = 'energy'
-    args['norm_attn'] = True
+    args['corpus'] = 'wiki2'
+    args['LMtype'] = 'energy'
+    args['choose'] = 'BET-NN'
+    # args['norm_attn'] = True
     r = Runner()
     # r.textData = TextData('LMbenchmark')
 

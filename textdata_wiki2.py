@@ -27,6 +27,7 @@ class Batch:
         self.decoderSeqs = []
         self.targetSeqs = []
         self.decoder_lens = []
+        self.raw = []
 
 
 class TextData_wiki2:
@@ -98,6 +99,7 @@ class TextData_wiki2:
             # TODO: Should use tf batch function to automatically add padding and batch samples
             # Add padding & define weight
             batch.decoder_lens.append(len(batch.targetSeqs[i]))
+            batch.raw.append(raw_sentence)
 
         maxlen_dec = max(batch.decoder_lens)
 
