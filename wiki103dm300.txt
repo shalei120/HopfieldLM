@@ -1,0 +1,1120 @@
+Sun May  9 15:09:13 2021       
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 465.19.01    Driver Version: 465.19.01    CUDA Version: 11.3     |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|                               |                      |               MIG M. |
+|===============================+======================+======================|
+|   0  NVIDIA Quadro R...  On   | 00000000:1B:00.0 Off |                  Off |
+| 33%   40C    P8    25W / 260W |      3MiB / 24220MiB |      0%      Default |
+|                               |                      |                  N/A |
++-------------------------------+----------------------+----------------------+
+                                                                               
++-----------------------------------------------------------------------------+
+| Processes:                                                                  |
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+|        ID   ID                                                   Usage      |
+|=============================================================================|
+|  No running processes found                                                 |
++-----------------------------------------------------------------------------+
+Collecting nltk
+  Downloading nltk-3.6.2-py3-none-any.whl (1.5 MB)
+Collecting matplotlib
+  Downloading matplotlib-3.4.2-cp38-cp38-manylinux1_x86_64.whl (10.3 MB)
+Collecting beautifulsoup4
+  Downloading beautifulsoup4-4.9.3-py3-none-any.whl (115 kB)
+Collecting torch==1.7.1
+  Downloading torch-1.7.1-cp38-cp38-manylinux1_x86_64.whl (776.8 MB)
+Collecting torchtext==0.8
+  Downloading torchtext-0.8.0-cp38-cp38-manylinux1_x86_64.whl (7.0 MB)
+Collecting click
+  Downloading click-7.1.2-py2.py3-none-any.whl (82 kB)
+Collecting joblib
+  Downloading joblib-1.0.1-py3-none-any.whl (303 kB)
+Requirement already satisfied: tqdm in /home/user/miniconda/lib/python3.8/site-packages (from nltk->-r requirements.txt (line 1)) (4.46.0)
+Collecting regex
+  Downloading regex-2021.4.4-cp38-cp38-manylinux2014_x86_64.whl (733 kB)
+Collecting kiwisolver>=1.0.1
+  Downloading kiwisolver-1.3.1-cp38-cp38-manylinux1_x86_64.whl (1.2 MB)
+Collecting cycler>=0.10
+  Downloading cycler-0.10.0-py2.py3-none-any.whl (6.5 kB)
+Collecting pyparsing>=2.2.1
+  Downloading pyparsing-2.4.7-py2.py3-none-any.whl (67 kB)
+Requirement already satisfied: numpy>=1.16 in /home/user/miniconda/lib/python3.8/site-packages (from matplotlib->-r requirements.txt (line 2)) (1.19.2)
+Requirement already satisfied: pillow>=6.2.0 in /home/user/miniconda/lib/python3.8/site-packages (from matplotlib->-r requirements.txt (line 2)) (8.2.0)
+Collecting python-dateutil>=2.7
+  Downloading python_dateutil-2.8.1-py2.py3-none-any.whl (227 kB)
+Collecting soupsieve>1.2; python_version >= "3.0"
+  Downloading soupsieve-2.2.1-py3-none-any.whl (33 kB)
+Requirement already satisfied: typing-extensions in /home/user/miniconda/lib/python3.8/site-packages (from torch==1.7.1->-r requirements.txt (line 4)) (3.7.4.3)
+Requirement already satisfied: requests in /home/user/miniconda/lib/python3.8/site-packages (from torchtext==0.8->-r requirements.txt (line 5)) (2.23.0)
+Requirement already satisfied: six in /home/user/miniconda/lib/python3.8/site-packages (from cycler>=0.10->matplotlib->-r requirements.txt (line 2)) (1.14.0)
+Requirement already satisfied: urllib3!=1.25.0,!=1.25.1,<1.26,>=1.21.1 in /home/user/miniconda/lib/python3.8/site-packages (from requests->torchtext==0.8->-r requirements.txt (line 5)) (1.25.8)
+Requirement already satisfied: chardet<4,>=3.0.2 in /home/user/miniconda/lib/python3.8/site-packages (from requests->torchtext==0.8->-r requirements.txt (line 5)) (3.0.4)
+Requirement already satisfied: idna<3,>=2.5 in /home/user/miniconda/lib/python3.8/site-packages (from requests->torchtext==0.8->-r requirements.txt (line 5)) (2.9)
+Requirement already satisfied: certifi>=2017.4.17 in /home/user/miniconda/lib/python3.8/site-packages (from requests->torchtext==0.8->-r requirements.txt (line 5)) (2020.12.5)
+Installing collected packages: click, joblib, regex, nltk, kiwisolver, cycler, pyparsing, python-dateutil, matplotlib, soupsieve, beautifulsoup4, torch, torchtext
+  Attempting uninstall: torch
+    Found existing installation: torch 1.8.1
+    Uninstalling torch-1.8.1:
+      Successfully uninstalled torch-1.8.1
+Successfully installed beautifulsoup4-4.9.3 click-7.1.2 cycler-0.10.0 joblib-1.0.1 kiwisolver-1.3.1 matplotlib-3.4.2 nltk-3.6.2 pyparsing-2.4.7 python-dateutil-2.8.1 regex-2021.4.4 soupsieve-2.2.1 torch-1.7.1 torchtext-0.8.0
+./artifacts//LMdata_wikitext-103.pkl
+Loading dataset from ./artifacts//LMdata_wikitext-103.pkl
+loaded
+Loaded LMbenchmark: 30004 words, 0 QA
+30004
+{'test': None, 'createDataset': True, 'playDataset': 10, 'reset': True, 'device': 'cuda:0', 'rootDir': './artifacts/', 'retrain_model': 'No', 'maxLength': 100, 'vocabularySize': 30004, 'hiddenSize': 100, 'numLayers': 6, 'softmaxSamples': 0, 'initEmbeddings': True, 'embeddingSize': 300, 'numEpochs': 1000, 'saveEvery': 2000, 'batchSize': 64, 'learningRate': 0.001, 'dropout': 0.9, 'clip': 5.0, 'encunit': 'lstm', 'decunit': 'lstm', 'enc_numlayer': 2, 'dec_numlayer': 2, 'maxLengthEnco': 100, 'maxLengthDeco': 101, 'temperature': 1.0, 'LMtype': 'energy', 'corpus': 'wiki103', 'server': 'dgx', 'nhead': 4, 'choose': 'Diagmask', 'norm_attn': True}
+LanguageModel creation...
+34248254 137.003768 m
+<class 'dict'> cuda:0
+1160832
+niters  18138
+2879
+28m 54s (- 2021-05-09 15:39:39.703502) (10000 55%) loss = 3.2251, CE_loss = 3.2251, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  70.09274252345588
+perplexity =  70.09274252345588 >= min_perplexity ( -1 ), saving model...
+perplexity =  55.294233230485176 >= min_perplexity ( 70.09274252345588 ), saving model...
+Epoch  0 loss =  3.073271079893635 Valid perplexity =  55.294233230485176
+57m 20s (- 2021-05-09 16:08:05.963549) (20000 110%) loss = 2.8667, CE_loss = 2.8667, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  53.390564401606056
+perplexity =  53.390564401606056 >= min_perplexity ( 55.294233230485176 ), saving model...
+85m 43s (- 2021-05-09 16:36:28.626193) (30000 165%) loss = 2.7265, CE_loss = 2.7265, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  44.63009844538493
+perplexity =  44.63009844538493 >= min_perplexity ( 53.390564401606056 ), saving model...
+perplexity =  42.30327106163062 >= min_perplexity ( 44.63009844538493 ), saving model...
+Epoch  1 loss =  2.7056470103278447 Valid perplexity =  42.30327106163062
+114m 9s (- 2021-05-09 17:04:54.702515) (40000 220%) loss = 2.6329, CE_loss = 2.6329, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  41.55541124322047
+perplexity =  41.55541124322047 >= min_perplexity ( 42.30327106163062 ), saving model...
+142m 33s (- 2021-05-09 17:33:18.848642) (50000 275%) loss = 2.5806, CE_loss = 2.5806, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  38.43423903614671
+perplexity =  38.43423903614671 >= min_perplexity ( 41.55541124322047 ), saving model...
+perplexity =  37.27413613731362 >= min_perplexity ( 38.43423903614671 ), saving model...
+Epoch  2 loss =  2.575972504132519 Valid perplexity =  37.27413613731362
+171m 7s (- 2021-05-09 18:01:52.177940) (60000 330%) loss = 2.5306, CE_loss = 2.5306, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  36.98576738458336
+perplexity =  36.98576738458336 >= min_perplexity ( 37.27413613731362 ), saving model...
+199m 44s (- 2021-05-09 18:30:29.798507) (70000 385%) loss = 2.4987, CE_loss = 2.4987, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  34.832631213286476
+perplexity =  34.832631213286476 >= min_perplexity ( 36.98576738458336 ), saving model...
+perplexity =  34.54498978287402 >= min_perplexity ( 34.832631213286476 ), saving model...
+Epoch  3 loss =  2.503101999937259 Valid perplexity =  34.54498978287402
+228m 29s (- 2021-05-09 18:59:14.258871) (80000 441%) loss = 2.4680, CE_loss = 2.4680, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  34.70218247046053
+257m 7s (- 2021-05-09 19:27:52.791062) (90000 496%) loss = 2.4520, CE_loss = 2.4520, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  33.00590428069808
+perplexity =  33.00590428069808 >= min_perplexity ( 34.54498978287402 ), saving model...
+perplexity =  32.870497944458265 >= min_perplexity ( 33.00590428069808 ), saving model...
+Epoch  4 loss =  2.4555078448442447 Valid perplexity =  32.870497944458265
+285m 54s (- 2021-05-09 19:56:39.105784) (100000 551%) loss = 2.4287, CE_loss = 2.4287, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  32.8471821852035
+perplexity =  32.8471821852035 >= min_perplexity ( 32.870497944458265 ), saving model...
+perplexity =  31.695788005100713 >= min_perplexity ( 32.8471821852035 ), saving model...
+Epoch  5 loss =  2.421417471518037 Valid perplexity =  31.695788005100713
+314m 39s (- 2021-05-09 20:25:24.306387) (110000 606%) loss = 2.4101, CE_loss = 2.4101, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  32.19774747353692
+343m 22s (- 2021-05-09 20:54:07.543885) (120000 661%) loss = 2.3998, CE_loss = 2.3998, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  31.216920730004116
+perplexity =  31.216920730004116 >= min_perplexity ( 31.695788005100713 ), saving model...
+perplexity =  30.94914456566932 >= min_perplexity ( 31.216920730004116 ), saving model...
+Epoch  6 loss =  2.395746754759043 Valid perplexity =  30.94914456566932
+372m 5s (- 2021-05-09 21:22:50.867689) (130000 716%) loss = 2.3861, CE_loss = 2.3861, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  30.80572698613622
+perplexity =  30.80572698613622 >= min_perplexity ( 30.94914456566932 ), saving model...
+400m 54s (- 2021-05-09 21:51:39.509567) (140000 771%) loss = 2.3794, CE_loss = 2.3794, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  30.38802589296216
+perplexity =  30.38802589296216 >= min_perplexity ( 30.80572698613622 ), saving model...
+perplexity =  30.346018791522415 >= min_perplexity ( 30.38802589296216 ), saving model...
+Epoch  7 loss =  2.3752975632480835 Valid perplexity =  30.346018791522415
+429m 41s (- 2021-05-09 22:20:26.663476) (150000 826%) loss = 2.3657, CE_loss = 2.3657, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  30.54901547924503
+458m 18s (- 2021-05-09 22:49:03.844537) (160000 882%) loss = 2.3596, CE_loss = 2.3596, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  29.68164485002198
+perplexity =  29.68164485002198 >= min_perplexity ( 30.346018791522415 ), saving model...
+Epoch  8 loss =  2.3585706608046872 Valid perplexity =  29.776823845591846
+487m 2s (- 2021-05-09 23:17:47.601618) (170000 937%) loss = 2.3457, CE_loss = 2.3457, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  30.131732004746137
+515m 42s (- 2021-05-09 23:46:27.277076) (180000 992%) loss = 2.3466, CE_loss = 2.3466, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  29.369315404562045
+perplexity =  29.369315404562045 >= min_perplexity ( 29.68164485002198 ), saving model...
+Epoch  9 loss =  2.3448923158696893 Valid perplexity =  29.407259341128988
+544m 27s (- 2021-05-10 00:15:12.983245) (190000 1047%) loss = 2.3365, CE_loss = 2.3365, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  29.606174568963667
+perplexity =  29.025173985453073 >= min_perplexity ( 29.369315404562045 ), saving model...
+Epoch  10 loss =  2.3331951523122245 Valid perplexity =  29.025173985453073
+573m 14s (- 2021-05-10 00:43:59.125464) (200000 1102%) loss = 2.3292, CE_loss = 2.3292, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  29.93380166121021
+601m 59s (- 2021-05-10 01:12:44.408799) (210000 1157%) loss = 2.3244, CE_loss = 2.3244, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  28.940525718580194
+perplexity =  28.940525718580194 >= min_perplexity ( 29.025173985453073 ), saving model...
+perplexity =  28.795329385981802 >= min_perplexity ( 28.940525718580194 ), saving model...
+Epoch  11 loss =  2.3230723863577865 Valid perplexity =  28.795329385981802
+630m 41s (- 2021-05-10 01:41:26.526864) (220000 1212%) loss = 2.3197, CE_loss = 2.3197, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  28.93711201481401
+659m 21s (- 2021-05-10 02:10:06.762087) (230000 1268%) loss = 2.3164, CE_loss = 2.3164, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  28.006050748006995
+perplexity =  28.006050748006995 >= min_perplexity ( 28.795329385981802 ), saving model...
+Epoch  12 loss =  2.3142071774058732 Valid perplexity =  28.510900289524795
+688m 7s (- 2021-05-10 02:38:52.506521) (240000 1323%) loss = 2.3088, CE_loss = 2.3088, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  28.381089886276435
+716m 51s (- 2021-05-10 03:07:36.329888) (250000 1378%) loss = 2.3081, CE_loss = 2.3081, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  28.08363034576173
+Epoch  13 loss =  2.3062845966918872 Valid perplexity =  28.28640450153908
+745m 37s (- 2021-05-10 03:36:22.135852) (260000 1433%) loss = 2.3006, CE_loss = 2.3006, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  28.287496981068816
+774m 21s (- 2021-05-10 04:05:06.712332) (270000 1488%) loss = 2.2987, CE_loss = 2.2987, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  27.811075590606624
+perplexity =  27.811075590606624 >= min_perplexity ( 28.006050748006995 ), saving model...
+Epoch  14 loss =  2.299324654317938 Valid perplexity =  28.08537232240004
+803m 3s (- 2021-05-10 04:33:48.230687) (280000 1543%) loss = 2.2956, CE_loss = 2.2956, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  28.26577779922748
+831m 44s (- 2021-05-10 05:02:29.180001) (290000 1598%) loss = 2.2923, CE_loss = 2.2923, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  27.912760517815215
+Epoch  15 loss =  2.292967457742843 Valid perplexity =  27.860172123469805
+860m 32s (- 2021-05-10 05:31:17.747068) (300000 1653%) loss = 2.2887, CE_loss = 2.2887, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  28.17691849118421
+Epoch  16 loss =  2.287251400374462 Valid perplexity =  27.849813501603307
+889m 15s (- 2021-05-10 06:00:00.248132) (310000 1709%) loss = 2.2809, CE_loss = 2.2809, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  27.70903325555808
+perplexity =  27.70903325555808 >= min_perplexity ( 27.811075590606624 ), saving model...
+917m 53s (- 2021-05-10 06:28:38.266149) (320000 1764%) loss = 2.2883, CE_loss = 2.2883, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  28.076246862563995
+perplexity =  27.645898467027997 >= min_perplexity ( 27.70903325555808 ), saving model...
+Epoch  17 loss =  2.2821486875593946 Valid perplexity =  27.645898467027997
+946m 19s (- 2021-05-10 06:57:04.642984) (330000 1819%) loss = 2.2759, CE_loss = 2.2759, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  27.549400915722806
+perplexity =  27.549400915722806 >= min_perplexity ( 27.645898467027997 ), saving model...
+974m 45s (- 2021-05-10 07:25:30.250999) (340000 1874%) loss = 2.2801, CE_loss = 2.2801, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  27.192669291723046
+perplexity =  27.192669291723046 >= min_perplexity ( 27.549400915722806 ), saving model...
+Epoch  18 loss =  2.2773781944916993 Valid perplexity =  27.55674808506982
+1003m 10s (- 2021-05-10 07:53:55.223085) (350000 1929%) loss = 2.2742, CE_loss = 2.2742, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  27.44296697773388
+1031m 29s (- 2021-05-10 08:22:14.726907) (360000 1984%) loss = 2.2748, CE_loss = 2.2748, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  27.34034942823673
+Epoch  19 loss =  2.2728830074045465 Valid perplexity =  27.48367343171325
+1059m 56s (- 2021-05-10 08:50:41.918944) (370000 2039%) loss = 2.2681, CE_loss = 2.2681, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  27.64821481730513
+1088m 17s (- 2021-05-10 09:19:02.317695) (380000 2095%) loss = 2.2712, CE_loss = 2.2712, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  27.274509656223245
+Epoch  20 loss =  2.268865943778204 Valid perplexity =  27.39166509765836
+1116m 43s (- 2021-05-10 09:47:28.384300) (390000 2150%) loss = 2.2660, CE_loss = 2.2660, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  27.401232894739078
+Epoch  21 loss =  2.2651210734640204 Valid perplexity =  27.211096484479317
+1145m 7s (- 2021-05-10 10:15:52.545563) (400000 2205%) loss = 2.2603, CE_loss = 2.2603, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  27.253936006368754
+1173m 34s (- 2021-05-10 10:44:19.096022) (410000 2260%) loss = 2.2621, CE_loss = 2.2621, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  27.13170322797827
+perplexity =  27.13170322797827 >= min_perplexity ( 27.192669291723046 ), saving model...
+perplexity =  27.125920541498964 >= min_perplexity ( 27.13170322797827 ), saving model...
+Epoch  22 loss =  2.2615752993111493 Valid perplexity =  27.125920541498964
+1201m 58s (- 2021-05-10 11:12:44.061281) (420000 2315%) loss = 2.2602, CE_loss = 2.2602, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.974695781000833
+perplexity =  26.974695781000833 >= min_perplexity ( 27.125920541498964 ), saving model...
+1230m 24s (- 2021-05-10 11:41:09.222708) (430000 2370%) loss = 2.2611, CE_loss = 2.2611, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.68803664083718
+perplexity =  26.68803664083718 >= min_perplexity ( 26.974695781000833 ), saving model...
+Epoch  23 loss =  2.258316791492019 Valid perplexity =  27.07353647413919
+1258m 51s (- 2021-05-10 12:09:36.251150) (440000 2425%) loss = 2.2560, CE_loss = 2.2560, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  27.37537778016258
+1287m 13s (- 2021-05-10 12:37:58.861217) (450000 2480%) loss = 2.2567, CE_loss = 2.2567, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  27.079663067119004
+Epoch  24 loss =  2.2550754220128284 Valid perplexity =  26.97994274103983
+1315m 40s (- 2021-05-10 13:06:25.182026) (460000 2536%) loss = 2.2501, CE_loss = 2.2501, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  27.09873624428993
+1344m 2s (- 2021-05-10 13:34:48.077512) (470000 2591%) loss = 2.2544, CE_loss = 2.2544, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  27.22673727267136
+Epoch  25 loss =  2.252228766009384 Valid perplexity =  26.977187234151742
+1372m 30s (- 2021-05-10 14:03:15.673271) (480000 2646%) loss = 2.2491, CE_loss = 2.2491, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.89433973932961
+Epoch  26 loss =  2.2494864596666213 Valid perplexity =  26.814674580614692
+1400m 59s (- 2021-05-10 14:31:44.582185) (490000 2701%) loss = 2.2489, CE_loss = 2.2489, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  27.040416308244204
+1430m 26s (- 2021-05-10 15:01:12.069817) (500000 2756%) loss = 2.2474, CE_loss = 2.2474, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.712592736110505
+Epoch  27 loss =  2.2467205462237283 Valid perplexity =  26.751362695750714
+1459m 21s (- 2021-05-10 15:30:06.774337) (510000 2811%) loss = 2.2440, CE_loss = 2.2440, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.59591880218424
+perplexity =  26.59591880218424 >= min_perplexity ( 26.68803664083718 ), saving model...
+1487m 43s (- 2021-05-10 15:58:28.310785) (520000 2866%) loss = 2.2482, CE_loss = 2.2482, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.537008929559782
+perplexity =  26.537008929559782 >= min_perplexity ( 26.59591880218424 ), saving model...
+Epoch  28 loss =  2.244401762388299 Valid perplexity =  26.652183173470437
+1516m 6s (- 2021-05-10 16:26:51.764606) (530000 2922%) loss = 2.2391, CE_loss = 2.2391, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.843123614951857
+1544m 24s (- 2021-05-10 16:55:09.190556) (540000 2977%) loss = 2.2459, CE_loss = 2.2459, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.47349981839243
+perplexity =  26.47349981839243 >= min_perplexity ( 26.537008929559782 ), saving model...
+Epoch  29 loss =  2.2419892351292687 Valid perplexity =  26.595180186272575
+1572m 45s (- 2021-05-10 17:23:30.608036) (550000 3032%) loss = 2.2393, CE_loss = 2.2393, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.8304394557181
+1601m 3s (- 2021-05-10 17:51:48.192767) (560000 3087%) loss = 2.2399, CE_loss = 2.2399, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.351655074007986
+perplexity =  26.351655074007986 >= min_perplexity ( 26.47349981839243 ), saving model...
+Epoch  30 loss =  2.2398582069863164 Valid perplexity =  26.529972029078547
+1629m 23s (- 2021-05-10 18:20:08.561743) (570000 3142%) loss = 2.2376, CE_loss = 2.2376, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.700459463388167
+1657m 44s (- 2021-05-10 18:48:29.850704) (580000 3197%) loss = 2.2395, CE_loss = 2.2395, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.23974940020281
+perplexity =  26.23974940020281 >= min_perplexity ( 26.351655074007986 ), saving model...
+Epoch  31 loss =  2.2377394889704725 Valid perplexity =  26.405990959602235
+1686m 6s (- 2021-05-10 19:16:51.132710) (590000 3252%) loss = 2.2370, CE_loss = 2.2370, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.488999950677236
+Epoch  32 loss =  2.235599361876824 Valid perplexity =  26.42440673920581
+1714m 53s (- 2021-05-10 19:45:38.310636) (600000 3307%) loss = 2.2298, CE_loss = 2.2298, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.60711500956979
+1743m 49s (- 2021-05-10 20:14:34.722839) (610000 3363%) loss = 2.2367, CE_loss = 2.2367, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.416852392507824
+Epoch  33 loss =  2.2338417465115135 Valid perplexity =  26.404474057278453
+1772m 44s (- 2021-05-10 20:43:29.884658) (620000 3418%) loss = 2.2310, CE_loss = 2.2310, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.547571930844764
+1801m 38s (- 2021-05-10 21:12:23.752701) (630000 3473%) loss = 2.2343, CE_loss = 2.2343, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.88990755803128
+perplexity =  25.88990755803128 >= min_perplexity ( 26.23974940020281 ), saving model...
+Epoch  34 loss =  2.231869785890044 Valid perplexity =  26.390199237033183
+1830m 40s (- 2021-05-10 21:41:25.613890) (640000 3528%) loss = 2.2305, CE_loss = 2.2305, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.230180106955537
+1859m 40s (- 2021-05-10 22:10:25.687834) (650000 3583%) loss = 2.2313, CE_loss = 2.2313, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.153856773540948
+Epoch  35 loss =  2.230162178415857 Valid perplexity =  26.298053740630774
+1888m 37s (- 2021-05-10 22:39:22.434859) (660000 3638%) loss = 2.2275, CE_loss = 2.2275, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.654045293503184
+1917m 26s (- 2021-05-10 23:08:11.844499) (670000 3693%) loss = 2.2306, CE_loss = 2.2306, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.01946478819629
+Epoch  36 loss =  2.2284043647890277 Valid perplexity =  26.167643712955762
+1946m 8s (- 2021-05-10 23:36:53.979162) (680000 3749%) loss = 2.2266, CE_loss = 2.2266, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.719517484468483
+Epoch  37 loss =  2.2266786165436043 Valid perplexity =  26.326000570859964
+1974m 50s (- 2021-05-11 00:05:36.068905) (690000 3804%) loss = 2.2242, CE_loss = 2.2242, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.12588982915282
+2003m 27s (- 2021-05-11 00:34:12.935277) (700000 3859%) loss = 2.2242, CE_loss = 2.2242, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.073935597083224
+Epoch  38 loss =  2.225161101350725 Valid perplexity =  26.176858605374854
+2032m 7s (- 2021-05-11 01:02:52.837536) (710000 3914%) loss = 2.2249, CE_loss = 2.2249, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.21546846898993
+2060m 45s (- 2021-05-11 01:31:30.419670) (720000 3969%) loss = 2.2266, CE_loss = 2.2266, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.85898641574026
+perplexity =  25.85898641574026 >= min_perplexity ( 25.88990755803128 ), saving model...
+Epoch  39 loss =  2.2234768256954194 Valid perplexity =  26.23456477128468
+2089m 26s (- 2021-05-11 02:00:11.250910) (730000 4024%) loss = 2.2214, CE_loss = 2.2214, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.179470204035596
+2118m 4s (- 2021-05-11 02:28:49.815220) (740000 4079%) loss = 2.2233, CE_loss = 2.2233, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.12716792027855
+Epoch  40 loss =  2.2221039137729592 Valid perplexity =  26.161209874283916
+2146m 41s (- 2021-05-11 02:57:27.010116) (750000 4134%) loss = 2.2187, CE_loss = 2.2187, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.28613843250905
+2175m 16s (- 2021-05-11 03:26:01.761661) (760000 4190%) loss = 2.2220, CE_loss = 2.2220, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.338244821105416
+Epoch  41 loss =  2.2205703644870014 Valid perplexity =  26.067238258882515
+2203m 57s (- 2021-05-11 03:54:42.440686) (770000 4245%) loss = 2.2200, CE_loss = 2.2200, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.11849765191642
+Epoch  42 loss =  2.219241904543994 Valid perplexity =  26.06624520406668
+2232m 35s (- 2021-05-11 04:23:20.928453) (780000 4300%) loss = 2.2188, CE_loss = 2.2188, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.16627738143592
+2261m 12s (- 2021-05-11 04:51:57.168181) (790000 4355%) loss = 2.2182, CE_loss = 2.2182, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.272861221412366
+Epoch  43 loss =  2.2180118755546188 Valid perplexity =  26.100814648982066
+2289m 49s (- 2021-05-11 05:20:34.191287) (800000 4410%) loss = 2.2157, CE_loss = 2.2157, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.969949001023583
+2318m 26s (- 2021-05-11 05:49:11.496108) (810000 4465%) loss = 2.2197, CE_loss = 2.2197, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.04573026301547
+Epoch  44 loss =  2.2165800886283518 Valid perplexity =  25.944988975337104
+2347m 4s (- 2021-05-11 06:17:49.957415) (820000 4520%) loss = 2.2120, CE_loss = 2.2120, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.14053429466235
+2375m 42s (- 2021-05-11 06:46:27.590858) (830000 4576%) loss = 2.2190, CE_loss = 2.2190, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.923632546061885
+Epoch  45 loss =  2.215348129316693 Valid perplexity =  25.95347935993519
+2404m 26s (- 2021-05-11 07:15:11.909757) (840000 4631%) loss = 2.2138, CE_loss = 2.2138, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.07909345743924
+2433m 6s (- 2021-05-11 07:43:51.946636) (850000 4686%) loss = 2.2138, CE_loss = 2.2138, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.91443468795359
+Epoch  46 loss =  2.2141098287582976 Valid perplexity =  26.026932945925164
+2462m 4s (- 2021-05-11 08:12:50.079984) (860000 4741%) loss = 2.2120, CE_loss = 2.2120, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.112231453016637
+2491m 31s (- 2021-05-11 08:42:16.924758) (870000 4796%) loss = 2.2156, CE_loss = 2.2156, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.937447826967183
+Epoch  47 loss =  2.2128973323660817 Valid perplexity =  26.004837014657177
+2521m 5s (- 2021-05-11 09:11:50.969999) (880000 4851%) loss = 2.2127, CE_loss = 2.2127, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.070898990101448
+Epoch  48 loss =  2.2117775726547078 Valid perplexity =  25.932085704855478
+2550m 40s (- 2021-05-11 09:41:25.347767) (890000 4906%) loss = 2.2076, CE_loss = 2.2076, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.885272086209998
+2580m 15s (- 2021-05-11 10:11:00.693642) (900000 4961%) loss = 2.2120, CE_loss = 2.2120, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.98493918517866
+Epoch  49 loss =  2.210696534728817 Valid perplexity =  25.883360238752584
+2609m 53s (- 2021-05-11 10:40:38.775208) (910000 5017%) loss = 2.2091, CE_loss = 2.2091, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.808085185427576
+perplexity =  25.808085185427576 >= min_perplexity ( 25.85898641574026 ), saving model...
+2639m 26s (- 2021-05-11 11:10:11.733540) (920000 5072%) loss = 2.2129, CE_loss = 2.2129, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.96671201155868
+perplexity =  25.802236022003463 >= min_perplexity ( 25.808085185427576 ), saving model...
+Epoch  50 loss =  2.209587363453313 Valid perplexity =  25.802236022003463
+2669m 6s (- 2021-05-11 11:39:51.788576) (930000 5127%) loss = 2.2080, CE_loss = 2.2080, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.054789126886213
+2698m 39s (- 2021-05-11 12:09:24.721608) (940000 5182%) loss = 2.2100, CE_loss = 2.2100, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.68849128556697
+perplexity =  25.68849128556697 >= min_perplexity ( 25.802236022003463 ), saving model...
+Epoch  51 loss =  2.20840556686092 Valid perplexity =  25.82187132359356
+2728m 17s (- 2021-05-11 12:39:02.939072) (950000 5237%) loss = 2.2037, CE_loss = 2.2037, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.879917595756535
+2757m 49s (- 2021-05-11 13:08:34.840190) (960000 5292%) loss = 2.2107, CE_loss = 2.2107, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.889530762037296
+Epoch  52 loss =  2.2073907381888325 Valid perplexity =  25.88112494464894
+2787m 25s (- 2021-05-11 13:38:10.658043) (970000 5347%) loss = 2.2061, CE_loss = 2.2061, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.094795275210267
+Epoch  53 loss =  2.2064378341913145 Valid perplexity =  25.933171510352768
+2817m 2s (- 2021-05-11 14:07:47.377406) (980000 5403%) loss = 2.2050, CE_loss = 2.2050, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.600286203014857
+perplexity =  25.600286203014857 >= min_perplexity ( 25.68849128556697 ), saving model...
+2846m 36s (- 2021-05-11 14:37:22.056986) (990000 5458%) loss = 2.2053, CE_loss = 2.2053, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.6814523524856
+Epoch  54 loss =  2.2054141097149493 Valid perplexity =  25.86302021271251
+2876m 11s (- 2021-05-11 15:06:56.374825) (1000000 5513%) loss = 2.2050, CE_loss = 2.2050, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.759778388784632
+2905m 41s (- 2021-05-11 15:36:26.675918) (1010000 5568%) loss = 2.2066, CE_loss = 2.2066, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.570990579049024
+perplexity =  25.570990579049024 >= min_perplexity ( 25.600286203014857 ), saving model...
+Epoch  55 loss =  2.2044654078120263 Valid perplexity =  25.936022997059602
+2935m 25s (- 2021-05-11 16:06:10.530857) (1020000 5623%) loss = 2.2028, CE_loss = 2.2028, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.846427012444906
+2965m 52s (- 2021-05-11 16:36:37.365812) (1030000 5678%) loss = 2.2044, CE_loss = 2.2044, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.781347446336337
+Epoch  56 loss =  2.2034815747776793 Valid perplexity =  25.67118186083544
+2995m 26s (- 2021-05-11 17:06:11.492396) (1040000 5733%) loss = 2.2018, CE_loss = 2.2018, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.818977787306544
+3024m 44s (- 2021-05-11 17:35:29.289526) (1050000 5788%) loss = 2.2023, CE_loss = 2.2023, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.530113906276288
+perplexity =  25.530113906276288 >= min_perplexity ( 25.570990579049024 ), saving model...
+Epoch  57 loss =  2.2025155009255544 Valid perplexity =  25.710725450695882
+3054m 34s (- 2021-05-11 18:05:20.079637) (1060000 5844%) loss = 2.2025, CE_loss = 2.2025, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.689603653503934
+3084m 30s (- 2021-05-11 18:35:15.939963) (1070000 5899%) loss = 2.2021, CE_loss = 2.2021, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.82276022326882
+Epoch  58 loss =  2.2015883653997808 Valid perplexity =  25.714033696751514
+3114m 33s (- 2021-05-11 19:05:18.844588) (1080000 5954%) loss = 2.2009, CE_loss = 2.2009, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.719709373968573
+Epoch  59 loss =  2.2009206062355515 Valid perplexity =  25.657714966350365
+3144m 28s (- 2021-05-11 19:35:13.673169) (1090000 6009%) loss = 2.1964, CE_loss = 2.1964, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.904490591227606
+3174m 27s (- 2021-05-11 20:05:12.496927) (1100000 6064%) loss = 2.2053, CE_loss = 2.2053, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.789299320266636
+Epoch  60 loss =  2.199932856964413 Valid perplexity =  25.708242501655167
+3204m 29s (- 2021-05-11 20:35:15.031918) (1110000 6119%) loss = 2.1953, CE_loss = 2.1953, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  26.007518979829694
+3234m 26s (- 2021-05-11 21:05:11.178644) (1120000 6174%) loss = 2.2020, CE_loss = 2.2020, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.68600830554886
+Epoch  61 loss =  2.1991354552282365 Valid perplexity =  25.72810708278456
+3264m 34s (- 2021-05-11 21:35:19.392857) (1130000 6230%) loss = 2.1978, CE_loss = 2.1978, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.573347231829178
+3294m 26s (- 2021-05-11 22:05:11.837602) (1140000 6285%) loss = 2.2009, CE_loss = 2.2009, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.70773822876843
+Epoch  62 loss =  2.1983915965008833 Valid perplexity =  25.588578141045332
+3324m 27s (- 2021-05-11 22:35:12.621407) (1150000 6340%) loss = 2.1949, CE_loss = 2.1949, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.78187434303724
+3354m 25s (- 2021-05-11 23:05:10.285673) (1160000 6395%) loss = 2.2003, CE_loss = 2.2003, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.6899647409423
+Epoch  63 loss =  2.197437202540053 Valid perplexity =  25.725354399147275
+3384m 23s (- 2021-05-11 23:35:08.278187) (1170000 6450%) loss = 2.1974, CE_loss = 2.1974, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.809364007452682
+Epoch  64 loss =  2.1967808559712743 Valid perplexity =  25.59066148859914
+3414m 23s (- 2021-05-12 00:05:09.006640) (1180000 6505%) loss = 2.1924, CE_loss = 2.1924, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.78664231855113
+3444m 17s (- 2021-05-12 00:35:02.600904) (1190000 6560%) loss = 2.1965, CE_loss = 2.1965, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.45446321651698
+perplexity =  25.45446321651698 >= min_perplexity ( 25.530113906276288 ), saving model...
+Epoch  65 loss =  2.1959478642583248 Valid perplexity =  25.70758630845152
+3474m 14s (- 2021-05-12 01:04:59.116614) (1200000 6615%) loss = 2.1957, CE_loss = 2.1957, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.830583586184435
+3504m 7s (- 2021-05-12 01:34:52.604724) (1210000 6671%) loss = 2.1973, CE_loss = 2.1973, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.889951330390463
+Epoch  66 loss =  2.1951922501414467 Valid perplexity =  25.527331534972557
+3534m 6s (- 2021-05-12 02:04:51.253951) (1220000 6726%) loss = 2.1942, CE_loss = 2.1942, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.659204607717776
+3564m 5s (- 2021-05-12 02:34:50.946946) (1230000 6781%) loss = 2.1957, CE_loss = 2.1957, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.705040720758472
+Epoch  67 loss =  2.1943796628321897 Valid perplexity =  25.676005436048086
+3594m 14s (- 2021-05-12 03:04:59.670374) (1240000 6836%) loss = 2.1910, CE_loss = 2.1910, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.611771843937735
+3624m 23s (- 2021-05-12 03:35:08.812451) (1250000 6891%) loss = 2.1963, CE_loss = 2.1963, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.460885581140637
+Epoch  68 loss =  2.1936214507917597 Valid perplexity =  25.564751675295263
+3654m 29s (- 2021-05-12 04:05:14.479660) (1260000 6946%) loss = 2.1918, CE_loss = 2.1918, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.831878309281883
+Epoch  69 loss =  2.1930274756399166 Valid perplexity =  25.570691608144088
+3684m 29s (- 2021-05-12 04:35:14.566744) (1270000 7001%) loss = 2.1932, CE_loss = 2.1932, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.753577504524298
+3714m 26s (- 2021-05-12 05:05:11.133591) (1280000 7057%) loss = 2.1929, CE_loss = 2.1929, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.696721497525317
+Epoch  70 loss =  2.19223037041368 Valid perplexity =  25.499820876210848
+3744m 26s (- 2021-05-12 05:35:11.222123) (1290000 7112%) loss = 2.1896, CE_loss = 2.1896, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.552234013686494
+3774m 28s (- 2021-05-12 06:05:13.848948) (1300000 7167%) loss = 2.1950, CE_loss = 2.1950, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.134649601500925
+perplexity =  25.134649601500925 >= min_perplexity ( 25.45446321651698 ), saving model...
+Epoch  71 loss =  2.191569278806806 Valid perplexity =  25.534143632480532
+3804m 32s (- 2021-05-12 06:35:17.206466) (1310000 7222%) loss = 2.1873, CE_loss = 2.1873, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.881638654253994
+3834m 29s (- 2021-05-12 07:05:14.433960) (1320000 7277%) loss = 2.1946, CE_loss = 2.1946, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.721319716490395
+Epoch  72 loss =  2.190959635533352 Valid perplexity =  25.561732370378753
+3864m 34s (- 2021-05-12 07:35:19.782910) (1330000 7332%) loss = 2.1887, CE_loss = 2.1887, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.549700830000937
+3894m 39s (- 2021-05-12 08:05:24.291157) (1340000 7387%) loss = 2.1907, CE_loss = 2.1907, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.138710305019973
+Epoch  73 loss =  2.1904353605178084 Valid perplexity =  25.558977438801534
+3923m 56s (- 2021-05-12 08:34:41.800366) (1350000 7442%) loss = 2.1900, CE_loss = 2.1900, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.467283920460748
+3953m 37s (- 2021-05-12 09:04:22.197685) (1360000 7498%) loss = 2.1907, CE_loss = 2.1907, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.358798908836185
+Epoch  74 loss =  2.1895807235233575 Valid perplexity =  25.47615509960232
+3983m 18s (- 2021-05-12 09:34:03.948493) (1370000 7553%) loss = 2.1898, CE_loss = 2.1898, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.60892858931341
+Epoch  75 loss =  2.189008283020643 Valid perplexity =  25.465060939829456
+4013m 0s (- 2021-05-12 10:03:45.851913) (1380000 7608%) loss = 2.1840, CE_loss = 2.1840, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.620590017128954
+4042m 36s (- 2021-05-12 10:33:21.573990) (1390000 7663%) loss = 2.1920, CE_loss = 2.1920, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.760037929102182
+Epoch  76 loss =  2.188412602243672 Valid perplexity =  25.538824916156962
+4072m 14s (- 2021-05-12 11:02:59.362068) (1400000 7718%) loss = 2.1855, CE_loss = 2.1855, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.453657280266565
+4101m 46s (- 2021-05-12 11:32:31.328441) (1410000 7773%) loss = 2.1902, CE_loss = 2.1902, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.37897603066256
+Epoch  77 loss =  2.187739390166359 Valid perplexity =  25.565374684182263
+4132m 8s (- 2021-05-12 12:02:53.806440) (1420000 7828%) loss = 2.1865, CE_loss = 2.1865, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.517203418437905
+4161m 42s (- 2021-05-12 12:32:27.250483) (1430000 7884%) loss = 2.1893, CE_loss = 2.1893, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.372737043051163
+Epoch  78 loss =  2.187310267816122 Valid perplexity =  25.404415075732597
+4191m 38s (- 2021-05-12 13:02:23.483447) (1440000 7939%) loss = 2.1848, CE_loss = 2.1848, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.535302504562715
+4221m 17s (- 2021-05-12 13:32:02.219371) (1450000 7994%) loss = 2.1890, CE_loss = 2.1890, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.25484638219878
+Epoch  79 loss =  2.186603014809134 Valid perplexity =  25.43783499039839
+4251m 7s (- 2021-05-12 14:01:52.211457) (1460000 8049%) loss = 2.1855, CE_loss = 2.1855, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.59862387734007
+Epoch  80 loss =  2.1858561367128395 Valid perplexity =  25.45800753430628
+4280m 57s (- 2021-05-12 14:31:42.614949) (1470000 8104%) loss = 2.1834, CE_loss = 2.1834, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.453927361851775
+4310m 52s (- 2021-05-12 15:01:37.624690) (1480000 8159%) loss = 2.1842, CE_loss = 2.1842, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.36733799104133
+Epoch  81 loss =  2.1853752974418734 Valid perplexity =  25.444726236479138
+4340m 46s (- 2021-05-12 15:31:31.671622) (1490000 8214%) loss = 2.1858, CE_loss = 2.1858, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.459706742179662
+4370m 40s (- 2021-05-12 16:01:25.410722) (1500000 8269%) loss = 2.1877, CE_loss = 2.1877, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.04388292177261
+perplexity =  25.04388292177261 >= min_perplexity ( 25.134649601500925 ), saving model...
+Epoch  82 loss =  2.1848827109048066 Valid perplexity =  25.447828830142182
+4400m 39s (- 2021-05-12 16:31:24.904690) (1510000 8325%) loss = 2.1837, CE_loss = 2.1837, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.302073931161992
+4430m 31s (- 2021-05-12 17:01:16.565158) (1520000 8380%) loss = 2.1850, CE_loss = 2.1850, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.335997580960026
+Epoch  83 loss =  2.184155561617315 Valid perplexity =  25.414642147853144
+4460m 33s (- 2021-05-12 17:31:18.548209) (1530000 8435%) loss = 2.1805, CE_loss = 2.1805, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.40220256417866
+4490m 33s (- 2021-05-12 18:01:18.709304) (1540000 8490%) loss = 2.1861, CE_loss = 2.1861, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.48368058115068
+Epoch  84 loss =  2.183619470350639 Valid perplexity =  25.435044746736516
+4520m 33s (- 2021-05-12 18:31:18.342787) (1550000 8545%) loss = 2.1827, CE_loss = 2.1827, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.245912172772815
+Epoch  85 loss =  2.18299318318173 Valid perplexity =  25.405185656094474
+4550m 28s (- 2021-05-12 19:01:13.695005) (1560000 8600%) loss = 2.1833, CE_loss = 2.1833, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.235777074116005
+4580m 21s (- 2021-05-12 19:31:06.700843) (1570000 8655%) loss = 2.1826, CE_loss = 2.1826, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.540746374834594
+Epoch  86 loss =  2.182500076545009 Valid perplexity =  25.350676793233067
+4610m 19s (- 2021-05-12 20:01:04.953452) (1580000 8710%) loss = 2.1798, CE_loss = 2.1798, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.656709772480053
+4640m 15s (- 2021-05-12 20:31:00.241355) (1590000 8766%) loss = 2.1861, CE_loss = 2.1861, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.39406035580256
+Epoch  87 loss =  2.181910718648341 Valid perplexity =  25.391629520120183
+4670m 12s (- 2021-05-12 21:00:57.506277) (1600000 8821%) loss = 2.1775, CE_loss = 2.1775, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.458580176143997
+4700m 7s (- 2021-05-12 21:30:53.059404) (1610000 8876%) loss = 2.1851, CE_loss = 2.1851, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.315156123978475
+Epoch  88 loss =  2.181430242254908 Valid perplexity =  25.343994235961357
+4730m 3s (- 2021-05-12 22:00:48.131124) (1620000 8931%) loss = 2.1801, CE_loss = 2.1801, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.78523000942723
+4759m 58s (- 2021-05-12 22:30:43.132977) (1630000 8986%) loss = 2.1807, CE_loss = 2.1807, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.438681412679156
+Epoch  89 loss =  2.180959884670054 Valid perplexity =  25.42299670668204
+4789m 45s (- 2021-05-12 23:00:31.033493) (1640000 9041%) loss = 2.1792, CE_loss = 2.1792, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.20494118301127
+4819m 33s (- 2021-05-12 23:30:18.358980) (1650000 9096%) loss = 2.1829, CE_loss = 2.1829, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.205528037393503
+Epoch  90 loss =  2.1804565725173797 Valid perplexity =  25.46504568872001
+4849m 23s (- 2021-05-13 00:00:09.020287) (1660000 9152%) loss = 2.1816, CE_loss = 2.1816, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.41205862936472
+Epoch  91 loss =  2.179961626585427 Valid perplexity =  25.341104823794485
+4879m 14s (- 2021-05-13 00:29:59.962074) (1670000 9207%) loss = 2.1751, CE_loss = 2.1751, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.208215077855158
+4909m 7s (- 2021-05-13 00:59:52.269493) (1680000 9262%) loss = 2.1808, CE_loss = 2.1808, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.01349614201481
+perplexity =  25.01349614201481 >= min_perplexity ( 25.04388292177261 ), saving model...
+Epoch  92 loss =  2.1794333144626408 Valid perplexity =  25.290403868413545
+4939m 4s (- 2021-05-13 01:29:49.109441) (1690000 9317%) loss = 2.1778, CE_loss = 2.1778, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.270044299461034
+4968m 52s (- 2021-05-13 01:59:37.580072) (1700000 9372%) loss = 2.1822, CE_loss = 2.1822, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.001155777616848
+perplexity =  25.001155777616848 >= min_perplexity ( 25.01349614201481 ), saving model...
+Epoch  93 loss =  2.1789529273759465 Valid perplexity =  25.308722229417594
+4998m 37s (- 2021-05-13 02:29:22.655184) (1710000 9427%) loss = 2.1777, CE_loss = 2.1777, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.07630596193782
+5028m 26s (- 2021-05-13 02:59:11.316646) (1720000 9482%) loss = 2.1799, CE_loss = 2.1799, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.11032390516424
+Epoch  94 loss =  2.178355778552808 Valid perplexity =  25.319285576671955
+5058m 19s (- 2021-05-13 03:29:04.294953) (1730000 9537%) loss = 2.1748, CE_loss = 2.1748, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.16406389162347
+5088m 4s (- 2021-05-13 03:58:49.625514) (1740000 9593%) loss = 2.1811, CE_loss = 2.1811, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.263555858538588
+Epoch  95 loss =  2.178017107741298 Valid perplexity =  25.40932804385025
+5117m 52s (- 2021-05-13 04:28:37.236143) (1750000 9648%) loss = 2.1774, CE_loss = 2.1774, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.359805065302567
+Epoch  96 loss =  2.1776785027403753 Valid perplexity =  25.28654716373044
+5147m 46s (- 2021-05-13 04:58:31.157377) (1760000 9703%) loss = 2.1760, CE_loss = 2.1760, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.15484609040475
+5177m 27s (- 2021-05-13 05:28:12.750436) (1770000 9758%) loss = 2.1763, CE_loss = 2.1763, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.385587354053154
+Epoch  97 loss =  2.176982292970968 Valid perplexity =  25.269086301906352
+5207m 22s (- 2021-05-13 05:58:07.333023) (1780000 9813%) loss = 2.1767, CE_loss = 2.1767, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.271891959172958
+5237m 24s (- 2021-05-13 06:28:09.733796) (1790000 9868%) loss = 2.1793, CE_loss = 2.1793, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.403635363218378
+Epoch  98 loss =  2.176569356227844 Valid perplexity =  25.2642351303351
+5267m 29s (- 2021-05-13 06:58:14.807843) (1800000 9923%) loss = 2.1741, CE_loss = 2.1741, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.912101047877336
+perplexity =  24.912101047877336 >= min_perplexity ( 25.001155777616848 ), saving model...
+5297m 36s (- 2021-05-13 07:28:21.478096) (1810000 9979%) loss = 2.1781, CE_loss = 2.1781, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.914137373421497
+Epoch  99 loss =  2.176156840166074 Valid perplexity =  25.319324492670937
+5327m 40s (- 2021-05-13 07:58:26.023616) (1820000 10034%) loss = 2.1745, CE_loss = 2.1745, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.493187503822888
+5358m 0s (- 2021-05-13 08:28:45.992764) (1830000 10089%) loss = 2.1753, CE_loss = 2.1753, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.023786399108875
+Epoch  100 loss =  2.175505653436135 Valid perplexity =  25.236048856390617
+5388m 12s (- 2021-05-13 08:58:57.647849) (1840000 10144%) loss = 2.1756, CE_loss = 2.1756, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.266479414588854
+5418m 12s (- 2021-05-13 09:28:57.317497) (1850000 10199%) loss = 2.1759, CE_loss = 2.1759, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.181021903936237
+Epoch  101 loss =  2.1750831331464973 Valid perplexity =  25.26426820396
+5448m 16s (- 2021-05-13 09:59:01.688807) (1860000 10254%) loss = 2.1747, CE_loss = 2.1747, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.35247552594641
+Epoch  102 loss =  2.1747878488000825 Valid perplexity =  25.161609997443698
+5478m 19s (- 2021-05-13 10:29:04.811392) (1870000 10309%) loss = 2.1711, CE_loss = 2.1711, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.267254917382367
+5508m 22s (- 2021-05-13 10:59:07.338681) (1880000 10364%) loss = 2.1782, CE_loss = 2.1782, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.017555835352123
+Epoch  103 loss =  2.1744145591587096 Valid perplexity =  25.291165226635396
+5538m 33s (- 2021-05-13 11:29:19.004991) (1890000 10420%) loss = 2.1704, CE_loss = 2.1704, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.089796144161866
+5568m 35s (- 2021-05-13 11:59:20.479570) (1900000 10475%) loss = 2.1772, CE_loss = 2.1772, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.01947639795452
+Epoch  104 loss =  2.1739138783105534 Valid perplexity =  25.241318158897222
+5598m 50s (- 2021-05-13 12:29:35.885255) (1910000 10530%) loss = 2.1730, CE_loss = 2.1730, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.335997580960026
+5628m 55s (- 2021-05-13 12:59:40.601924) (1920000 10585%) loss = 2.1750, CE_loss = 2.1750, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.3181022904771
+Epoch  105 loss =  2.173500236945755 Valid perplexity =  25.112398128245555
+5659m 0s (- 2021-05-13 13:29:45.423628) (1930000 10640%) loss = 2.1714, CE_loss = 2.1714, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.22712544165885
+5689m 0s (- 2021-05-13 13:59:45.875062) (1940000 10695%) loss = 2.1763, CE_loss = 2.1763, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.134377579126408
+Epoch  106 loss =  2.1730324404415007 Valid perplexity =  25.24584366515863
+5719m 5s (- 2021-05-13 14:29:50.427705) (1950000 10750%) loss = 2.1725, CE_loss = 2.1725, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.0607396224896
+Epoch  107 loss =  2.172669181158017 Valid perplexity =  25.21859492983215
+5749m 11s (- 2021-05-13 14:59:56.308879) (1960000 10806%) loss = 2.1686, CE_loss = 2.1686, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.08197035658075
+5779m 18s (- 2021-05-13 15:30:03.892650) (1970000 10861%) loss = 2.1726, CE_loss = 2.1726, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.281105888178544
+Epoch  108 loss =  2.17208123175545 Valid perplexity =  25.16908845303352
+5809m 12s (- 2021-05-13 15:59:58.048594) (1980000 10916%) loss = 2.1719, CE_loss = 2.1719, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.315032552687224
+5838m 48s (- 2021-05-13 16:29:33.229538) (1990000 10971%) loss = 2.1741, CE_loss = 2.1741, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.998879545224458
+Epoch  109 loss =  2.1718432173742483 Valid perplexity =  25.219626667330203
+5868m 33s (- 2021-05-13 16:59:18.740265) (2000000 11026%) loss = 2.1711, CE_loss = 2.1711, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.369758702494188
+5898m 18s (- 2021-05-13 17:29:04.019041) (2010000 11081%) loss = 2.1723, CE_loss = 2.1723, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.060199836869398
+Epoch  110 loss =  2.1713887528168327 Valid perplexity =  25.159878945733457
+5928m 5s (- 2021-05-13 17:58:50.679259) (2020000 11136%) loss = 2.1680, CE_loss = 2.1680, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.965823024660594
+5957m 52s (- 2021-05-13 18:28:37.938416) (2030000 11191%) loss = 2.1741, CE_loss = 2.1741, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.06202723877504
+Epoch  111 loss =  2.1709692743472853 Valid perplexity =  25.174113217166806
+5987m 51s (- 2021-05-13 18:58:36.398698) (2040000 11247%) loss = 2.1705, CE_loss = 2.1705, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.298240251889304
+Epoch  112 loss =  2.170591913552252 Valid perplexity =  25.148521315561286
+6017m 9s (- 2021-05-13 19:27:54.979985) (2050000 11302%) loss = 2.1701, CE_loss = 2.1701, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.341319718528844
+6046m 9s (- 2021-05-13 19:56:54.689334) (2060000 11357%) loss = 2.1698, CE_loss = 2.1698, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.984801297301196
+Epoch  113 loss =  2.1702462910738283 Valid perplexity =  25.133241564517355
+6075m 20s (- 2021-05-13 20:26:05.396963) (2070000 11412%) loss = 2.1687, CE_loss = 2.1687, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.85795621151011
+perplexity =  24.85795621151011 >= min_perplexity ( 24.912101047877336 ), saving model...
+6104m 32s (- 2021-05-13 20:55:17.250420) (2080000 11467%) loss = 2.1720, CE_loss = 2.1720, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.015319077608687
+Epoch  114 loss =  2.169752156511664 Valid perplexity =  25.140879879484483
+6133m 47s (- 2021-05-13 21:24:32.801489) (2090000 11522%) loss = 2.1670, CE_loss = 2.1670, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.233316721716285
+6163m 1s (- 2021-05-13 21:53:47.008569) (2100000 11577%) loss = 2.1719, CE_loss = 2.1719, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.87329389798716
+Epoch  115 loss =  2.169382119445938 Valid perplexity =  25.136095685632267
+6192m 17s (- 2021-05-13 22:23:02.579729) (2110000 11633%) loss = 2.1675, CE_loss = 2.1675, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.95087829181217
+6221m 26s (- 2021-05-13 22:52:11.785976) (2120000 11688%) loss = 2.1693, CE_loss = 2.1693, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.95739145381874
+Epoch  116 loss =  2.1690602697040164 Valid perplexity =  25.122132295674298
+6250m 44s (- 2021-05-13 23:21:29.837254) (2130000 11743%) loss = 2.1696, CE_loss = 2.1696, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.174203411667655
+6280m 14s (- 2021-05-13 23:50:59.690066) (2140000 11798%) loss = 2.1690, CE_loss = 2.1690, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.12990734913054
+Epoch  117 loss =  2.1687581187664757 Valid perplexity =  25.12957144799531
+6309m 45s (- 2021-05-14 00:20:30.736490) (2150000 11853%) loss = 2.1694, CE_loss = 2.1694, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.05162287031416
+Epoch  118 loss =  2.168370943069984 Valid perplexity =  25.141686705686485
+6339m 11s (- 2021-05-14 00:49:56.956296) (2160000 11908%) loss = 2.1636, CE_loss = 2.1636, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.224393203541158
+6368m 34s (- 2021-05-14 01:19:19.312039) (2170000 11963%) loss = 2.1723, CE_loss = 2.1723, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.440459557451568
+Epoch  119 loss =  2.168019942111987 Valid perplexity =  25.153354934046195
+6398m 7s (- 2021-05-14 01:48:52.521690) (2180000 12018%) loss = 2.1643, CE_loss = 2.1643, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.165887396665248
+6427m 34s (- 2021-05-14 02:18:19.600710) (2190000 12074%) loss = 2.1705, CE_loss = 2.1705, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.89679406044696
+Epoch  120 loss =  2.1675431762489965 Valid perplexity =  25.194120557381886
+6457m 3s (- 2021-05-14 02:47:48.803047) (2200000 12129%) loss = 2.1659, CE_loss = 2.1659, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.010364980203715
+6486m 30s (- 2021-05-14 03:17:15.509026) (2210000 12184%) loss = 2.1692, CE_loss = 2.1692, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.124491923578876
+Epoch  121 loss =  2.167241873649071 Valid perplexity =  25.247630811328634
+6515m 56s (- 2021-05-14 03:46:41.670404) (2220000 12239%) loss = 2.1656, CE_loss = 2.1656, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.87645417713827
+6545m 22s (- 2021-05-14 04:16:07.529332) (2230000 12294%) loss = 2.1693, CE_loss = 2.1693, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.03199482671104
+Epoch  122 loss =  2.1668176503501004 Valid perplexity =  25.095453078522787
+6574m 50s (- 2021-05-14 04:45:35.979519) (2240000 12349%) loss = 2.1661, CE_loss = 2.1661, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.930783595033574
+Epoch  123 loss =  2.166365910370356 Valid perplexity =  25.143510055048505
+6604m 1s (- 2021-05-14 05:14:46.217420) (2250000 12404%) loss = 2.1628, CE_loss = 2.1628, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.927517458389055
+6633m 25s (- 2021-05-14 05:44:10.789213) (2260000 12460%) loss = 2.1656, CE_loss = 2.1656, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.997038994736418
+Epoch  124 loss =  2.1659893377611454 Valid perplexity =  25.07935911307814
+6662m 43s (- 2021-05-14 06:13:28.667077) (2270000 12515%) loss = 2.1659, CE_loss = 2.1659, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.781112302626195
+perplexity =  24.781112302626195 >= min_perplexity ( 24.85795621151011 ), saving model...
+6691m 56s (- 2021-05-14 06:42:41.361478) (2280000 12570%) loss = 2.1685, CE_loss = 2.1685, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.222676146799056
+Epoch  125 loss =  2.16579099620916 Valid perplexity =  25.11256316843167
+6721m 7s (- 2021-05-14 07:11:52.266724) (2290000 12625%) loss = 2.1652, CE_loss = 2.1652, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.99559653880591
+6750m 20s (- 2021-05-14 07:41:05.768165) (2300000 12680%) loss = 2.1668, CE_loss = 2.1668, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.15851789811667
+Epoch  126 loss =  2.1654645702284587 Valid perplexity =  25.039510403170503
+6779m 34s (- 2021-05-14 08:10:19.876152) (2310000 12735%) loss = 2.1613, CE_loss = 2.1613, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.05280618350078
+6808m 42s (- 2021-05-14 08:39:27.598386) (2320000 12790%) loss = 2.1679, CE_loss = 2.1679, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.809670384569348
+Epoch  127 loss =  2.1651167776947027 Valid perplexity =  25.094028750433242
+6837m 55s (- 2021-05-14 09:08:40.398801) (2330000 12845%) loss = 2.1645, CE_loss = 2.1645, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.071178870732204
+Epoch  128 loss =  2.1648198085887285 Valid perplexity =  25.10104184329495
+6867m 6s (- 2021-05-14 09:37:51.529046) (2340000 12901%) loss = 2.1647, CE_loss = 2.1647, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.854080489378834
+6896m 11s (- 2021-05-14 10:06:57.028341) (2350000 12956%) loss = 2.1647, CE_loss = 2.1647, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.909795957100116
+Epoch  129 loss =  2.1644445111814257 Valid perplexity =  25.015146854229048
+6925m 17s (- 2021-05-14 10:36:03.038985) (2360000 13011%) loss = 2.1624, CE_loss = 2.1624, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.244606278381642
+6954m 35s (- 2021-05-14 11:05:20.169433) (2370000 13066%) loss = 2.1678, CE_loss = 2.1678, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.976844241846297
+Epoch  130 loss =  2.164069950641391 Valid perplexity =  25.0533005307297
+6983m 57s (- 2021-05-14 11:34:42.573717) (2380000 13121%) loss = 2.1595, CE_loss = 2.1595, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.967352024854478
+7013m 23s (- 2021-05-14 12:04:08.893718) (2390000 13176%) loss = 2.1678, CE_loss = 2.1678, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.01912844748095
+Epoch  131 loss =  2.163863339891362 Valid perplexity =  25.13032077207603
+7042m 49s (- 2021-05-14 12:33:34.302905) (2400000 13231%) loss = 2.1620, CE_loss = 2.1620, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.96976924032252
+7072m 15s (- 2021-05-14 13:03:00.309132) (2410000 13287%) loss = 2.1638, CE_loss = 2.1638, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.824540669605756
+Epoch  132 loss =  2.1634179939786895 Valid perplexity =  25.059687688821416
+7101m 40s (- 2021-05-14 13:32:25.442138) (2420000 13342%) loss = 2.1621, CE_loss = 2.1621, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.89290779719344
+7131m 15s (- 2021-05-14 14:02:00.469182) (2430000 13397%) loss = 2.1659, CE_loss = 2.1659, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.785019732658817
+Epoch  133 loss =  2.1631241448561247 Valid perplexity =  24.979146931737766
+7160m 55s (- 2021-05-14 14:31:41.078170) (2440000 13452%) loss = 2.1641, CE_loss = 2.1641, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.113724735969843
+Epoch  134 loss =  2.1627905807114973 Valid perplexity =  25.028240139502557
+7190m 32s (- 2021-05-14 15:01:17.486394) (2450000 13507%) loss = 2.1575, CE_loss = 2.1575, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.857859640459942
+7220m 7s (- 2021-05-14 15:30:52.357385) (2460000 13562%) loss = 2.1644, CE_loss = 2.1644, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.770980522940935
+perplexity =  24.770980522940935 >= min_perplexity ( 24.781112302626195 ), saving model...
+Epoch  135 loss =  2.162527104854676 Valid perplexity =  24.97040885038965
+7249m 55s (- 2021-05-14 16:00:40.552038) (2470000 13617%) loss = 2.1605, CE_loss = 2.1605, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.824967620631938
+7279m 31s (- 2021-05-14 16:30:17.066292) (2480000 13672%) loss = 2.1657, CE_loss = 2.1657, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.724253407479083
+perplexity =  24.724253407479083 >= min_perplexity ( 24.770980522940935 ), saving model...
+Epoch  136 loss =  2.162228608347639 Valid perplexity =  25.085055308034065
+7309m 6s (- 2021-05-14 16:59:52.022465) (2490000 13728%) loss = 2.1608, CE_loss = 2.1608, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.952035290131086
+7338m 34s (- 2021-05-14 17:29:19.802450) (2500000 13783%) loss = 2.1624, CE_loss = 2.1624, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.740340306725233
+Epoch  137 loss =  2.1618121617706465 Valid perplexity =  24.963722935757303
+7368m 5s (- 2021-05-14 17:58:50.604288) (2510000 13838%) loss = 2.1599, CE_loss = 2.1599, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.0524539189188
+7397m 27s (- 2021-05-14 18:28:12.514925) (2520000 13893%) loss = 2.1644, CE_loss = 2.1644, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.716604909084584
+perplexity =  24.716604909084584 >= min_perplexity ( 24.724253407479083 ), saving model...
+Epoch  138 loss =  2.1614371417789635 Valid perplexity =  25.021302289037685
+7426m 53s (- 2021-05-14 18:57:38.414331) (2530000 13948%) loss = 2.1602, CE_loss = 2.1602, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.88668172557581
+Epoch  139 loss =  2.1612389410067214 Valid perplexity =  24.941943877211372
+7456m 17s (- 2021-05-14 19:27:02.456606) (2540000 14003%) loss = 2.1604, CE_loss = 2.1604, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.815773285265617
+7485m 46s (- 2021-05-14 19:56:31.342323) (2550000 14058%) loss = 2.1595, CE_loss = 2.1595, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.88270103264721
+Epoch  140 loss =  2.1607916013584445 Valid perplexity =  24.963387403646543
+7515m 16s (- 2021-05-14 20:26:01.953926) (2560000 14114%) loss = 2.1603, CE_loss = 2.1603, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.060254691521035
+7544m 48s (- 2021-05-14 20:55:33.844743) (2570000 14169%) loss = 2.1642, CE_loss = 2.1642, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.600093801808512
+perplexity =  24.600093801808512 >= min_perplexity ( 24.716604909084584 ), saving model...
+Epoch  141 loss =  2.1605551892308026 Valid perplexity =  25.026789648897292
+7574m 22s (- 2021-05-14 21:25:07.245367) (2580000 14224%) loss = 2.1580, CE_loss = 2.1580, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.89337840729995
+7603m 45s (- 2021-05-14 21:54:30.905830) (2590000 14279%) loss = 2.1619, CE_loss = 2.1619, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.07962761570129
+Epoch  142 loss =  2.1602962763267546 Valid perplexity =  24.90343235230431
+7633m 15s (- 2021-05-14 22:24:00.568700) (2600000 14334%) loss = 2.1582, CE_loss = 2.1582, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.978839391076814
+7662m 43s (- 2021-05-14 22:53:28.222368) (2610000 14389%) loss = 2.1610, CE_loss = 2.1610, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.72660633020531
+Epoch  143 loss =  2.160104575216251 Valid perplexity =  25.06807476652291
+7692m 9s (- 2021-05-14 23:22:54.571577) (2620000 14444%) loss = 2.1601, CE_loss = 2.1601, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.0087189575883
+7721m 33s (- 2021-05-14 23:52:18.226970) (2630000 14499%) loss = 2.1603, CE_loss = 2.1603, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.05409286101769
+Epoch  144 loss =  2.1597935304888582 Valid perplexity =  24.99430438730604
+7750m 55s (- 2021-05-15 00:21:40.995660) (2640000 14555%) loss = 2.1590, CE_loss = 2.1590, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.823326037387023
+Epoch  145 loss =  2.159519002045288 Valid perplexity =  25.016923901188058
+7780m 27s (- 2021-05-15 00:51:12.396674) (2650000 14610%) loss = 2.1570, CE_loss = 2.1570, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.202434414634105
+7809m 52s (- 2021-05-15 01:20:37.091949) (2660000 14665%) loss = 2.1620, CE_loss = 2.1620, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.902560316501557
+Epoch  146 loss =  2.159207281259655 Valid perplexity =  24.991067280757246
+7839m 18s (- 2021-05-15 01:50:03.301745) (2670000 14720%) loss = 2.1555, CE_loss = 2.1555, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.121600241587497
+7868m 33s (- 2021-05-15 02:19:18.581419) (2680000 14775%) loss = 2.1621, CE_loss = 2.1621, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.92029199124067
+Epoch  147 loss =  2.158697970388138 Valid perplexity =  24.87092965316844
+7897m 47s (- 2021-05-15 02:48:32.093380) (2690000 14830%) loss = 2.1577, CE_loss = 2.1577, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.865367083455215
+7926m 54s (- 2021-05-15 03:17:39.470666) (2700000 14885%) loss = 2.1593, CE_loss = 2.1593, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.81820042308003
+Epoch  148 loss =  2.1585369036464237 Valid perplexity =  24.97825847656073
+7956m 2s (- 2021-05-15 03:46:48.079027) (2710000 14941%) loss = 2.1562, CE_loss = 2.1562, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.76997698572376
+7985m 7s (- 2021-05-15 04:15:52.367373) (2720000 14996%) loss = 2.1617, CE_loss = 2.1617, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.94212379263416
+Epoch  149 loss =  2.158194479594053 Valid perplexity =  24.906077023562354
+8014m 22s (- 2021-05-15 04:45:07.648670) (2730000 15051%) loss = 2.1578, CE_loss = 2.1578, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.02750699122024
+Epoch  150 loss =  2.157959458206951 Valid perplexity =  24.892432050687574
+8043m 38s (- 2021-05-15 05:14:23.909299) (2740000 15106%) loss = 2.1548, CE_loss = 2.1548, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.9420029675855
+8072m 49s (- 2021-05-15 05:43:34.574313) (2750000 15161%) loss = 2.1585, CE_loss = 2.1585, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.939929468304793
+Epoch  151 loss =  2.1577184009064334 Valid perplexity =  24.896078353438647
+8102m 4s (- 2021-05-15 06:12:49.709953) (2760000 15216%) loss = 2.1566, CE_loss = 2.1566, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.97290564362487
+8131m 14s (- 2021-05-15 06:41:59.210111) (2770000 15271%) loss = 2.1607, CE_loss = 2.1607, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.770632089791544
+Epoch  152 loss =  2.1574751391821203 Valid perplexity =  24.996358295663867
+8160m 30s (- 2021-05-15 07:11:15.751674) (2780000 15326%) loss = 2.1563, CE_loss = 2.1563, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.191798183773937
+8189m 38s (- 2021-05-15 07:40:23.761252) (2790000 15382%) loss = 2.1583, CE_loss = 2.1583, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.919506005562724
+Epoch  153 loss =  2.157152829592566 Valid perplexity =  24.98174376910469
+8218m 48s (- 2021-05-15 08:09:33.887261) (2800000 15437%) loss = 2.1533, CE_loss = 2.1533, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.768866236636583
+8247m 58s (- 2021-05-15 08:38:43.985375) (2810000 15492%) loss = 2.1599, CE_loss = 2.1599, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.712362092104666
+Epoch  154 loss =  2.156881220913969 Valid perplexity =  24.917184382185678
+8277m 13s (- 2021-05-15 09:07:59.043521) (2820000 15547%) loss = 2.1570, CE_loss = 2.1570, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.97367292994068
+Epoch  155 loss =  2.156582190975266 Valid perplexity =  24.995204408674507
+8306m 30s (- 2021-05-15 09:37:15.174976) (2830000 15602%) loss = 2.1561, CE_loss = 2.1561, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.15190639062242
+8335m 51s (- 2021-05-15 10:06:36.932224) (2840000 15657%) loss = 2.1555, CE_loss = 2.1555, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.128474140091082
+Epoch  156 loss =  2.156498144380851 Valid perplexity =  24.891723197344888
+8365m 34s (- 2021-05-15 10:36:19.709914) (2850000 15712%) loss = 2.1561, CE_loss = 2.1561, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.875690800646183
+8394m 57s (- 2021-05-15 11:05:42.828107) (2860000 15768%) loss = 2.1576, CE_loss = 2.1576, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.432686712066275
+perplexity =  24.432686712066275 >= min_perplexity ( 24.600093801808512 ), saving model...
+Epoch  157 loss =  2.156173078806007 Valid perplexity =  24.939831256976667
+8424m 32s (- 2021-05-15 11:35:17.111818) (2870000 15823%) loss = 2.1544, CE_loss = 2.1544, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.94190461589925
+8454m 5s (- 2021-05-15 12:04:50.131853) (2880000 15878%) loss = 2.1575, CE_loss = 2.1575, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.610493513627343
+Epoch  158 loss =  2.1558564588984552 Valid perplexity =  24.94722065748499
+8483m 36s (- 2021-05-15 12:34:21.455389) (2890000 15933%) loss = 2.1543, CE_loss = 2.1543, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.708479343281837
+8512m 53s (- 2021-05-15 13:03:38.467307) (2900000 15988%) loss = 2.1555, CE_loss = 2.1555, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.617704310090996
+Epoch  159 loss =  2.1555659731679353 Valid perplexity =  24.898686481505834
+8542m 5s (- 2021-05-15 13:32:50.637694) (2910000 16043%) loss = 2.1565, CE_loss = 2.1565, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.10869845155884
+8571m 47s (- 2021-05-15 14:02:32.261193) (2920000 16098%) loss = 2.1554, CE_loss = 2.1554, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.813034178472208
+Epoch  160 loss =  2.155345722273845 Valid perplexity =  24.931927372518636
+8601m 2s (- 2021-05-15 14:31:47.218341) (2930000 16153%) loss = 2.1557, CE_loss = 2.1557, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.084456634262224
+Epoch  161 loss =  2.155016374280427 Valid perplexity =  24.91845854747236
+8630m 19s (- 2021-05-15 15:01:05.034770) (2940000 16209%) loss = 2.1500, CE_loss = 2.1500, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.723658889287087
+8659m 34s (- 2021-05-15 15:30:19.668664) (2950000 16264%) loss = 2.1602, CE_loss = 2.1602, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.20935367958128
+Epoch  162 loss =  2.1548524568787166 Valid perplexity =  24.777861440472012
+8689m 15s (- 2021-05-15 16:00:00.354488) (2960000 16319%) loss = 2.1506, CE_loss = 2.1506, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.704105024258777
+8718m 50s (- 2021-05-15 16:29:36.067124) (2970000 16374%) loss = 2.1572, CE_loss = 2.1572, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.64102241489967
+Epoch  163 loss =  2.1545816273933234 Valid perplexity =  24.97707669877881
+8748m 28s (- 2021-05-15 16:59:13.187080) (2980000 16429%) loss = 2.1537, CE_loss = 2.1537, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.667277354178655
+8777m 59s (- 2021-05-15 17:28:44.984492) (2990000 16484%) loss = 2.1562, CE_loss = 2.1562, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.83660193402277
+Epoch  164 loss =  2.154294149201515 Valid perplexity =  24.929958564461902
+8807m 31s (- 2021-05-15 17:58:16.781383) (3000000 16539%) loss = 2.1520, CE_loss = 2.1520, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.992928983051605
+8836m 58s (- 2021-05-15 18:27:43.797901) (3010000 16594%) loss = 2.1568, CE_loss = 2.1568, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.62665140423609
+Epoch  165 loss =  2.1539283580104525 Valid perplexity =  24.807020435919643
+8866m 6s (- 2021-05-15 18:56:51.741997) (3020000 16650%) loss = 2.1536, CE_loss = 2.1536, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.821712057849627
+Epoch  166 loss =  2.1537643528235026 Valid perplexity =  24.83299606159406
+8895m 14s (- 2021-05-15 19:25:59.397037) (3030000 16705%) loss = 2.1501, CE_loss = 2.1501, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.76329565128702
+8924m 19s (- 2021-05-15 19:55:04.758651) (3040000 16760%) loss = 2.1538, CE_loss = 2.1538, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.933278011901933
+Epoch  167 loss =  2.1535432970251738 Valid perplexity =  24.844025927403393
+8953m 28s (- 2021-05-15 20:24:13.571973) (3050000 16815%) loss = 2.1530, CE_loss = 2.1530, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.599322217623392
+8982m 31s (- 2021-05-15 20:53:16.563699) (3060000 16870%) loss = 2.1560, CE_loss = 2.1560, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.427147586924274
+perplexity =  24.427147586924274 >= min_perplexity ( 24.432686712066275 ), saving model...
+Epoch  168 loss =  2.1533179172299404 Valid perplexity =  24.825143534485036
+9011m 35s (- 2021-05-15 21:22:20.189097) (3070000 16925%) loss = 2.1526, CE_loss = 2.1526, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.747533403679878
+9040m 36s (- 2021-05-15 21:51:21.914453) (3080000 16980%) loss = 2.1545, CE_loss = 2.1545, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.946626198766303
+Epoch  169 loss =  2.1531046357415375 Valid perplexity =  24.86201780519324
+9069m 35s (- 2021-05-15 22:20:20.934965) (3090000 17036%) loss = 2.1496, CE_loss = 2.1496, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.70234273538826
+9098m 32s (- 2021-05-15 22:49:17.811807) (3100000 17091%) loss = 2.1555, CE_loss = 2.1555, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.80616413464323
+Epoch  170 loss =  2.1528793372413477 Valid perplexity =  24.78743939586041
+9127m 57s (- 2021-05-15 23:18:42.777852) (3110000 17146%) loss = 2.1518, CE_loss = 2.1518, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.667209109385198
+Epoch  171 loss =  2.1525049517065704 Valid perplexity =  24.880480287957017
+9157m 7s (- 2021-05-15 23:47:52.510052) (3120000 17201%) loss = 2.1519, CE_loss = 2.1519, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.64498573540513
+9186m 10s (- 2021-05-16 00:16:55.848119) (3130000 17256%) loss = 2.1528, CE_loss = 2.1528, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.871168637987477
+Epoch  172 loss =  2.1522146462851945 Valid perplexity =  24.89498068570856
+9215m 12s (- 2021-05-16 00:45:57.261894) (3140000 17311%) loss = 2.1501, CE_loss = 2.1501, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.822728215970784
+9244m 13s (- 2021-05-16 01:14:58.942748) (3150000 17366%) loss = 2.1557, CE_loss = 2.1557, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.520708635265798
+Epoch  173 loss =  2.151965797281026 Valid perplexity =  24.8910827004715
+9273m 17s (- 2021-05-16 01:44:02.704011) (3160000 17421%) loss = 2.1476, CE_loss = 2.1476, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.96833219564992
+9302m 20s (- 2021-05-16 02:13:05.196892) (3170000 17477%) loss = 2.1556, CE_loss = 2.1556, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.835410536399134
+Epoch  174 loss =  2.1518113896676283 Valid perplexity =  24.75921829778495
+9331m 23s (- 2021-05-16 02:42:08.802533) (3180000 17532%) loss = 2.1504, CE_loss = 2.1504, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.67442553821752
+9360m 24s (- 2021-05-16 03:11:09.867469) (3190000 17587%) loss = 2.1518, CE_loss = 2.1518, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.72619718993788
+Epoch  175 loss =  2.151584000718056 Valid perplexity =  24.771114698580586
+9389m 27s (- 2021-05-16 03:40:12.343673) (3200000 17642%) loss = 2.1507, CE_loss = 2.1507, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.925154268428955
+9418m 26s (- 2021-05-16 04:09:11.790332) (3210000 17697%) loss = 2.1531, CE_loss = 2.1531, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.821367515491293
+Epoch  176 loss =  2.1513657330898166 Valid perplexity =  24.809110497863585
+9447m 29s (- 2021-05-16 04:38:14.338435) (3220000 17752%) loss = 2.1526, CE_loss = 2.1526, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.860964989472116
+Epoch  177 loss =  2.15134451566339 Valid perplexity =  24.842135949178807
+9476m 30s (- 2021-05-16 05:07:15.985052) (3230000 17807%) loss = 2.1463, CE_loss = 2.1463, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.62746600559958
+9505m 29s (- 2021-05-16 05:36:14.319254) (3240000 17863%) loss = 2.1534, CE_loss = 2.1534, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.88906092289676
+Epoch  178 loss =  2.1510111985471205 Valid perplexity =  24.785822100902102
+9534m 34s (- 2021-05-16 06:05:19.353241) (3250000 17918%) loss = 2.1491, CE_loss = 2.1491, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.673601537323773
+9563m 30s (- 2021-05-16 06:34:15.160091) (3260000 17973%) loss = 2.1529, CE_loss = 2.1529, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.42898721923253
+Epoch  179 loss =  2.1507790430547225 Valid perplexity =  24.851627056012465
+9592m 37s (- 2021-05-16 07:03:22.235019) (3270000 18028%) loss = 2.1501, CE_loss = 2.1501, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.746760605161466
+9621m 39s (- 2021-05-16 07:32:24.767083) (3280000 18083%) loss = 2.1515, CE_loss = 2.1515, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.579298441228303
+Epoch  180 loss =  2.150410005498884 Valid perplexity =  24.891111459812922
+9650m 42s (- 2021-05-16 08:01:27.105131) (3290000 18138%) loss = 2.1490, CE_loss = 2.1490, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.915949766556167
+9679m 43s (- 2021-05-16 08:30:28.358020) (3300000 18193%) loss = 2.1524, CE_loss = 2.1524, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.678119037578963
+Epoch  181 loss =  2.1501228453184598 Valid perplexity =  24.85364618795055
+9709m 3s (- 2021-05-16 08:59:48.168730) (3310000 18248%) loss = 2.1493, CE_loss = 2.1493, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.038918522764355
+Epoch  182 loss =  2.1499639246035653 Valid perplexity =  24.765332939115513
+9738m 28s (- 2021-05-16 09:29:13.994061) (3320000 18304%) loss = 2.1481, CE_loss = 2.1481, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.745457972264056
+9769m 18s (- 2021-05-16 10:00:03.845906) (3330000 18359%) loss = 2.1485, CE_loss = 2.1485, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.611507286028456
+Epoch  183 loss =  2.1498290436761964 Valid perplexity =  24.72095890567565
+9802m 50s (- 2021-05-16 10:33:35.091940) (3340000 18414%) loss = 2.1501, CE_loss = 2.1501, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.867448486046897
+9836m 35s (- 2021-05-16 11:07:20.385025) (3350000 18469%) loss = 2.1528, CE_loss = 2.1528, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.420827682072755
+perplexity =  24.420827682072755 >= min_perplexity ( 24.427147586924274 ), saving model...
+Epoch  184 loss =  2.1495105093629507 Valid perplexity =  24.80765074934282
+9870m 22s (- 2021-05-16 11:41:08.048749) (3360000 18524%) loss = 2.1477, CE_loss = 2.1477, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.653414465107776
+9904m 11s (- 2021-05-16 12:14:56.406834) (3370000 18579%) loss = 2.1505, CE_loss = 2.1505, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.854113948159803
+Epoch  185 loss =  2.1493810905154502 Valid perplexity =  24.83727012104536
+9938m 4s (- 2021-05-16 12:48:49.221877) (3380000 18634%) loss = 2.1471, CE_loss = 2.1471, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.870367593125458
+9971m 52s (- 2021-05-16 13:22:37.666912) (3390000 18690%) loss = 2.1502, CE_loss = 2.1502, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.711122825583722
+Epoch  186 loss =  2.1491030670011537 Valid perplexity =  24.80404973746848
+10005m 38s (- 2021-05-16 13:56:24.020155) (3400000 18745%) loss = 2.1498, CE_loss = 2.1498, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.913038777429612
+Epoch  187 loss =  2.149090728626084 Valid perplexity =  24.79109213035784
+10039m 30s (- 2021-05-16 14:30:15.281515) (3410000 18800%) loss = 2.1487, CE_loss = 2.1487, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.783286742675983
+10073m 13s (- 2021-05-16 15:03:58.483370) (3420000 18855%) loss = 2.1486, CE_loss = 2.1486, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.633991489710276
+Epoch  188 loss =  2.148739013564154 Valid perplexity =  24.84565136573792
+10107m 2s (- 2021-05-16 15:37:47.992217) (3430000 18910%) loss = 2.1468, CE_loss = 2.1468, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.556393271651718
+10140m 52s (- 2021-05-16 16:11:37.154372) (3440000 18965%) loss = 2.1517, CE_loss = 2.1517, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.698880976308015
+Epoch  189 loss =  2.1486335647058192 Valid perplexity =  24.853964306087597
+10174m 43s (- 2021-05-16 16:45:28.639152) (3450000 19020%) loss = 2.1445, CE_loss = 2.1445, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.572284867528744
+10208m 11s (- 2021-05-16 17:18:56.265952) (3460000 19075%) loss = 2.1521, CE_loss = 2.1521, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.756605753387795
+Epoch  190 loss =  2.148228465579142 Valid perplexity =  24.82107954542144
+10241m 46s (- 2021-05-16 17:52:31.911537) (3470000 19131%) loss = 2.1472, CE_loss = 2.1472, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.923320599025992
+10275m 10s (- 2021-05-16 18:25:55.126536) (3480000 19186%) loss = 2.1484, CE_loss = 2.1484, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.615621110389498
+Epoch  191 loss =  2.148112731347511 Valid perplexity =  24.703433742344846
+10308m 37s (- 2021-05-16 18:59:23.050562) (3490000 19241%) loss = 2.1463, CE_loss = 2.1463, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.76032480853005
+10342m 43s (- 2021-05-16 19:33:28.194704) (3500000 19296%) loss = 2.1505, CE_loss = 2.1505, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.549728041756016
+Epoch  192 loss =  2.147864365977954 Valid perplexity =  24.732130648634715
+10376m 58s (- 2021-05-16 20:07:43.715621) (3510000 19351%) loss = 2.1486, CE_loss = 2.1486, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.81289017560569
+Epoch  193 loss =  2.1476069591871263 Valid perplexity =  24.76202338298812
+10411m 24s (- 2021-05-16 20:42:09.568982) (3520000 19406%) loss = 2.1436, CE_loss = 2.1436, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.468868717838863
+10445m 44s (- 2021-05-16 21:16:29.149686) (3530000 19461%) loss = 2.1490, CE_loss = 2.1490, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.880800068251407
+Epoch  194 loss =  2.14742389621355 Valid perplexity =  24.917799533867136
+10479m 15s (- 2021-05-16 21:50:00.226309) (3540000 19517%) loss = 2.1460, CE_loss = 2.1460, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.783542749409566
+10512m 34s (- 2021-05-16 22:23:19.619917) (3550000 19572%) loss = 2.1502, CE_loss = 2.1502, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.66239505949356
+Epoch  195 loss =  2.147203124600362 Valid perplexity =  24.768430667503775
+10545m 53s (- 2021-05-16 22:56:38.908173) (3560000 19627%) loss = 2.1460, CE_loss = 2.1460, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.999724346566108
+10579m 9s (- 2021-05-16 23:29:54.955465) (3570000 19682%) loss = 2.1486, CE_loss = 2.1486, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.52730839834664
+Epoch  196 loss =  2.1470218658798887 Valid perplexity =  24.800232499503075
+10612m 5s (- 2021-05-17 00:02:50.786969) (3580000 19737%) loss = 2.1430, CE_loss = 2.1430, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.804980638993715
+10644m 58s (- 2021-05-17 00:35:43.657438) (3590000 19792%) loss = 2.1501, CE_loss = 2.1501, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.767608121732334
+Epoch  197 loss =  2.146831336492924 Valid perplexity =  24.72873195035948
+10678m 5s (- 2021-05-17 01:08:50.510020) (3600000 19847%) loss = 2.1465, CE_loss = 2.1465, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.840038365473745
+Epoch  198 loss =  2.146630795076711 Valid perplexity =  24.6471893796005
+10711m 1s (- 2021-05-17 01:41:46.902840) (3610000 19902%) loss = 2.1450, CE_loss = 2.1450, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.50591800300516
+10743m 52s (- 2021-05-17 02:14:37.684386) (3620000 19958%) loss = 2.1464, CE_loss = 2.1464, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.505512644250263
+Epoch  199 loss =  2.146586016927944 Valid perplexity =  24.770557257388248
+10776m 51s (- 2021-05-17 02:47:36.447658) (3630000 20013%) loss = 2.1462, CE_loss = 2.1462, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.68633300939815
+10809m 48s (- 2021-05-17 03:20:33.189400) (3640000 20068%) loss = 2.1488, CE_loss = 2.1488, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.46199296689174
+Epoch  200 loss =  2.1463017688376307 Valid perplexity =  24.748783153370162
+10842m 49s (- 2021-05-17 03:53:34.565605) (3650000 20123%) loss = 2.1444, CE_loss = 2.1444, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.78681498217356
+10875m 47s (- 2021-05-17 04:26:32.740309) (3660000 20178%) loss = 2.1471, CE_loss = 2.1471, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.72775515678247
+Epoch  201 loss =  2.1459823336243984 Valid perplexity =  24.716890095053508
+10908m 53s (- 2021-05-17 04:59:38.650905) (3670000 20233%) loss = 2.1447, CE_loss = 2.1447, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.711610561617213
+10941m 58s (- 2021-05-17 05:32:43.785850) (3680000 20288%) loss = 2.1458, CE_loss = 2.1458, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.342960635331824
+perplexity =  24.342960635331824 >= min_perplexity ( 24.420827682072755 ), saving model...
+Epoch  202 loss =  2.1458817515060122 Valid perplexity =  24.69432302881996
+10975m 0s (- 2021-05-17 06:05:45.931993) (3690000 20344%) loss = 2.1466, CE_loss = 2.1466, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.640925772435185
+11007m 59s (- 2021-05-17 06:38:44.394154) (3700000 20399%) loss = 2.1457, CE_loss = 2.1457, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.608692644463126
+Epoch  203 loss =  2.145638946844299 Valid perplexity =  24.69236879589636
+11041m 3s (- 2021-05-17 07:11:48.528001) (3710000 20454%) loss = 2.1454, CE_loss = 2.1454, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.565344773212495
+Epoch  204 loss =  2.145401760419854 Valid perplexity =  24.629663775505495
+11074m 9s (- 2021-05-17 07:44:54.286064) (3720000 20509%) loss = 2.1411, CE_loss = 2.1411, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.542636924942222
+11107m 11s (- 2021-05-17 08:17:57.048712) (3730000 20564%) loss = 2.1509, CE_loss = 2.1509, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.848782451384157
+Epoch  205 loss =  2.1454592960969734 Valid perplexity =  24.645436506341145
+11140m 17s (- 2021-05-17 08:51:02.307181) (3740000 20619%) loss = 2.1410, CE_loss = 2.1410, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.614968801265814
+11173m 13s (- 2021-05-17 09:23:58.657853) (3750000 20674%) loss = 2.1480, CE_loss = 2.1480, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.495860826707883
+Epoch  206 loss =  2.145194544017887 Valid perplexity =  24.647608446981785
+11206m 13s (- 2021-05-17 09:56:58.170445) (3760000 20729%) loss = 2.1441, CE_loss = 2.1441, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.45614440746542
+11239m 17s (- 2021-05-17 10:30:02.248617) (3770000 20785%) loss = 2.1475, CE_loss = 2.1475, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.68213031671092
+Epoch  207 loss =  2.144955990613591 Valid perplexity =  24.682833986296966
+11272m 23s (- 2021-05-17 11:03:09.077422) (3780000 20840%) loss = 2.1421, CE_loss = 2.1421, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.685154315035913
+11305m 25s (- 2021-05-17 11:36:10.719055) (3790000 20895%) loss = 2.1473, CE_loss = 2.1473, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.483848764692755
+Epoch  208 loss =  2.1446463181880095 Valid perplexity =  24.712248666903378
+11338m 37s (- 2021-05-17 12:09:22.101484) (3800000 20950%) loss = 2.1449, CE_loss = 2.1449, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.677074794035065
+Epoch  209 loss =  2.1444963078696535 Valid perplexity =  24.729754394304873
+11371m 46s (- 2021-05-17 12:42:31.909919) (3810000 21005%) loss = 2.1404, CE_loss = 2.1404, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.623083060391135
+11404m 54s (- 2021-05-17 13:15:39.736520) (3820000 21060%) loss = 2.1450, CE_loss = 2.1450, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.90318527019344
+Epoch  210 loss =  2.144337746805269 Valid perplexity =  24.65810874979159
+11438m 0s (- 2021-05-17 13:48:45.613206) (3830000 21115%) loss = 2.1439, CE_loss = 2.1439, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.755645965164323
+11471m 3s (- 2021-05-17 14:21:49.040219) (3840000 21171%) loss = 2.1464, CE_loss = 2.1464, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  24.49970548958313
+Epoch  211 loss =  2.1440374856813302 Valid perplexity =  24.704682705294935
+11504m 16s (- 2021-05-17 14:55:01.746288) (3850000 21226%) loss = 2.1432, CE_loss = 2.1432, VAE recon = 0.0000, KL = 0.0000, error=0.0000
+Test ppl:  25.027306563068677
