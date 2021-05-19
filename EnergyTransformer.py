@@ -563,6 +563,16 @@ class EnergyTransformerEncoderLayer(Module):
 
         return src3, torch.Tensor([recon + recon1, KL_loss2+ KL_loss1] )
 
+    def normalize(self, attn_output_weights, src_len):
+
+        mask = (torch.triu(torch.ones(src_len, src_len)) == 1).transpose(0, 1).to(args['device'])
+        attn_output_weights = attn_output_weights * mask.unsqueeze(0)
+        attn_mu = attn_output_weights.sum(2, keepdim=True) / (mask.sum(1, keepdim=True).unsqueeze(0) + 1e-6)
+        attn_sigma = ((attn_output_weights - attn_mu) * mask.unsqueeze(0)) ** 2
+        attn_sigma = torch.sqrt(attn_sigma.sum(2, keepdim=True) + 1e-6)
+        attn_output_weights = (attn_output_weights - attn_mu) / (attn_sigma + 1e-6)
+        return attn_output_weights
+
     def multi_head_attention_forward(self, query: Tensor,
                 key: Tensor,
                 value: Tensor,
@@ -814,14 +824,29 @@ class EnergyTransformerEncoderLayer(Module):
         attn_output_weights = torch.bmm(q, k.transpose(1, 2))
         assert list(attn_output_weights.size()) == [bsz * num_heads, tgt_len, src_len]
 
-        if args['choose'] == 'norm_attn' or args['choose'] == 'NADM':
-            attn_output_weights = F.layer_norm(attn_output_weights, (attn_output_weights.size()[-1],))
+        choose = args['choose'].split('-')
+        ablation = 'NN'
+        if len(choose) ==2:
+            choose, ablation = choose
+        elif len(choose) ==1:
+            choose = choose[0]
+        else:
+            print('Wrong choice!!!')
 
-        if args['choose'] == 'BET':
+        if choose == 'norm_attn' or choose == 'NADM':
+            # attn_output_weights = F.layer_norm(attn_output_weights, (attn_output_weights.size()[-1],), None, None)
+
+            attn_output_weights1 = self.normalize(attn_output_weights, src_len)
+            attn_output_weights = attn_output_weights - 3*attn_output_weights1.detach()
+
+        if choose == 'BET':
             # attn_output_weights = F.layer_norm(attn_output_weights,(attn_output_weights.size()[-1],))
             attn_output_weights_beta = attn_output_weights.clone()
 
-        if args['choose']=='Diagmask' or args['choose'] == 'NADM':
+            # if 'na' not in ablation:
+            #     attn_output_weights = self.normalize(attn_output_weights, src_len)
+
+        if choose=='Diagmask' or choose == 'NADM':
             I = torch.eye(query.size()[0]).to(args['device'])
             I[0,0] = 0
             I = I.masked_fill_(I==1, float("-inf"))
@@ -858,23 +883,24 @@ class EnergyTransformerEncoderLayer(Module):
         attn_output = attn_output.transpose(0, 1).contiguous().view(tgt_len, bsz, embed_dim)
         attn_output = F.linear(attn_output, out_proj_weight, out_proj_bias)
 
-        if  args['choose'] == 'BET':
+        if choose == 'BET':
             cat = torch.cat([q, attn_output.transpose(0,1)], dim = 2) # N S 2E
             high = self.f(cat).squeeze() # N S (1)
             fixed_weight = attn_output_weights_beta * high.unsqueeze(1)
             # print(fixed_weight)
 
-            fixed_weight = F.layer_norm(fixed_weight,(fixed_weight.size()[-1],))
+            # fixed_weight = F.layer_norm(fixed_weight,(fixed_weight.size()[-1],), None,None)
+
             if attn_mask is not None:
                 if attn_mask.dtype == torch.bool:
                     fixed_weight.masked_fill_(attn_mask, float("-inf"))
                 else:
                     fixed_weight += attn_mask
-
-            I = torch.eye(query.size()[0]).to(args['device'])
-            I[0,0] = 0
-            I = I.masked_fill_(I==1, float("-inf"))
-            fixed_weight += I
+            if 'dm' not in ablation:
+                I = torch.eye(query.size()[0]).to(args['device'])
+                I[0,0] = 0
+                I = I.masked_fill_(I==1, float("-inf"))
+                fixed_weight += I
             # print(fixed_weight)
             fixed_weight = F.softmax(fixed_weight, dim=-1)
             fixed_weight = F.dropout(fixed_weight, p=dropout_p, training=training)
@@ -939,6 +965,7 @@ class EnergyTransformerEncoderLayer(Module):
             training=training,
             key_padding_mask=None, need_weights=True,
             attn_mask=attn_mask)
+
 
         attn_output = attn_output.transpose(0, 1)
         KL = torch.Tensor([0,0]).to(args['device'])

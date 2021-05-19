@@ -20,6 +20,7 @@ from modules import Hopfield, HopfieldPooling, HopfieldLayer
 from modules.transformer import  HopfieldEncoderLayer
 from HackTransformer import TransformerEncoderLayer,TransformerEncoder
 from EnergyTransformer import EnergyTransformerEncoderLayer,EnergyTransformerEncoder
+
 class LanguageModel(nn.Module):
     def __init__(self,w2i, i2w):
         """
@@ -69,13 +70,20 @@ class LanguageModel(nn.Module):
         elif args['LMtype'] == 'asso_enco':
             self.hopfield = Hopfield(
                 input_size=args['embeddingSize'] )
-            self.hp_network = HopfieldEncoderLayer(self.hopfield)
+            self.hp_network1 = HopfieldEncoderLayer(self.hopfield)
+            self.hp_network =  nn.TransformerEncoder(self.hp_network1, num_layers=args['numLayers']).to(self.device)
+            self.output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize'])
+        elif args['LMtype'] == 'bigbird':
+            self.trans_net = nn.TransformerEncoderLayer(d_model=args['embeddingSize'], nhead=args['nhead']).to(
+                self.device)
+            self.transformer_encoder = nn.TransformerEncoder(self.trans_net, num_layers=args['numLayers']).to(
+                self.device)
             self.output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize'])
         elif args['LMtype'] == 'transformer':
             # self.trans_net = nn.TransformerEncoderLayer(d_model=args['embeddingSize'], nhead=args['nhead']).to(self.device)
             # self.transformer_encoder = nn.TransformerEncoder(self.trans_net, num_layers=args['numLayers']).to(self.device)
-            self.trans_net =  TransformerEncoderLayer(d_model=args['embeddingSize'], nhead=args['nhead']).to(self.device)
-            self.transformer_encoder =  TransformerEncoder(self.trans_net, num_layers=args['numLayers']).to(self.device)
+            self.trans_net =  nn.TransformerEncoderLayer(d_model=args['embeddingSize'], nhead=args['nhead']).to(self.device)
+            self.transformer_encoder =  nn.TransformerEncoder(self.trans_net, num_layers=args['numLayers']).to(self.device)
             self.output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize'])
             # self.transformer_network = nn.Sequential(self.transformer_encoder, output_projection).to(self.device)
         elif args['LMtype'] == 'energy':
@@ -94,6 +102,18 @@ class LanguageModel(nn.Module):
         mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
         return mask
 
+    def generate_bigbird_mask(self, sz):
+        # mask = torch.logical_not(torch.triu(torch.ones(sz, sz)) == 1)
+        # mask[0, 0] = True
+        mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
+        mask2 = torch.zeros(sz, sz)
+        mask2[4:,2:] = mask[:-4,:-2]
+        x = [np.random.randint(sz) for _ in range(30)]
+        y = [np.random.randint(sz) for _ in range(30)]
+        mask2[x,y] = 0
+        mask = (mask==1) & (mask2 ==0)
+        mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
+        return mask
 
 
     def build(self, x, training):
@@ -118,11 +138,16 @@ class LanguageModel(nn.Module):
             de_outputs = self.hp_network(dec_input_embed,src_mask)
             de_outputs = self.output_projection(de_outputs)
             # de_outputs = de_outputs.transpose(0,1)
+        elif args['LMtype'] == 'bigbird':
+            src_mask = self.generate_bigbird_mask(self.dec_len).to(self.device)
+            de_outputs = self.transformer_encoder(dec_input_embed.transpose(0, 1), mask=src_mask)
+            de_outputs = self.output_projection(de_outputs)
+            de_outputs = de_outputs.transpose(0, 1)
         elif args['LMtype']== 'transformer':
             src_mask = self.generate_square_subsequent_mask(self.dec_len).to(self.device)
-            de_outputs, attn_list = self.transformer_encoder(dec_input_embed, mask=src_mask) # .transpose(0,1)
+            de_outputs= self.transformer_encoder(dec_input_embed.transpose(0,1), mask=src_mask)
             de_outputs = self.output_projection(de_outputs)
-            # de_outputs = de_outputs.transpose(0,1)
+            de_outputs = de_outputs.transpose(0,1)
             # print(de_outputs.size())
         elif args['LMtype'] == 'energy':
             src_mask = self.generate_square_subsequent_mask(self.dec_len).to(self.device)
@@ -161,8 +186,8 @@ class LanguageModel(nn.Module):
             #     c_loss += torch.exp(-dots.mean())
 
             data['error'] = error
-        elif args['LMtype'] == 'transformer':
-            data['attn_list'] = attn_list
+        # elif args['LMtype'] == 'transformer':
+        #     data['attn_list'] = attn_list
 
 
 
