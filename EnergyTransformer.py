@@ -193,8 +193,9 @@ class EnergyTransformerEncoder(Module):
         Energy = 0
         Error = torch.Tensor([0]).to(args['device'])
         outputs = []
+        attns = []
         for mod in self.layers:
-            output, E = mod(output, src_mask=mask, src_key_padding_mask=src_key_padding_mask, training = training, choice = 1)
+            output, E, attn = mod(output, src_mask=mask, src_key_padding_mask=src_key_padding_mask, training = training, choice = 1)
             Energy += E
             # if prev_out is None:
             #     prev_out = output
@@ -202,11 +203,12 @@ class EnergyTransformerEncoder(Module):
             #     prev_out = prev_out + F.dropout(output)
             #     prev_out = self.norm(prev_out)
             outputs.append(output)
+            attns.append(attn)
 
         if self.norm is not None:
             output = self.norm(output)
 
-        return output, Energy, Error, outputs
+        return output, Energy, Error, outputs, attns
 
 
 
@@ -970,7 +972,7 @@ class EnergyTransformerEncoderLayer(Module):
         attn_output = attn_output.transpose(0, 1)
         KL = torch.Tensor([0,0]).to(args['device'])
 
-        return attn_output, KL
+        return attn_output, KL, attn_weight
 
     def predictcode_attn(self, X, attn_mask=None, dropout_p = 0.1, training = True, eps = 1e-6):
         '''
@@ -1021,7 +1023,7 @@ class EnergyTransformerEncoderLayer(Module):
         #                       key_padding_mask=src_key_padding_mask)[0]
         # src2 = src2.transpose(0,1)
         # src2 = self.reweight_attn(src, attn_mask=src_mask)
-        src2, loss_tuple = self.All_attn(src, attn_mask=src_mask, choice = 1)
+        src2, loss_tuple, attn = self.All_attn(src, attn_mask=src_mask, choice = 1)
 
         # src2, loss_tuple = self.predictcode_attn(src, attn_mask=src_mask)
         # KL = torch.tensor([0]).to(args['device'])
@@ -1037,7 +1039,7 @@ class EnergyTransformerEncoderLayer(Module):
         src2 = self.linear2(self.dropout(self.activation(self.linear1(src))))
         src = src + self.dropout2(src2)
         src = self.norm2(src)
-        return src, loss_tuple
+        return src, loss_tuple, attn
 
 
 
