@@ -131,7 +131,8 @@ class Runner:
         print(args)
         torch.manual_seed(0)
         # self.model = LanguageModel(self.textData.word2index, self.textData.index2word).to(args['device'])
-        self.model = torch.load(args['rootDir']+ 'model_energy_wiki2_100_6_300.pth', map_location=args['device'])
+        # self.model = torch.load(args['rootDir']+ 'model_energy_wiki2_100_6_300.pth', map_location=args['device'])
+        self.model = torch.load(args['rootDir']+ 'model_transformer_wiki2_100_6_300.pth', map_location=args['device'])
         params = sum([np.prod(p.size()) for p in self.model.parameters()])
         print(params, sum([sys.getsizeof(p.storage()) for p in self.model.parameters()])/1000000, 'm')
         # self.trainLM()     # contain  model saving
@@ -273,7 +274,7 @@ class Runner:
         num = 0
         ave_loss = 0
         if printlog:
-            filepointer = open(args['rootDir'] + 'attn_log.txt', 'w')
+            filepointer = open(args['rootDir'] + 'tf_attn_log.txt', 'w')
         with torch.no_grad():
             # print(len(self.testbatches[datasetname][0].decoderSeqs))
             attns = []
@@ -435,7 +436,10 @@ class Runner:
         res   = []
         for ind, sen in enumerate(raw_sentence_list):
             res.append([])
+            sen = ['SOS'] + sen
+            sen = sen[:50]
             for layer_index, attn_layer in enumerate(attn_list):
+
                 res[ind].append({'sen': sen, 'pos':[]})
                 matrix = attn_layer[ind,:,:]
                 for p in range(10, len(sen)):
@@ -445,7 +449,7 @@ class Runner:
                     res[ind][layer_index]['pos'].append((p,sen[p],','.join(high)))
 
 
-                    fp.write(str(layer_index) + '\t' + sen + '\t')
+                    fp.write(str(layer_index) + '\t' + ' '.join(sen) + '\t')
                     fp.write(str(p) + ' ' + sen[p] + '\t' + ','.join(high)+'\n')
 
 
@@ -461,9 +465,9 @@ class Runner:
  
 
 if __name__ == '__main__':
-    args['corpus'] = 'wiki2'
-    args['LMtype'] = 'energy'
-    args['choose'] = 'BET-NN'
+    # args['corpus'] = 'wiki2'
+    # args['LMtype'] = 'energy'
+    # args['choose'] = 'BET-NN'
     # args['norm_attn'] = True
     r = Runner()
     # r.textData = TextData('LMbenchmark')

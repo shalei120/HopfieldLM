@@ -81,8 +81,8 @@ class LanguageModel(nn.Module):
         elif args['LMtype'] == 'transformer':
             # self.trans_net = nn.TransformerEncoderLayer(d_model=args['embeddingSize'], nhead=args['nhead']).to(args['device'])
             # self.transformer_encoder = nn.TransformerEncoder(self.trans_net, num_layers=args['numLayers']).to(args['device'])
-            self.trans_net =  nn.TransformerEncoderLayer(d_model=args['embeddingSize'], nhead=args['nhead']).to(args['device'])
-            self.transformer_encoder =  nn.TransformerEncoder(self.trans_net, num_layers=args['numLayers']).to(args['device'])
+            self.trans_net =  TransformerEncoderLayer(d_model=args['embeddingSize'], nhead=args['nhead']).to(args['device'])
+            self.transformer_encoder =  TransformerEncoder(self.trans_net, num_layers=args['numLayers']).to(args['device'])
             self.output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize'])
             # self.transformer_network = nn.Sequential(self.transformer_encoder, output_projection).to(args['device'])
         elif args['LMtype'] == 'energy':
@@ -116,7 +116,7 @@ class LanguageModel(nn.Module):
 
 
     def build(self, x, training):
-        print(args['device'])
+        # print(args['device'])
         self.decoderInputs = x['dec_input'].to(args['device'])
         self.decoder_lengths = x['dec_len']
         self.decoderTargets = x['dec_target'].to(args['device'])
@@ -145,7 +145,7 @@ class LanguageModel(nn.Module):
             de_outputs = de_outputs.transpose(0, 1)
         elif args['LMtype']== 'transformer':
             src_mask = self.generate_square_subsequent_mask(self.dec_len).to(args['device'])
-            de_outputs= self.transformer_encoder(dec_input_embed.transpose(0,1), mask=src_mask)
+            de_outputs, attns= self.transformer_encoder(dec_input_embed.transpose(0,1), mask=src_mask)
             de_outputs = self.output_projection(de_outputs)
             de_outputs = de_outputs.transpose(0,1)
             # print(de_outputs.size())
@@ -188,8 +188,8 @@ class LanguageModel(nn.Module):
             data['error'] = error
             data['attns'] = attns
 
-        # elif args['LMtype'] == 'transformer':
-        #     data['attn_list'] = attn_list
+        elif args['LMtype'] == 'transformer':
+            data['attns'] = attns
 
 
 
