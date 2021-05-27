@@ -187,7 +187,7 @@ class TransformerEncoder(Module):
         Shape:
             see the docs in Transformer class.
         """
-        output = src
+        output = src.transpose(0,1)
         prev_out = None
 
         attn = []
@@ -200,7 +200,7 @@ class TransformerEncoder(Module):
         if self.norm is not None:
             output = self.norm(output)
 
-        return output, attn
+        return output.transpose(0,1), attn
 
 
 
