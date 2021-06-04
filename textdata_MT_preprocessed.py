@@ -18,6 +18,7 @@ class Batch:
     """Struct containing batches info
     """
     def __init__(self):
+        self.id = []
         self.encoderSeqs = []
         self.label = []
         self.decoderSeqs = []
@@ -81,7 +82,7 @@ class TextData_MT:
         # Create the batch tensor
         for i in range(batchSize):
             # Unpack the sample
-            src_sample, tgt_sample, raw_src, raw_tgt = samples[i]
+            src_sample, tgt_sample, raw_src, raw_tgt, index = samples[i]
 
             if len(src_sample) > maxlen_def:
                 src_sample = src_sample[:maxlen_def]
@@ -100,6 +101,7 @@ class TextData_MT:
             batch.decoder_lens.append(len(batch.targetSeqs[i]))
             batch.raw_source.append(raw_src)
             batch.raw_target.append(raw_tgt)
+            batch.id.append(index)
 
         maxlen_dec = max(batch.decoder_lens)
         maxlen_enc = max(batch.encoder_lens)
@@ -183,44 +185,16 @@ class TextData_MT:
             #                         'EN_DE.de': self.basedir + 'training/europarl-v7.de-en.de',
             #                         'EN_FR.en': self.basedir + 'training/europarl-v7.fr-en.en',
             #                         'EN_FR.fr': self.basedir + 'training/europarl-v7.fr-en.fr'}
-            self.corpusDir_train = {'DE_EN.en': [self.basedir + 'de-en/train.tags.de-en.en'],
-                                    'DE_EN.de': [self.basedir + 'de-en/train.tags.de-en.de'],
-                                    'EN_DE.en': self.basedir + 'de-en/news-commentary-v9.de-en.en',
-                                    'EN_DE.de': self.basedir + 'training/news-commentary-v9.de-en.de',
-                                    'EN_FR.en': self.basedir + 'training/news-commentary-v9.fr-en.en',
-                                    'EN_FR.fr': self.basedir + 'training/news-commentary-v9.fr-en.fr'}
-            self.corpusDir_dev =  {'DE_EN.en': [self.basedir + 'de-en/IWSLT14.TED.dev2010.de-en.en.xml', self.basedir + 'de-en/IWSLT14.TEDX.dev2012.de-en.en.xml'],
-                                    'DE_EN.de': [self.basedir + 'de-en/IWSLT14.TED.dev2010.de-en.de.xml', self.basedir + 'de-en/IWSLT14.TEDX.dev2012.de-en.de.xml'],
-                                   'EN_DE.en': self.basedir + 'dev/news-test2008-src.en.sgm',
-                                    'EN_DE.de': self.basedir + 'dev/news-test2008-ref.de.sgm',
-                                    'EN_FR.en': self.basedir + 'dev/news-test2008-src.en.sgm',
-                                    'EN_FR.fr': self.basedir + 'dev/news-test2008-ref.fr.sgm'}
-            self.corpusDir_test =  {'DE_EN.en': [self.basedir + 'de-en/IWSLT14.TED.tst2010.de-en.en.xml', self.basedir + 'de-en/IWSLT14.TED.tst2011.de-en.en.xml', self.basedir + 'de-en/IWSLT14.TED.tst2012.de-en.en.xml'],
-                                    'DE_EN.de': [self.basedir + 'de-en/IWSLT14.TED.tst2010.de-en.de.xml', self.basedir + 'de-en/IWSLT14.TED.tst2011.de-en.de.xml', self.basedir + 'de-en/IWSLT14.TED.tst2012.de-en.de.xml'],
-                                    'EN_DE.en': self.basedir + 'test-full/newstest2014-deen-src.en.sgm',
-                                    'EN_DE.de': self.basedir + 'test-full/newstest2014-deen-ref.de.sgm',
-                                    'EN_FR.en': self.basedir + 'test-full/newstest2014-fren-src.en.sgm',
-                                    'EN_FR.fr': self.basedir + 'test-full/newstest2014-fren-ref.fr.sgm'}
+            self.corpusDir_train = {'DE_EN.en': self.basedir + 'de-en-preprocessed/train.en',
+                                    'DE_EN.de': self.basedir + 'de-en-preprocessed/train.de'}
+            self.corpusDir_dev =  {'DE_EN.en': self.basedir + 'de-en-preprocessed/valid.en',
+                                    'DE_EN.de': self.basedir + 'de-en-preprocessed/valid.de'
+                                   }
+            self.corpusDir_test =  {'DE_EN.en': self.basedir + 'de-en-preprocessed/test.en',
+                                    'DE_EN.de': self.basedir + 'de-en-preprocessed/test.de',
+                                    }
             if not os.path.exists(self.basedir):
                 os.mkdir(self.basedir)
-
-            # if not os.path.exists(self.corpusDir_train['EN_DE.en']):
-            #     # os.system('wget -P ' + self.basedir + ' http://www.statmt.org/wmt13/training-parallel-europarl-v7.tgz')
-            #     # os.system('tar zxvf training-parallel-europarl-v7.tgz')
-            #     r = requests.get('http://www.statmt.org/wmt13/training-parallel-europarl-v7.tgz', allow_redirects=True)
-            #     open(self.basedir + 'train.tgz', 'wb').write(r.content)
-            #     self.extract(self.basedir + 'train.tgz', self.basedir)
-            #
-            #     # os.system('wget -P ' + self.basedir + ' http://www.statmt.org/wmt14/dev.tgz')
-            #     # os.system('tar zxvf dev.tgz')
-            #     r = requests.get('http://www.statmt.org/wmt14/dev.tgz', allow_redirects=True)
-            #     open(self.basedir + 'dev.tgz', 'wb').write(r.content)
-            #     self.extract(self.basedir + 'dev.tgz', self.basedir)
-            #     # os.system('wget -P ' + self.basedir + ' http://www.statmt.org/wmt14/test-full.tgz')
-            #     # os.system('tar zxvf test-full.tgz')
-            #     r = requests.get('http://www.statmt.org/wmt14/test-full.tgz', allow_redirects=True)
-            #     open(self.basedir + 'test.tgz', 'wb').write(r.content)
-            #     self.extract(self.basedir + 'test.tgz', self.basedir)
 
             if not args['createDataset']:
                 self.basedir = args['rootDir']
@@ -238,81 +212,52 @@ class TextData_MT:
             self.sorted_word_index = {'DE_EN': {}, 'EN_DE': {},'EN_FR':{}}
             self.index2word = {'DE_EN': {}, 'EN_DE': {},'EN_FR':{}}
             self.index2word_set = {'DE_EN': {}, 'EN_DE': {},'EN_FR':{}}
-            # learn_bpe( self.corpusDir_train['DE_EN.de'],
-            #           args['rootDir'] + 'DE_EN.de.bpe', 37000, 6, True)
-            # learn_bpe(self.corpusDir_train['DE_EN.en'] ,
-            #           args['rootDir'] + 'DE_EN.en.bpe', 37000, 6, True)
-            # learn_bpe([self.corpusDir_train['EN_DE.en'], self.corpusDir_train['EN_DE.de']], args['rootDir'] + 'EN_DE.bpe', 37000, 6, True)
-            # learn_bpe([self.corpusDir_train['EN_FR.en'], self.corpusDir_train['EN_FR.fr']], args['rootDir'] + 'EN_FR.bpe', 37000, 6, True)
             for typename in ['DE_EN']: #['EN_DE', 'EN_FR']:
                 total_words1 = []
                 total_words2 = []
                 l1,l2 = typename.split('_')
-                codes_l1 = codecs.open(args['rootDir'] + typename +'.' + l1.lower() + '.bpe', encoding='utf-8')
-                codes_l2 = codecs.open(args['rootDir'] + typename +'.' + l2.lower() + '.bpe', encoding='utf-8')
-                bpe_l1 = BPE(codes_l1, separator='@@')
-                bpe_l2 = BPE(codes_l2, separator='@@')
-                for train_l1_file , train_l2_file in zip(self.corpusDir_train[typename + '.' + l1.lower()],self.corpusDir_train[typename + '.' + l2.lower()]):
-                    with open(train_l1_file, 'r') as src_handle:
-                        with open(train_l2_file, 'r') as tgt_handle:
-                            src_lines = src_handle.readlines()
-                            tgt_lines = tgt_handle.readlines()
-                            for src_line, tgt_line in zip(src_lines, tgt_lines):
-                                if len(src_line) < 5 or len(tgt_line) < 5:
-                                    continue
-                                src_line = src_line.lower().strip()
-                                tgt_line = tgt_line.lower().strip()
-                                src_bpe_line = bpe_l1.process_line(src_line).split()
-                                tgt_bpe_line = bpe_l2.process_line(tgt_line).split()
-                                total_words1.extend(src_bpe_line)
-                                total_words2.extend(tgt_bpe_line)
-                                dataset[typename]['train'].append([src_bpe_line, tgt_bpe_line])
+                train_l1_file = self.corpusDir_train[typename + '.' + l1.lower()]
+                train_l2_file = self.corpusDir_train[typename + '.' + l2.lower()]
+                with open(train_l1_file, 'r') as src_handle:
+                    with open(train_l2_file, 'r') as tgt_handle:
+                        src_lines = src_handle.readlines()
+                        tgt_lines = tgt_handle.readlines()
+                        for src_line, tgt_line in zip(src_lines, tgt_lines):
+                            if len(src_line) < 5 or len(tgt_line) < 5:
+                                continue
+                            src_line = src_line.lower().strip().split()
+                            tgt_line = tgt_line.lower().strip().split()
+                            total_words1.extend(src_line)
+                            total_words2.extend(tgt_line)
+                            dataset[typename]['train'].append([src_line, tgt_line])
 
-                for dev_l1_file , dev_l2_file in zip(self.corpusDir_dev[typename + '.' + l1.lower()],self.corpusDir_dev[typename + '.' + l2.lower()]):
-                    with open(dev_l1_file, 'r') as src_handle:
-                        with open(dev_l2_file, 'r') as tgt_handle:
-                            src_content = src_handle.read()
-                            tgt_content = tgt_handle.read()
-                            src_soup = BeautifulSoup(src_content)
-                            tgt_soup = BeautifulSoup(tgt_content)
-                            src_docs = src_soup.find_all('doc')
-                            tgt_docs = tgt_soup.find_all('doc')
-                            assert len(src_docs) == len(tgt_docs)
+                dev_l1_file = self.corpusDir_dev[typename + '.' + l1.lower()]
+                dev_l2_file = self.corpusDir_dev[typename + '.' + l2.lower()]
 
-                            for srcd, tgtd in zip(src_docs, tgt_docs):
-                                assert srcd.attrs['docid'] == tgtd.attrs['docid']
-                                src_segs = srcd.find_all('seg')
-                                tgt_segs = tgtd.find_all('seg')
-                                for srcseg, tgtseg in zip(src_segs, tgt_segs):
-                                    src_sen = srcseg.text
-                                    tgt_sen = tgtseg.text
-                                    src_bpe_line = bpe_l1.process_line(src_sen).split()
-                                    tgt_bpe_line = bpe_l2.process_line(tgt_sen).split()
-                                    dataset[typename]['valid'].append([src_bpe_line, tgt_bpe_line])
+                with open(dev_l1_file, 'r') as src_handle:
+                    with open(dev_l2_file, 'r') as tgt_handle:
+                        src_lines = src_handle.readlines()
+                        tgt_lines = tgt_handle.readlines()
+                        for src_line, tgt_line in zip(src_lines, tgt_lines):
+                            if len(src_line) < 5 or len(tgt_line) < 5:
+                                continue
+                            src_line = src_line.lower().strip().split()
+                            tgt_line = tgt_line.lower().strip().split()
+                            dataset[typename]['valid'].append([src_line, tgt_line])
 
-                for test_l1_file, test_l2_file in zip(self.corpusDir_test[typename + '.' + l1.lower()],
-                                                    self.corpusDir_test[typename + '.' + l2.lower()]):
+                test_l1_file = self.corpusDir_test[typename + '.' + l1.lower()]
+                test_l2_file = self.corpusDir_test[typename + '.' + l2.lower()]
 
-                    with open(test_l1_file, 'r') as src_handle:
-                        with open(test_l2_file, 'r') as tgt_handle:
-                            src_content = src_handle.read()
-                            tgt_content = tgt_handle.read()
-                            src_soup = BeautifulSoup(src_content)
-                            tgt_soup = BeautifulSoup(tgt_content)
-                            src_docs = src_soup.find_all('doc')
-                            tgt_docs = tgt_soup.find_all('doc')
-                            assert len(src_docs) == len(tgt_docs)
-
-                            for srcd, tgtd in zip(src_docs, tgt_docs):
-                                assert srcd.attrs['docid'] == tgtd.attrs['docid']
-                                src_segs = srcd.find_all('seg')
-                                tgt_segs = tgtd.find_all('seg')
-                                for srcseg, tgtseg in zip(src_segs, tgt_segs):
-                                    src_sen = srcseg.text
-                                    tgt_sen = tgtseg.text
-                                    src_bpe_line = bpe_l1.process_line(src_sen).split()
-                                    tgt_bpe_line = bpe_l2.process_line(tgt_sen).split()
-                                    dataset[typename]['test'].append([src_bpe_line, tgt_bpe_line])
+                with open(test_l1_file, 'r') as src_handle:
+                    with open(test_l2_file, 'r') as tgt_handle:
+                        src_lines = src_handle.readlines()
+                        tgt_lines = tgt_handle.readlines()
+                        for src_line, tgt_line in zip(src_lines, tgt_lines):
+                            if len(src_line) < 5 or len(tgt_line) < 5:
+                                continue
+                            src_line = src_line.lower().strip().split()
+                            tgt_line = tgt_line.lower().strip().split()
+                            dataset[typename]['test'].append([src_line, tgt_line])
 
                 print(typename, len(dataset[typename]['train']), len(dataset[typename]['valid']),len(dataset[typename]['test']))
 
@@ -343,7 +288,7 @@ class TextData_MT:
             # self.raw_sentences = copy.deepcopy(dataset)
 
                 for setname in ['train', 'valid', 'test']:
-                    dataset[typename][setname] = [(self.TurnWordID(src, typename, l1), self.TurnWordID(tgt, typename, l2), src, tgt) for src,tgt in tqdm(dataset[typename][setname])]
+                    dataset[typename][setname] = [(self.TurnWordID(src, typename, l1), self.TurnWordID(tgt, typename, l2), src, tgt, index) for index, (src,tgt) in tqdm(enumerate(dataset[typename][setname]))]
             self.datasets = dataset
 
 
