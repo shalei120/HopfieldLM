@@ -8,7 +8,7 @@ import os  # Checking file existance
 import random
 import string, copy
 from nltk.tokenize import word_tokenize
-from Hyperparameters import args
+from Hyperparameters_MT import args
 import requests, tarfile
 from learn_bpe import learn_bpe
 from apply_bpe import BPE
@@ -297,7 +297,7 @@ class TextData_MT:
             self.saveDataset(self.fullSamplesPath)  # Saving tf samples
         else:
             self.loadDataset(self.fullSamplesPath)
-            self.print2json(self.datasets['DE_EN'])
+            # self.print2json(self.datasets['DE_EN'])
 
             print('loaded')
             for typename in ['DE_EN', 'EN_DE', 'EN_FR']:

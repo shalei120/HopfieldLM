@@ -1,7 +1,0 @@
-nltk
-matplotlib
-beautifulsoup4
-torch==1.7.1
-torchtext==0.8
-omegaconf
-fairseq

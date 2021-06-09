@@ -20,7 +20,7 @@ import argparse
 # import GPUtil
 # import turibolt as bolt
 import pickle
-from Hyperparameters import args
+from Hyperparameters_MT import args
 from nltk.translate.bleu_score import corpus_bleu, SmoothingFunction
 
 # import matplotlib.pyplot as plt
@@ -123,7 +123,7 @@ class Runner:
         print(args['vocabularySize_src'], args['vocabularySize_tgt'])
         print(args)
         torch.manual_seed(0)
-        self.model = TranslationModel(self.textData.word2index[args['typename']][self.l2], self.textData.index2word[args['typename']][self.l2]).to(args['device'])
+        self.model = TranslationModel(self.textData.word2index[args['typename']][self.l1], self.textData.index2word[args['typename']][self.l1], self.textData.word2index[args['typename']][self.l2], self.textData.index2word[args['typename']][self.l2]).to(args['device'])
         # self.model = torch.load(self.model_path.replace('model', 'model_'+'fw'), map_location=args['device'])
         params = sum([np.prod(p.size()) for p in self.model.parameters()])
         print(params, sum([sys.getsizeof(p.storage()) for p in self.model.parameters()])/1000000, 'm')
@@ -214,20 +214,11 @@ class Runner:
                 x['enc_input'] = autograd.Variable(torch.LongTensor(batch.encoderSeqs))
                 x['dec_input'] = autograd.Variable(torch.LongTensor(batch.decoderSeqs))
                 x['dec_len'] = batch.decoder_lens
-                x['dec_target'] = autograd.Variable(torch.LongTensor(batch.targetSeqs))
+                x['target'] = autograd.Variable(torch.LongTensor(batch.targetSeqs))
 
 
-                # print(x['enc_input'][0],x['dec_input'][0],x['dec_target'][0])
-                if args['LMtype'] == 'energy':
-                    data = self.model(x)    # batch seq_len outsize
-                    loss_mean = torch.mean(data['loss']) + 0.1 * data['KL'] + 0.01 * data['VAE_recon'] + 1 * data['error']
-                    CE_loss_total += torch.mean(data['loss']).item()
-                    KL_total += data['KL'].item()
-                    VAE_recon_total += data['VAE_recon'].item()
-                    error_total += data['error'].item()
-                else:
-                    data = self.model(x)    # batch seq_len outsize
-                    loss_mean = torch.mean(data['loss'])
+                loss, data = self.model(x)    # batch seq_len outsize
+                loss_mean = torch.mean(loss)
                 # Reward = loss_mean.data
 
                 loss_mean.backward(retain_graph=True)
@@ -296,6 +287,7 @@ class Runner:
         print('Test time: ', time.strftime("%H:%M:%S", time.gmtime(end-start )))
 
     def Cal_BLEU_for_dataset(self, datasetname):
+        EVAL_BLEU_ORDER = 4
         if not hasattr(self, 'testbatches' ):
             self.testbatches = {}
         if datasetname not in self.testbatches:
@@ -307,6 +299,9 @@ class Runner:
         gold_ans = []
         rec = None
         valid_loss = []
+        logs = []
+
+
         with torch.no_grad():
             # print(len(self.testbatches[datasetname][0].decoderSeqs))
             for batch in self.testbatches[datasetname]:
@@ -317,31 +312,53 @@ class Runner:
                 x['dec_len'] = batch.decoder_lens
                 x['dec_target'] = autograd.Variable(torch.LongTensor(batch.targetSeqs))
 
-                decoded_words, loss = self.model.predict(x)    # batch seq_len outsize
-                pred_ans.extend(decoded_words)
-                gold_ans.extend([[r] for r in batch.raw_target])
+                loss, sample_size, logging_output = self.model.predict(x)    # batch seq_len outsize
+                logs.append(logging_output)
+                # pred_ans.extend(decoded_words)
+                # gold_ans.extend([[r] for r in batch.raw_target])
                 valid_loss.append(loss)
                 if rec is None:
                     rec = (decoded_words[0], batch.raw_source[0], batch.raw_target[0])
-                # GPUtil.showUtilization()
-                # true_mean = recon_loss_mean
-                # print(true_mean.size())
-                # sum_true = data['true_mean'].sum().item()
-                # ave_loss = (ave_loss * num + sum_true) / (num + len(data['true_mean']))
-                #
-                # num += len(data['true_mean'])
 
+            counts, totals = [], []
+            for i in range(EVAL_BLEU_ORDER):
+                counts.append(sum([log["_bleu_counts_" + str(i)] for log in logs]))
+                totals.append(sum([log["_bleu_totals_" + str(i)] for log in logs]))
+            metrics = {}
+            metrics["_bleu_counts"] = np.array(counts)
+            metrics["_bleu_totals"]=np.array(totals)
+            metrics["_bleu_sys_len"]=sum([log["_bleu_sys_len"] for log in logs])
+            metrics["_bleu_ref_len"]=sum([log["_bleu_ref_len"] for log in logs])
 
+            def compute_bleu(meters):
+                import inspect
+                import sacrebleu
+
+                fn_sig = inspect.getfullargspec(sacrebleu.compute_bleu)[0]
+                if "smooth_method" in fn_sig:
+                    smooth = {"smooth_method": "exp"}
+                else:
+                    smooth = {"smooth": "exp"}
+                bleu = sacrebleu.compute_bleu(
+                    correct=meters["_bleu_counts"].sum,
+                    total=meters["_bleu_totals"].sum,
+                    sys_len=meters["_bleu_sys_len"].sum,
+                    ref_len=meters["_bleu_ref_len"].sum,
+                    **smooth
+                )
+                return round(bleu.score, 2)
+
+            metrics["bleu"] = compute_bleu(metrics)
             print(rec)
-            bleu = corpus_bleu(gold_ans, pred_ans)
+            bleu = metrics["bleu"] #corpus_bleu(gold_ans, pred_ans)
 
         self.model.train()
         return bleu, valid_loss
  
 
 if __name__ == '__main__':
-    # args['corpus'] = 'EN_DE'
-    # args['typename'] = args['corpus']
+    args['corpus'] = 'DE_EN'
+    args['typename'] = args['corpus']
     # args['LMtype'] = 'transformer'
     args['norm_attn'] = True
     r = Runner()
