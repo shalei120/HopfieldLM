@@ -9,18 +9,22 @@ from torch.nn.parameter import Parameter
 
 import numpy as np
 
-import datetime
-from Hyperparameters import args
+import datetime, json
+from Hyperparameters_MT import args
 from queue import PriorityQueue
 import copy
+from argparse import Namespace
 
 # from kenLM import LMEvaluator as LMEr
 
 from modules import Hopfield, HopfieldPooling, HopfieldLayer
 from modules.transformer import  HopfieldEncoderLayer
 from EnergyTransformer import EnergyTransformerEncoderLayer,EnergyTransformerEncoder
+from Transformer_for_MT import TransformerModel
+from sequence_generator import SequenceGenerator
+import search
 class TranslationModel(nn.Module):
-    def __init__(self,w2i, i2w):
+    def __init__(self, enc_w2i, enc_i2w, dec_w2i, dec_i2w):
         """
         Args:
             args: parameters of the model
@@ -29,15 +33,18 @@ class TranslationModel(nn.Module):
         super(TranslationModel, self).__init__()
         print("TranslationModel creation...")
 
-        self.word2index = w2i
-        self.index2word = i2w
+        self.enc_word2index = enc_w2i
+        self.enc_index2word = enc_i2w
+        self.dec_word2index = dec_w2i
+        self.dec_index2word = dec_i2w
         self.max_length = args['maxLengthDeco']
         self.batch_size = args['batchSize']
-
+        self.ignore_prefix_size = 0
+        self.padding_idx = enc_w2i['PAD']
         self.dtype = 'float32'
 
-        self.embedding_src = nn.Embedding(args['vocabularySize_src'], args['embeddingSize']).to(args['device'])
-        self.embedding_tgt = nn.Embedding(args['vocabularySize_tgt'], args['embeddingSize']).to(args['device'])
+        # self.embedding_src = nn.Embedding(args['vocabularySize_src'], args['embeddingSize']).to(args['device'])
+        # self.embedding_tgt = nn.Embedding(args['vocabularySize_tgt'], args['embeddingSize']).to(args['device'])
 
         # if args['decunit'] == 'lstm':
         #     self.dec_unit = nn.LSTM(input_size=args['embeddingSize'],
@@ -60,131 +67,93 @@ class TranslationModel(nn.Module):
         # self.init_state = (torch.rand(args['dec_numlayer'], 1, args['hiddenSize'], device=args['device']),
         #                    torch.rand(args['dec_numlayer'], 1, args['hiddenSize'], device=args['device']))
 
-        if args['LMtype'] == 'asso':
-            self.hopfield = Hopfield(
-                input_size=args['embeddingSize'] )
-            output_projection = nn.Linear(in_features=self.hopfield.output_size, out_features=args['vocabularySize_tgt'])
-            self.hp_network = nn.Sequential(self.hopfield, output_projection).to(args['device'])
-        elif args['LMtype'] == 'asso_enco':
-            self.hopfield = Hopfield(
-                input_size=args['embeddingSize'] )
-            self.hp_network = HopfieldEncoderLayer(self.hopfield)
-            self.output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize_tgt'])
-        elif args['LMtype'] == 'transformer':
-            self.trans_net = nn.TransformerEncoderLayer(d_model=args['embeddingSize'], dim_feedforward = 1024, nhead=args['nhead']).to(args['device'])
-            self.transformer_encoder = nn.TransformerEncoder(self.trans_net, num_layers=args['numLayers']).to(args['device'])
-            self.trans_de_net = nn.TransformerDecoderLayer(d_model=args['embeddingSize'],dim_feedforward = 1024,nhead=args['nhead']).to(args['device'])
-            self.transformer_decoder = nn.TransformerDecoder(self.trans_de_net, num_layers=args['numLayers']).to(args['device'])
-            self.output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize_tgt'])
-            # self.transformer_network = nn.Sequential(self.transformer_encoder, output_projection).to(args['device'])
-        elif args['LMtype'] == 'energy':
-            self.trans_net = EnergyTransformerEncoderLayer(d_model=args['embeddingSize'], nhead=args['nhead']).to(args['device'])
-            self.energytransformer_encoder = EnergyTransformerEncoder(self.trans_net, num_layers=args['numLayers']).to(args['device'])
-            self.output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize_tgt']).to(args['device'])
-            # self.transformer_network = nn.Sequential(self.transformer_encoder, output_projection).to(args['device'])
-            # self.energytransformer_encoder_neg = EnergyTransformerEncoder(self.trans_net, num_layers=args['numLayers'], choice = 0).to(args['device'])
-            # self.output_projection_neg = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize']).to(args['device'])
+        self.trans_net = TransformerModel(self.enc_word2index, self.enc_index2word, self.dec_word2index, self.dec_index2word)
 
+        gen_args = json.loads('{"beam":5,"max_len_a":1.2,"max_len_b":10}')
         self.sequence_generator = self.build_generator(
-            [model], Namespace(**gen_args)
+            [self.trans_net], Namespace(**gen_args)
         )
 
-    def generate_square_subsequent_mask(self, sz):
-        # mask = torch.logical_not(torch.triu(torch.ones(sz, sz)) == 1)
-        # mask[0, 0] = True
-        mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
-        mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
-        return mask
+    # def generate_square_subsequent_mask(self, sz):
+    #     # mask = torch.logical_not(torch.triu(torch.ones(sz, sz)) == 1)
+    #     # mask[0, 0] = True
+    #     mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
+    #     mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
+    #     return mask
 
+    def get_lprobs_and_target(self, model, net_output, sample):
+        lprobs = self.trans_net.decoder.get_normalized_probs(net_output, log_probs=True)
+        target = sample["target"]
+        if self.ignore_prefix_size > 0:
+            if getattr(lprobs, "batch_first", False):
+                lprobs = lprobs[:, self.ignore_prefix_size :, :].contiguous()
+                target = target[:, self.ignore_prefix_size :].contiguous()
+            else:
+                lprobs = lprobs[self.ignore_prefix_size :, :, :].contiguous()
+                target = target[self.ignore_prefix_size :, :].contiguous()
+        return lprobs.view(-1, lprobs.size(-1)), target.view(-1)
 
+    def label_smoothed_nll_loss(self, lprobs, target, epsilon, ignore_index=None, reduce=True):
+        if target.dim() == lprobs.dim() - 1:
+            target = target.unsqueeze(-1)
+        nll_loss = -lprobs.gather(dim=-1, index=target)
+        smooth_loss = -lprobs.sum(dim=-1, keepdim=True)
+        if ignore_index is not None:
+            pad_mask = target.eq(ignore_index)
+            nll_loss.masked_fill_(pad_mask, 0.0)
+            smooth_loss.masked_fill_(pad_mask, 0.0)
+        else:
+            nll_loss = nll_loss.squeeze(-1)
+            smooth_loss = smooth_loss.squeeze(-1)
+        if reduce:
+            nll_loss = nll_loss.sum()
+            smooth_loss = smooth_loss.sum()
+        eps_i = epsilon / (lprobs.size(-1) - 1)
+        loss = (1.0 - epsilon - eps_i) * nll_loss + eps_i * smooth_loss
+        return loss, nll_loss
 
-    def build(self, x, training, smooth_epsilon = 0.1):
-        self.encoderInputs = x['enc_input'].to(args['device'])
-        self.decoderInputs = x['dec_input'].to(args['device'])
-        self.decoder_lengths = x['dec_len']
-        self.decoderTargets = x['dec_target'].to(args['device'])
+    def build(self, x, epsilon = 0.1, reduce=True):
 
-        # print(self.encoderInputs[0], self.decoderInputs[0], self.decoderTargets[0])
+        # batch_size = self.decoderInputs.size()[0]
+        # self.dec_len = self.decoderInputs.size()[1]
+        # enc_input_embed = self.embedding_src(self.encoderInputs)
+        # dec_input_embed = self.embedding_tgt(self.decoderInputs)
+        # mask = torch.sign(self.decoderTargets.float())
 
-        batch_size = self.decoderInputs.size()[0]
-        self.dec_len = self.decoderInputs.size()[1]
-        enc_input_embed = self.embedding_src(self.encoderInputs)
-        dec_input_embed = self.embedding_tgt(self.decoderInputs)
-        mask = torch.sign(self.decoderTargets.float())
+        net_output = self.trans_net(x)
+        lprobs, target = self.get_lprobs_and_target(self.trans_net, net_output, x)
+        loss, nll_loss = self.label_smoothed_nll_loss(
+            lprobs,
+            target,
+            epsilon,
+            ignore_index=self.padding_idx,
+            reduce=reduce,
+        )
+        sample_size = (
+            x["target"].size(0)
+        )
+        logging_output = {
+            "loss": loss.data,
+            "nll_loss": nll_loss.data,
+            "ntokens": -1,
+            "nsentences": x["target"].size(0),
+            "sample_size": sample_size,
+        }
+        # attn_list = net_output[1]['attn_list']
+        # if self.report_accuracy:
+        mask = target.ne(self.padding_idx)
+        n_correct = torch.sum(
+            lprobs.argmax(1).masked_select(mask).eq(target.masked_select(mask))
+        )
+        total = torch.sum(mask)
+        logging_output["n_correct"] = n_correct.data
+        logging_output["total"] = total.data
+        return loss, sample_size, logging_output
 
-        if args['LMtype']== 'lstm':
-            init_state = (self.init_state[0].repeat([1, batch_size, 1]), self.init_state[1].repeat([1, batch_size, 1]))
-            de_outputs, de_state = self.decoder_t(init_state, dec_input_embed, batch_size, self.dec_len)
-        elif args['LMtype']== 'asso':
-            # print(args['maxLengthDeco'], dec_input_embed.size())
-            de_outputs = self.hp_network(dec_input_embed)
-        elif args['LMtype']== 'asso_enco':
-            src_mask = self.generate_square_subsequent_mask(self.dec_len).to(args['device'])
-            # print(args['maxLengthDeco'], dec_input_embed.size(), src_mask.size())
-            de_outputs = self.hp_network(dec_input_embed,src_mask)
-            de_outputs = self.output_projection(de_outputs)
-            # de_outputs = de_outputs.transpose(0,1)
-        elif args['LMtype']== 'transformer':
-            src_mask = self.generate_square_subsequent_mask(self.dec_len).to(args['device'])
-            enc_hid = self.transformer_encoder(enc_input_embed.transpose(0,1))
-            de_outputs = self.transformer_decoder(dec_input_embed.transpose(0,1), enc_hid, tgt_mask=src_mask)
-            de_outputs = self.output_projection(de_outputs)
-            de_outputs = de_outputs.transpose(0,1) # b s e
-            # print(de_outputs.size())
-        elif args['LMtype'] == 'energy':
-            src_mask = self.generate_square_subsequent_mask(self.dec_len).to(args['device'])
-            _, loss_tuple, error, de_outputs_list = self.energytransformer_encoder(dec_input_embed, mask = src_mask, src_key_padding_mask = mask, training=training)
-            de_outputs = self.output_projection(de_outputs_list[-1])
-            # de_outputs_neg, loss_tuple_neg, error_neg = self.energytransformer_encoder_neg(dec_input_embed, mask = src_mask, src_key_padding_mask = mask, training=training)
-            # de_outputs_neg = self.output_projection(de_outputs_neg)
-            # de_outputs = de_outputs.transpose(0,1)
-        # print(de_outputs.size(),self.decoderTargets.size())
-        # print(de_outputs.size(),self.decoderTargets.size() )
-        recon_loss = self.CEloss(torch.transpose(de_outputs, 1, 2), self.decoderTargets)
-        recon_loss = torch.squeeze(recon_loss) * mask
-        recon_loss_mean = torch.sum(recon_loss, dim = -1)
-
-        lprobs = - F.log_softmax(de_outputs) # b s v
-        smooth_loss = lprobs.sum(-1)
-        smooth_loss = torch.sum(smooth_loss * mask,dim = -1)
-
-        eps_i = smooth_epsilon / (lprobs.size(-1) - 1)
-
-        # recon_loss_neg = self.CEloss(torch.transpose(de_outputs_neg, 1, 2), self.decoderTargets)
-        # recon_loss_neg = torch.squeeze(recon_loss_neg) * mask
-        # recon_loss_mean_neg = torch.mean(recon_loss_neg, dim=-1)
-        # print(recon_loss.size(), mask.size())
-        true_mean = recon_loss.sum(1) / mask.sum(1)
-
-        data = {'de_outputs': de_outputs,
-                'loss':((1.0 - smooth_epsilon - eps_i) * recon_loss_mean + eps_i * smooth_loss).mean(),
-                'true_mean':true_mean}
-
-        if args['LMtype'] == 'energy':
-            targetvector = self.embedding(self.decoderTargets)
-            data['KL'] = loss_tuple[1]
-            data['VAE_recon']  = loss_tuple[0]
-            # recon_loss_mean = recon_loss_mean.mean() + 100*KL
-            # c_loss = 0
-            # for out in de_outputs_list[:-1]:
-            #     dots = torch.einsum('bse,bse->bs',out, targetvector)
-            #     # dots1 = torch.exp(-dots.clone())
-            #     dots *= mask
-            #     c_loss += torch.exp(-dots.mean())
-
-            data['error'] = error
-            # self.decoder = self.en
-        elif args['LMtype'] == 'transformer':
-            data['enc_output'] = enc_hid.transpose(0,1)
-            self.decoder = self.transformer_decoder
-
-
-
-        return data
 
     def forward(self, x):
-        data = self.build(x, training=True)
-        return data
+        loss, sample_size, logging_output = self.build(x)
+        return loss,logging_output
 
     def predict(self, x):
         sample={
@@ -198,7 +167,18 @@ class TranslationModel(nn.Module):
             },
             'target':x['dec_target']
         }
-        gen_out = self.inference_step(generator, [model], sample, prefix_tokens=None)
+        # model.eval()
+        with torch.no_grad():
+            loss, sample_size, logging_output  = self.build(x)
+        bleu = self._inference_with_bleu(self.sequence_generator, sample, self.trans_net)
+
+        logging_output["_bleu_sys_len"] = bleu.sys_len
+        logging_output["_bleu_ref_len"] = bleu.ref_len
+        assert len(bleu.counts) == EVAL_BLEU_ORDER
+        for i in range(EVAL_BLEU_ORDER):
+            logging_output["_bleu_counts_" + str(i)] = bleu.counts[i]
+            logging_output["_bleu_totals_" + str(i)] = bleu.totals[i]
+        return loss, sample_size, logging_output
 
     def predict_ori(self, x):
         bs = x['dec_target'].size()[0]
@@ -256,25 +236,47 @@ class TranslationModel(nn.Module):
         output = torch.transpose(output, 0,1)
         return output, out_state
 
+    def _inference_with_bleu(self, generator, sample, model):
+        import sacrebleu
+
+        def decode(toks, escape_unk=False):
+            s = self.tgt_dict.string(
+                toks.int().cpu(),
+                self.cfg.eval_bleu_remove_bpe,
+                # The default unknown string in fairseq is `<unk>`, but
+                # this is tokenized by sacrebleu as `< unk >`, inflating
+                # BLEU scores. Instead, we use a somewhat more verbose
+                # alternative that is unlikely to appear in the real
+                # reference, but doesn't get split into multiple tokens.
+                unk_string=("UNKNOWNTOKENINREF" if escape_unk else "UNKNOWNTOKENINHYP"),
+            )
+            if self.tokenizer:
+                s = self.tokenizer.decode(s)
+            return s
+
+        gen_out = self.inference_step(generator, [model], sample, prefix_tokens=None)
+        hyps, refs = [], []
+        # print([len(g) for g in gen_out])
+        for i in range(len(gen_out)):
+            hyps.append(decode(gen_out[i][0]["tokens"]))
+            refs.append(
+                decode(
+                    utils.strip_pad(sample["target"][i], self.tgt_dict.pad()),
+                    escape_unk=True,  # don't count <unk> as matches to the hypo
+                )
+            )
+        if self.cfg.eval_bleu_print_samples:
+            logger.info("example hypothesis: " + hyps[0])
+            logger.info("example reference: " + refs[0])
+        if self.cfg.eval_tokenized_bleu:
+            return sacrebleu.corpus_bleu(hyps, [refs], tokenize="none")
+        else:
+            return sacrebleu.corpus_bleu(hyps, [refs])
+
     def build_generator(
         self, models, args, seq_gen_cls=None, extra_gen_cls_kwargs=None
     ):
-        if getattr(args, "score_reference", False):
-            from fairseq.sequence_scorer import SequenceScorer
-
-            return SequenceScorer(
-                self.target_dictionary,
-                compute_alignment=getattr(args, "print_alignment", False),
-            )
-
-        from fairseq.sequence_generator import (
-            SequenceGenerator,
-            SequenceGeneratorWithAlignment,
-        )
-        try:
-            from fairseq.fb_sequence_generator import FBSequenceGenerator
-        except ModuleNotFoundError:
-            pass
+        self.target_dictionary = self.dec_word2index
 
         # Choose search strategy. Defaults to Beam Search.
         sampling = getattr(args, "sampling", False)
