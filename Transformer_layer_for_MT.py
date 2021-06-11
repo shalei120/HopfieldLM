@@ -13,11 +13,9 @@ from typing import Optional,Any, Callable, Dict, List, Tuple
 import datetime, math
 from Hyperparameters_MT import args
 
-from positional_embedding import PositionalEmbedding
-from sinusoidal_positional_embedding import SinusoidalPositionalEmbedding
-from quant_noise import quant_noise as apply_quant_noise_
-from layer_drop import LayerDropModuleList
-from adaptive_softmax import AdaptiveSoftmax
+from fairseq.modules import LayerNorm, MultiheadAttention
+from fairseq.modules.fairseq_dropout import FairseqDropout
+from fairseq.modules.quant_noise import quant_noise
 import utils
 
 class TransformerDecoderLayer(nn.Module):
@@ -41,40 +39,39 @@ class TransformerDecoderLayer(nn.Module):
         self, no_encoder_attn=False, add_bias_kv=False, add_zero_attn=False
     ):
         super().__init__()
-        self.embed_dim = args.decoder_embed_dim
+        self.embed_dim = args['embeddingSize']
         self.dropout_module = FairseqDropout(
-            args.dropout, module_name=self.__class__.__name__
+            args['dropout'], module_name=self.__class__.__name__
         )
-        self.quant_noise = getattr(args, "quant_noise_pq", 0)
-        self.quant_noise_block_size = getattr(args, "quant_noise_pq_block_size", 8)
+        self.quant_noise = args["quant_noise_pq"]
+        self.quant_noise_block_size = args["quant_noise_pq_block_size"] if "quant_noise_pq_block_size" in args else 8
 
-        self.cross_self_attention = getattr(args, "cross_self_attention", False)
+        self.cross_self_attention = args["cross_self_attention"] if  'cross_self_attention' in args else  False
 
         self.self_attn = self.build_self_attention(
             self.embed_dim,
-            args,
             add_bias_kv=add_bias_kv,
             add_zero_attn=add_zero_attn,
         )
 
         self.activation_fn = utils.get_activation_fn(
-            activation=str(args.activation_fn)
-            if getattr(args, "activation_fn", None) is not None
+            activation=str(args['activation_fn'])
+            if 'activation_fn' in args
             else "relu"
         )
-        activation_dropout_p = getattr(args, "activation_dropout", 0) or 0
+        activation_dropout_p = args["activation_dropout"] if "activation_dropout" in args else 0.0
         if activation_dropout_p == 0:
             # for backwards compatibility with models that use args.relu_dropout
-            activation_dropout_p = getattr(args, "relu_dropout", 0) or 0
+            activation_dropout_p = args["relu_dropout"] if "relu_dropout" in args else 0.0
         self.activation_dropout_module = FairseqDropout(
             float(activation_dropout_p), module_name=self.__class__.__name__
         )
-        self.normalize_before = args.decoder_normalize_before
+        self.normalize_before = args['decoder_normalize_before']
 
         # use layerNorm rather than FusedLayerNorm for exporting.
         # char_inputs can be used to determint this.
         # TODO  remove this once we update apex with the fix
-        export = getattr(args, "char_inputs", False)
+        export = args["char_inputs"] if "char_inputs" in args else False
         self.self_attn_layer_norm = LayerNorm(self.embed_dim, export=export)
 
         if no_encoder_attn:
@@ -86,12 +83,12 @@ class TransformerDecoderLayer(nn.Module):
 
         self.fc1 = self.build_fc1(
             self.embed_dim,
-            args.decoder_ffn_embed_dim,
+            args['decoder_ffn_embed_dim'],
             self.quant_noise,
             self.quant_noise_block_size,
         )
         self.fc2 = self.build_fc2(
-            args.decoder_ffn_embed_dim,
+            args['decoder_ffn_embed_dim'],
             self.embed_dim,
             self.quant_noise,
             self.quant_noise_block_size,
@@ -109,31 +106,31 @@ class TransformerDecoderLayer(nn.Module):
         return quant_noise(nn.Linear(input_dim, output_dim), q_noise, qn_block_size)
 
     def build_self_attention(
-        self, embed_dim, args, add_bias_kv=False, add_zero_attn=False
+        self, embed_dim, add_bias_kv=False, add_zero_attn=False
     ):
         return MultiheadAttention(
             embed_dim,
-            args.decoder_attention_heads,
-            dropout=args.attention_dropout,
+            args['decoder_attention_heads'],
+            dropout=args['attention_dropout'],
             add_bias_kv=add_bias_kv,
             add_zero_attn=add_zero_attn,
-            self_attention=not getattr(args, "cross_self_attention", False),
+            self_attention=not args["cross_self_attention"],
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
-            choose = args.choose,
+            # choose = args.choose,
         )
 
     def build_encoder_attention(self, embed_dim, args):
         return MultiheadAttention(
             embed_dim,
-            args.decoder_attention_heads,
-            kdim=getattr(args, "encoder_embed_dim", None),
-            vdim=getattr(args, "encoder_embed_dim", None),
-            dropout=args.attention_dropout,
+            args['decoder_attention_heads'],
+            kdim=args["encoder_embed_dim"],
+            vdim=args["encoder_embed_dim"],
+            dropout=args['attention_dropout'],
             encoder_decoder_attention=True,
             q_noise=self.quant_noise,
             qn_block_size=self.quant_noise_block_size,
-            choose = args.choose,
+            # choose = args.choose,
         )
 
     def prepare_for_onnx_export_(self):
@@ -217,7 +214,7 @@ class TransformerDecoderLayer(nn.Module):
             incremental_state=incremental_state,
             need_weights=False,
             attn_mask=self_attn_mask,
-            encode = False
+            # encode = False
         )
         x = self.dropout_module(x)
         x = self.residual_connection(x, residual)

@@ -10,6 +10,7 @@ import torch
 import torch.onnx.operators
 import utils
 from torch import Tensor, nn
+from Hyperparameters_MT import args
 
 
 class SinusoidalPositionalEmbedding(nn.Module):
@@ -29,9 +30,9 @@ class SinusoidalPositionalEmbedding(nn.Module):
         self.register_buffer("_float_tensor", torch.FloatTensor(1))
         self.max_positions = int(1e5)
 
-    def prepare_for_onnx_export_(self):
-        self.onnx_trace = True
-
+    # def prepare_for_onnx_export_(self):
+    #
+    #     self.onnx_trace = True
     @staticmethod
     def get_embedding(
         num_embeddings: int, embedding_dim: int, padding_idx: Optional[int] = None
@@ -88,7 +89,7 @@ class SinusoidalPositionalEmbedding(nn.Module):
 
         positions = utils.make_positions(
             input, self.padding_idx, onnx_trace=self.onnx_trace
-        )
+        ).to(args['device'])
         if self.onnx_trace:
             flat_embeddings = self.weights.detach().index_select(0, positions.view(-1))
             embedding_shape = torch.cat(

@@ -12,7 +12,7 @@ import numpy as np
 import datetime, json
 from Hyperparameters_MT import args
 from queue import PriorityQueue
-import copy
+import copy, utils
 from argparse import Namespace
 
 # from kenLM import LMEvaluator as LMEr
@@ -22,7 +22,7 @@ from modules.transformer import  HopfieldEncoderLayer
 from EnergyTransformer import EnergyTransformerEncoderLayer,EnergyTransformerEncoder
 from Transformer_for_MT import TransformerModel
 from sequence_generator import SequenceGenerator
-import search
+import search, data_utils
 class TranslationModel(nn.Module):
     def __init__(self, enc_w2i, enc_i2w, dec_w2i, dec_i2w):
         """
@@ -133,12 +133,13 @@ class TranslationModel(nn.Module):
             x["target"].size(0)
         )
         logging_output = {
-            "loss": loss.data,
+            "loss": loss.data / x['ntokens'] / np.log(2),
             "nll_loss": nll_loss.data,
-            "ntokens": -1,
+            "ntokens": x['ntokens'],
             "nsentences": x["target"].size(0),
             "sample_size": sample_size,
         }
+        loss = loss / x['ntokens'] / np.log(2)
         # attn_list = net_output[1]['attn_list']
         # if self.report_accuracy:
         mask = target.ne(self.padding_idx)
@@ -151,29 +152,58 @@ class TranslationModel(nn.Module):
         return loss, sample_size, logging_output
 
 
-    def forward(self, x):
+    # def forward(self, x):
+    def forward(self, sample):
+
+        sample['net_input']['src_tokens'] =  sample['net_input']['src_tokens'].to(args['device'])
+        sample['net_input']['src_lengths'] = sample['net_input']['src_lengths'].to(args['device'])
+        sample['net_input']['prev_output_tokens'] = sample['net_input']['prev_output_tokens'].to(args['device'])
+        sample['target'] = sample['target'].to(args['device'])
+        x={
+            'enc_input':sample['net_input']['src_tokens'],
+            'dec_input':sample['net_input']['prev_output_tokens'],
+            'target' : sample['target']
+        }
+        mask = torch.sign(x['dec_input'].float())
+        x['ntokens']=mask.sum()
         loss, sample_size, logging_output = self.build(x)
         return loss,logging_output
 
-    def predict(self, x):
-        sample={
-            'id': x['id'],
-            'nsentences':len(x['id']),
-            'ntokens':-1,
-            'net_input':{
-                'src_tokens':x['enc_input'],
-                'src_lengths':torch.sign(x['enc_input'].float()).sum(1) ,
-                'prev_output_tokens':x['dec_input'],
-            },
-            'target':x['dec_target']
+    # def predict(self, x, EVAL_BLEU_ORDER = 4):
+    def predict(self, sample, EVAL_BLEU_ORDER = 4):
+        mask = torch.sign(x['dec_input'].float())
+        x['ntokens']=mask.sum()
+
+        sample['net_input']['src_tokens'] =  sample['net_input']['src_tokens'].to(args['device'])
+        sample['net_input']['src_lengths'] = sample['net_input']['src_lengths'].to(args['device'])
+        sample['net_input']['prev_output_tokens'] = sample['net_input']['prev_output_tokens'].to(args['device'])
+        sample['target'] = sample['target'].to(args['device'])
+        x={
+            'enc_input':sample['net_input']['src_tokens'],
+            'dec_input':sample['net_input']['prev_output_tokens'],
+            'target' : sample['target']
         }
+        # sample={
+        #     'id': x['id'],
+        #     'nsentences':len(x['id']),
+        #     'ntokens':mask.sum(),
+        #     'net_input':{
+        #         'src_tokens':x['enc_input'],
+        #         'src_lengths':torch.sign(x['enc_input'].float()).sum(1) ,
+        #         'prev_output_tokens':x['dec_input'],
+        #     },
+        #     'target':x['target']
+        # }
         # model.eval()
+
         with torch.no_grad():
             loss, sample_size, logging_output  = self.build(x)
-        bleu = self._inference_with_bleu(self.sequence_generator, sample, self.trans_net)
+        bleu, hyps,refs = self._inference_with_bleu(self.sequence_generator, sample, self.trans_net)
 
         logging_output["_bleu_sys_len"] = bleu.sys_len
         logging_output["_bleu_ref_len"] = bleu.ref_len
+        logging_output["hyps"] = hyps
+        logging_output["refs"] = refs
         assert len(bleu.counts) == EVAL_BLEU_ORDER
         for i in range(EVAL_BLEU_ORDER):
             logging_output["_bleu_counts_" + str(i)] = bleu.counts[i]
@@ -240,9 +270,9 @@ class TranslationModel(nn.Module):
         import sacrebleu
 
         def decode(toks, escape_unk=False):
-            s = self.tgt_dict.string(
+            s = self.Make_string(self.dec_word2index,
                 toks.int().cpu(),
-                self.cfg.eval_bleu_remove_bpe,
+                '@@ ',
                 # The default unknown string in fairseq is `<unk>`, but
                 # this is tokenized by sacrebleu as `< unk >`, inflating
                 # BLEU scores. Instead, we use a somewhat more verbose
@@ -250,28 +280,81 @@ class TranslationModel(nn.Module):
                 # reference, but doesn't get split into multiple tokens.
                 unk_string=("UNKNOWNTOKENINREF" if escape_unk else "UNKNOWNTOKENINHYP"),
             )
-            if self.tokenizer:
-                s = self.tokenizer.decode(s)
+            # if self.tokenizer:
+            #     s = self.tokenizer.decode(s)
             return s
 
-        gen_out = self.inference_step(generator, [model], sample, prefix_tokens=None)
+        # gen_out = self.inference_step(generator, [model], sample, prefix_tokens=None)
+        with torch.no_grad():
+            gen_out = generator.generate(
+                [model], sample, prefix_tokens=None, constraints=None
+            )
         hyps, refs = [], []
         # print([len(g) for g in gen_out])
         for i in range(len(gen_out)):
             hyps.append(decode(gen_out[i][0]["tokens"]))
             refs.append(
                 decode(
-                    utils.strip_pad(sample["target"][i], self.tgt_dict.pad()),
+                    utils.strip_pad(sample["target"][i], self.dec_word2index['PAD']),
                     escape_unk=True,  # don't count <unk> as matches to the hypo
                 )
             )
-        if self.cfg.eval_bleu_print_samples:
-            logger.info("example hypothesis: " + hyps[0])
-            logger.info("example reference: " + refs[0])
-        if self.cfg.eval_tokenized_bleu:
-            return sacrebleu.corpus_bleu(hyps, [refs], tokenize="none")
+        # if self.cfg.eval_bleu_print_samples:
+        #     logger.info("example hypothesis: " + hyps[0])
+        #     logger.info("example reference: " + refs[0])
+
+        print("example hypothesis: " + hyps[0])
+        print("example reference: " + refs[0])
+        res = None
+        if args['eval_tokenized_bleu']:
+            res = sacrebleu.corpus_bleu(hyps, [refs], tokenize="none")
         else:
-            return sacrebleu.corpus_bleu(hyps, [refs])
+            res =  sacrebleu.corpus_bleu(hyps, [refs])
+
+        return res, hyps, refs
+
+    def Make_string(
+        self,tgt_dict,
+        tensor,
+        bpe_symbol=None,
+        escape_unk=False,
+        extra_symbols_to_ignore=None,
+        unk_string=None,
+        include_eos=False,
+        separator=" ",
+    ):
+        """Helper for converting a tensor of token indices to a string.
+
+        Can optionally remove BPE symbols or escape <unk> words.
+        """
+        if torch.is_tensor(tensor) and tensor.dim() == 2:
+            return "\n".join(
+                self.Make_string(tgt_dict, t, bpe_symbol, escape_unk, extra_symbols_to_ignore, include_eos=include_eos)
+                for t in tensor
+            )
+
+        extra_symbols_to_ignore = set(extra_symbols_to_ignore or [])
+        extra_symbols_to_ignore.add(tgt_dict['END_TOKEN'])
+
+        def token_string(i):
+            if i == tgt_dict['UNK']:
+                if unk_string is not None:
+                    return unk_string
+                else:
+                    return tgt_dict['UNK']
+            else:
+                return self.dec_index2word[i]
+
+        if 'START_TOKEN' in  tgt_dict:
+            extra_symbols_to_ignore.add(tgt_dict['START_TOKEN'])
+
+        sent = separator.join(
+            token_string(i)
+            for i in tensor
+            if i.data not in extra_symbols_to_ignore
+        )
+
+        return data_utils.post_process(sent, bpe_symbol)
 
     def build_generator(
         self, models, args, seq_gen_cls=None, extra_gen_cls_kwargs=None

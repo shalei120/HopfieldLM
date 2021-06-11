@@ -12,7 +12,7 @@ from typing import Optional,Any, Callable, Dict, List, Tuple
 
 import datetime, math
 from Hyperparameters_MT import args
-
+from Transformer_layer_for_MT import TransformerDecoderLayer
 from positional_embedding import PositionalEmbedding
 from sinusoidal_positional_embedding import SinusoidalPositionalEmbedding
 from quant_noise import quant_noise as apply_quant_noise_
@@ -60,6 +60,15 @@ class TransformerModel(nn.Module):
             return_all_hiddens=return_all_hiddens,
         )
         return decoder_out
+
+    def get_normalized_probs(
+            self,
+            net_output: Tuple[Tensor, Optional[Dict[str, List[Optional[Tensor]]]]],
+            log_probs: bool,
+            sample: Optional[Dict[str, Tensor]] = None,
+    ):
+        """Get normalized probabilities (or log probs) from a net's output."""
+        return self.decoder.get_normalized_probs(net_output, log_probs, sample)
 
 class TransformerEncoder(nn.Module):
 
@@ -128,7 +137,7 @@ class TransformerEncoder(nn.Module):
             self.layer_norm = None
 
     def build_encoder_layer(self):
-        layer = nn.TransformerEncoderLayer(d_model=args['embeddingSize'], dim_feedforward = 1024, nhead=args['nhead']).to(args['device'])
+        layer = nn.TransformerEncoderLayer(d_model=args['embeddingSize'], dim_feedforward = 1024, nhead=4).to(args['device'])
 
         return layer
 
@@ -375,7 +384,7 @@ class TransformerDecoder(nn.Module):
                 embed_dim,
                 self.padding_idx,
                 learned=args['decoder_learned_pos'],
-            )
+            ).to(args['device'])
             if not self.no_token_positional_embeddings
             else None
         )
@@ -448,7 +457,7 @@ class TransformerDecoder(nn.Module):
 
 
     def build_decoder_layer(self, no_encoder_attn=False):
-        layer = nn.TransformerDecoderLayer(d_model=args['embeddingSize'],dim_feedforward = 1024,nhead=args['nhead']).to(args['device'])
+        layer = TransformerDecoderLayer(no_encoder_attn)
 
         return layer
 
@@ -568,15 +577,15 @@ class TransformerDecoder(nn.Module):
 
             layer_attn = None
             # x, layer_attn, _ \
-            x = layer(
+            x, layer_attn, _ = layer(
                 x,
                 enc,
-                memory_key_padding_mask = padding_mask,
-                # incremental_state,
-                tgt_mask=self_attn_mask,
-                tgt_key_padding_mask=self_attn_padding_mask,
-                # need_attn=bool((idx == alignment_layer)),
-                # need_head_weights=bool((idx == alignment_layer)),
+                padding_mask,
+                incremental_state,
+                self_attn_mask=self_attn_mask,
+                self_attn_padding_mask=self_attn_padding_mask,
+                need_attn=bool((idx == alignment_layer)),
+                need_head_weights=bool((idx == alignment_layer)),
             )
 
             # attn_list.append(layer_attn.cpu())

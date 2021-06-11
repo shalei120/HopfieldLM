@@ -33,8 +33,21 @@ class HP:
         args['decoder_normalize_before'] = False
         args['adaptive_softmax_dropout'] = 0
         args['tie_adaptive_weights'] = False
+        args['eval_tokenized_bleu'] = False
         # args['adaptive_softmax_factor'] =
         # args['tie_adaptive_proj'] =
+        args["quant_noise_pq"] = 0
+        args["quant_noise_pq_block_size"] = 8
+        args['activation_fn'] = 'relu'
+        args["activation_dropout"] = 0.0
+        # args["relu_dropout"] =
+        args['decoder_normalize_before'] = False
+        # args["char_inputs"]
+        args['decoder_ffn_embed_dim'] = 1024
+        args['decoder_attention_heads'] = 4
+        args['attention_dropout'] = 0.0
+        args["encoder_embed_dim"] = 512
+
         args['numEpochs'] = 1000
         args['saveEvery'] = 2000
         args['batchSize'] = 256
