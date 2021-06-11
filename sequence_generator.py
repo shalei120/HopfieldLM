@@ -748,13 +748,14 @@ class EnsembleModel(nn.Module):
     def max_decoder_positions(self):
         return min([m.decoder.max_positions() for m in self.models])
 
-    @torch.jit.export
     def forward_encoder(self, net_input: Dict[str, Tensor]):
         if not self.has_encoder():
             return None
-        return [model.encoder.forward_torchscript(net_input) for model in self.models]
+        return [model.encoder.forward(
+                src_tokens=net_input["src_tokens"],
+                src_lengths=net_input["src_lengths"],
+            ) for model in self.models]
 
-    @torch.jit.export
     def forward_decoder(
         self,
         tokens,
@@ -820,7 +821,6 @@ class EnsembleModel(nn.Module):
             avg_attn.div_(self.models_size)
         return avg_probs, avg_attn
 
-    @torch.jit.export
     def reorder_encoder_out(
         self, encoder_outs: Optional[List[Dict[str, List[Tensor]]]], new_order
     ):
@@ -844,7 +844,6 @@ class EnsembleModel(nn.Module):
             )
         return new_outs
 
-    @torch.jit.export
     def reorder_incremental_state(
         self,
         incremental_states: List[Dict[str, Dict[str, Optional[Tensor]]]],

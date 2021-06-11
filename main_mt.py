@@ -29,6 +29,12 @@ import copy
 # from inverse_square_root_schedule import InverseSquareRootSchedule, InverseSquareRootLRScheduleConfig
 import fairseq
 from fairseq.optim import lr_scheduler
+import utils
+
+from fairseq import (
+    tasks,
+)
+
 # from kenLM import LMEvaluator as LMEr
 from omegaconf import dictconfig
 parser = argparse.ArgumentParser()
@@ -123,7 +129,26 @@ class Runner:
         print(args['vocabularySize_src'], args['vocabularySize_tgt'])
         print(args)
         torch.manual_seed(0)
-        self.model = TranslationModel(self.textData.word2index[args['typename']][self.l1], self.textData.index2word[args['typename']][self.l1], self.textData.word2index[args['typename']][self.l2], self.textData.index2word[args['typename']][self.l2]).to(args['device'])
+
+        self.task = tasks.setup_task(dictconfig.DictConfig(
+            {'_name': 'translation', 'data': 'data-bin/iwslt14.tokenized.de-en', 'source_lang': None,
+             'target_lang': None, 'load_alignments': False, 'left_pad_source': True, 'left_pad_target': False,
+             'max_source_positions': 1024, 'max_target_positions': 1024, 'upsample_primary': -1,
+             'truncate_source': False, 'num_batch_buckets': 0, 'train_subset': 'train', 'dataset_impl': None,
+             'required_seq_len_multiple': 1, 'eval_bleu': True,
+             'eval_bleu_args': '{"beam":5,"max_len_a":1.2,"max_len_b":10}', 'eval_bleu_detok': 'moses',
+             'eval_bleu_detok_args': '{}', 'eval_tokenized_bleu': False, 'eval_bleu_remove_bpe': '@@ ',
+             'eval_bleu_print_samples': True}))
+        self.task.load_dataset('valid', combine=False, epoch=1)
+        self.train_itr = self.get_train_iterator(
+            epoch=1, load_dataset=True
+        )
+
+        self.model = TranslationModel(self.textData.word2index[args['typename']][self.l1],
+                                      self.textData.index2word[args['typename']][self.l1],
+                                      self.textData.word2index[args['typename']][self.l2],
+                                      self.textData.index2word[args['typename']][self.l2]).to(args['device'])
+
         # self.model = torch.load(self.model_path.replace('model', 'model_'+'fw'), map_location=args['device'])
         params = sum([np.prod(p.size()) for p in self.model.parameters()])
         print(params, sum([sys.getsizeof(p.storage()) for p in self.model.parameters()])/1000000, 'm')
@@ -206,18 +231,23 @@ class Runner:
         self.lr_step_begin_epoch(epoch,scheduler)
         while epoch < args['numEpochs']:
             losses = []
+            itr = self.train_itr.next_epoch_itr(
+                fix_batches_to_gpus=False ,
+                shuffle=(self.train_itr.next_epoch_idx > 0),
+            )
 
-            for batch in batches:
+            # for batch in batches:
+            for sample in itr:
                 optimizer.zero_grad()
-                x={}
-                x['id'] = torch.LongTensor(batch.id)
-                x['enc_input'] = autograd.Variable(torch.LongTensor(batch.encoderSeqs))
-                x['dec_input'] = autograd.Variable(torch.LongTensor(batch.decoderSeqs))
-                x['dec_len'] = batch.decoder_lens
-                x['target'] = autograd.Variable(torch.LongTensor(batch.targetSeqs))
+                # x={}
+                # x['id'] = torch.LongTensor(batch.id).to(args['device'])
+                # x['enc_input'] = autograd.Variable(torch.LongTensor(batch.encoderSeqs)).to(args['device'])
+                # x['dec_input'] = autograd.Variable(torch.LongTensor(batch.decoderSeqs)).to(args['device'])
+                # x['dec_len'] = batch.decoder_lens
+                # x['target'] = autograd.Variable(torch.LongTensor(batch.targetSeqs)).to(args['device'])
 
 
-                loss, data = self.model(x)    # batch seq_len outsize
+                loss, data = self.model(sample)    # batch seq_len outsize
                 loss_mean = torch.mean(loss)
                 # Reward = loss_mean.data
 
@@ -254,11 +284,11 @@ class Runner:
                     # torch.cuda.empty_cache()
                     # GPUtil.showUtilization()
                     if args['corpus'] != '1mb' or iter % 100000 == 0:
-                        BLEU, val_losses = self.Cal_BLEU_for_dataset('test')
-                        print('Test ppl: ', BLEU, 'Val loss: ', sum(val_losses)/ len(val_losses))
+                        BLEU, bleu_ori,val_losses = self.Cal_BLEU_for_dataset('test')
+                        print('Test ppl: ', BLEU, bleu_ori, 'Val loss: ', sum(val_losses)/ len(val_losses))
 
                         if BLEU > min_BLEU or min_BLEU == -1:
-                            print('BLEU = ', BLEU, '>= min_BLEU (', min_BLEU, '), saving model...')
+                            print('BLEU = ', BLEU, bleu_ori, '>= min_BLEU (', min_BLEU, '), saving model...')
                             min_BLEU = BLEU
 
                 if iter % plot_every == 0:
@@ -271,13 +301,13 @@ class Runner:
             # scheduler.step()
             #     for g in optimizer.param_groups:
             #         g['lr'] = args['embeddingSize'] ** (-0.5) * min(iter ** (-0.5), iter*(4000**(-1.5)))
-            BLEU, valid_losses = self.Cal_BLEU_for_dataset('test')
+            BLEU, bleu_ori, valid_losses = self.Cal_BLEU_for_dataset('test')
             if BLEU > min_BLEU or min_BLEU == -1:
-                print('BLEU = ', BLEU, '>= min_BLEU (', min_BLEU, '), saving model...')
-                torch.save(self.model, self.model_path.replace('model', 'model_'+args['LMtype']+'_'+args['corpus'] + '_'+str(args['maxLength'])+'_'+str(args['numLayers'])+'_'+str(args['embeddingSize'])))
+                print('BLEU = ', BLEU, bleu_ori, '>= min_BLEU (', min_BLEU, '), saving model...')
+                # torch.save(self.model, self.model_path.replace('model', 'model_'+args['LMtype']+'_'+args['corpus'] + '_'+str(args['maxLength'])+'_'+str(args['numLayers'])+'_'+str(args['embeddingSize'])))
                 min_BLEU = BLEU
             lr = self.lr_step(epoch, scheduler,valid_losses[0])
-            print('Epoch ', epoch, 'loss = ', sum(losses) / len(losses), 'Valid BLEU = ', BLEU, 'best BLEU: ', min_BLEU)
+            print('Epoch ', epoch, 'loss = ', sum(losses) / len(losses), 'Valid BLEU = ', BLEU, bleu_ori,'best BLEU: ', min_BLEU)
             epoch += 1
 
     def testMT(self):
@@ -301,24 +331,31 @@ class Runner:
         valid_loss = []
         logs = []
 
-
+        valid_epoch_itr = self.get_valid_iterator('valid')
+        print(type(valid_epoch_itr),dir(valid_epoch_itr))
+        itr = valid_epoch_itr.next_epoch_itr (
+            shuffle=False, set_dataset_epoch=False  # use a fixed valid set
+        )
         with torch.no_grad():
             # print(len(self.testbatches[datasetname][0].decoderSeqs))
-            for batch in self.testbatches[datasetname]:
-                x = {}
+            # for batch in self.testbatches[datasetname]:
+            for sample in itr:
 
-                x['enc_input'] = autograd.Variable(torch.LongTensor(batch.encoderSeqs))
-                x['dec_input'] = autograd.Variable(torch.LongTensor(batch.decoderSeqs))
-                x['dec_len'] = batch.decoder_lens
-                x['dec_target'] = autograd.Variable(torch.LongTensor(batch.targetSeqs))
+                # x = {}
+                #
+                # x['id'] = torch.LongTensor(batch.id).to(args['device'])
+                # x['enc_input'] = autograd.Variable(torch.LongTensor(batch.encoderSeqs)).to(args['device'])
+                # x['dec_input'] = autograd.Variable(torch.LongTensor(batch.decoderSeqs)).to(args['device'])
+                # x['dec_len'] = batch.decoder_lens
+                # x['target'] = autograd.Variable(torch.LongTensor(batch.targetSeqs)).to(args['device'])
 
-                loss, sample_size, logging_output = self.model.predict(x)    # batch seq_len outsize
+                loss, sample_size, logging_output = self.model.predict(sample)    # batch seq_len outsize
                 logs.append(logging_output)
-                # pred_ans.extend(decoded_words)
-                # gold_ans.extend([[r] for r in batch.raw_target])
+                pred_ans.extend(logging_output['hyps'])
+                gold_ans.extend([[r] for r in logging_output['refs']])
                 valid_loss.append(loss)
-                if rec is None:
-                    rec = (decoded_words[0], batch.raw_source[0], batch.raw_target[0])
+                # if rec is None:
+                #     rec = (decoded_words[0], batch.raw_source[0], batch.raw_target[0])
 
             counts, totals = [], []
             for i in range(EVAL_BLEU_ORDER):
@@ -329,6 +366,7 @@ class Runner:
             metrics["_bleu_totals"]=np.array(totals)
             metrics["_bleu_sys_len"]=sum([log["_bleu_sys_len"] for log in logs])
             metrics["_bleu_ref_len"]=sum([log["_bleu_ref_len"] for log in logs])
+            print(metrics)
 
             def compute_bleu(meters):
                 import inspect
@@ -340,20 +378,95 @@ class Runner:
                 else:
                     smooth = {"smooth": "exp"}
                 bleu = sacrebleu.compute_bleu(
-                    correct=meters["_bleu_counts"].sum,
-                    total=meters["_bleu_totals"].sum,
-                    sys_len=meters["_bleu_sys_len"].sum,
-                    ref_len=meters["_bleu_ref_len"].sum,
+                    correct=np.array(meters["_bleu_counts"]),
+                    total=np.array(meters["_bleu_totals"]),
+                    sys_len=meters["_bleu_sys_len"],
+                    ref_len=meters["_bleu_ref_len"],
                     **smooth
                 )
                 return round(bleu.score, 2)
 
             metrics["bleu"] = compute_bleu(metrics)
             print(rec)
-            bleu = metrics["bleu"] #corpus_bleu(gold_ans, pred_ans)
+            bleu = metrics["bleu"]
+            bleu_ori = corpus_bleu(gold_ans, pred_ans)
 
         self.model.train()
-        return bleu, valid_loss
+        return bleu, bleu_ori, valid_loss
+
+    def get_train_iterator(
+        self,
+        epoch,
+        combine=True,
+        load_dataset=True,
+        data_selector=None,
+        shard_batch_itr=True,
+        disable_iterator_cache=False,
+    ):
+        self.data_parallel_world_size = 1
+        self.data_parallel_rank = 0
+        """Return an EpochBatchIterator over the training set for a given epoch."""
+        if load_dataset:
+            print("loading train data for epoch {}".format(epoch))
+            self.task.load_dataset(
+                'train',
+                epoch=epoch,
+                combine=combine,
+                data_selector=data_selector,
+                tpu=False,
+            )
+        batch_iterator = self.task.get_batch_iterator(
+            dataset=self.task.dataset('train'),
+            max_tokens=4096,
+            max_sentences=None,
+            max_positions=utils.resolve_max_positions(
+                self.task.max_positions(),
+                # self.model.max_positions(),
+                4096,
+            ),
+            ignore_invalid_inputs=True,
+            required_batch_size_multiple=8,
+                seed=1,
+            num_shards=self.data_parallel_world_size if shard_batch_itr else 1,
+            shard_id=self.data_parallel_rank if shard_batch_itr else 0,
+                num_workers=1,
+            epoch=epoch,
+            data_buffer_size=10,
+            disable_iterator_cache=disable_iterator_cache,
+        )
+        # self.reset_dummy_batch(batch_iterator.first_batch)
+        return batch_iterator
+
+    def get_valid_iterator(
+        self,
+        subset,
+        disable_iterator_cache=False,
+    ):
+        self.data_parallel_world_size = 1
+        self.data_parallel_rank = 0
+        """Return an EpochBatchIterator over given validation subset for a given epoch."""
+        batch_iterator = self.task.get_batch_iterator(
+            dataset=self.task.dataset(subset),
+            max_tokens=4096/2,
+            max_sentences=None,
+            max_positions=utils.resolve_max_positions(
+                self.task.max_positions(),
+                # self.model.max_positions(),
+            ),
+            ignore_invalid_inputs=False,
+            required_batch_size_multiple=8,
+            seed=1,
+            num_shards=self.data_parallel_world_size,
+            shard_id=self.data_parallel_rank,
+            num_workers=1,
+            # always pass a fixed "epoch" to keep validation data consistent
+            # across training epochs
+            epoch=1,
+            data_buffer_size=10,
+            disable_iterator_cache=disable_iterator_cache,
+        )
+        # self.reset_dummy_batch(batch_iterator.first_batch)
+        return batch_iterator
  
 
 if __name__ == '__main__':
