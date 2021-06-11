@@ -115,7 +115,20 @@ class Runner:
 
         self.l1, self.l2 = args['typename'].split('_')
 
+    def change_word(self, d):
 
+        d.indices['START_TOKEN']=0
+        d.indices['PAD']=1
+        d.indices['END_TOKEN']=2
+        d.indices['UNK']=3
+        d.symbols[0]='START_TOKEN'
+        d.symbols[1]='PAD'
+        d.symbols[2] = 'END_TOKEN'
+        d.symbols[3] ='UNK'
+        d.bos_word = 'START_TOKEN'
+        d.eos_word = 'END_TOKEN'
+        d.pad_word = 'PAD'
+        d.unk_word = 'UNK'
 
     def main(self):
         self.textData =  TextData_MT('MT')
@@ -124,10 +137,6 @@ class Runner:
         args['maxLengthDeco'] =  args['maxLengthEnco'] + 1
         self.start_token = self.textData.word2index[args['typename']][self.l2]['START_TOKEN']
         self.end_token = self.textData.word2index[args['typename']][self.l2]['END_TOKEN']
-        args['vocabularySize_src'] = self.textData.getVocabularySize(args['typename'], self.l1)
-        args['vocabularySize_tgt'] = self.textData.getVocabularySize(args['typename'], self.l2)
-        print(args['vocabularySize_src'], args['vocabularySize_tgt'])
-        print(args)
         torch.manual_seed(0)
 
         self.task = tasks.setup_task(dictconfig.DictConfig(
@@ -139,6 +148,18 @@ class Runner:
              'eval_bleu_args': '{"beam":5,"max_len_a":1.2,"max_len_b":10}', 'eval_bleu_detok': 'moses',
              'eval_bleu_detok_args': '{}', 'eval_tokenized_bleu': False, 'eval_bleu_remove_bpe': '@@ ',
              'eval_bleu_print_samples': True}))
+
+        self.change_word(self.task.src_dict)
+        self.change_word(self.task.tgt_dict)
+        self.textData.word2index[args['typename']][self.l1] = self.task.src_dict.indices
+        self.textData.index2word[args['typename']][self.l1] =  self.task.src_dict.symbols
+        self.textData.word2index[args['typename']][self.l2]= self.task.tgt_dict.indices
+        self.textData.index2word[args['typename']][self.l2] =  self.task.tgt_dict.symbols
+        args['vocabularySize_src'] = self.textData.getVocabularySize(args['typename'], self.l1)
+        args['vocabularySize_tgt'] = self.textData.getVocabularySize(args['typename'], self.l2)
+
+        print(args['vocabularySize_src'], args['vocabularySize_tgt'])
+        print(args)
         self.task.load_dataset('valid', combine=False, epoch=1)
         self.train_itr = self.get_train_iterator(
             epoch=1, load_dataset=True
@@ -220,7 +241,7 @@ class Runner:
         min_BLEU = -1
 
         self._num_updates = 0
-        # self.Cal_BLEU_for_dataset('test')
+        self.Cal_BLEU_for_dataset('test')
 
         CE_loss_total = 0
         KL_total = 0
@@ -333,9 +354,9 @@ class Runner:
 
         valid_epoch_itr = self.get_valid_iterator('valid')
         print(type(valid_epoch_itr),dir(valid_epoch_itr))
-        itr = valid_epoch_itr.next_epoch_itr (
-            shuffle=False, set_dataset_epoch=False  # use a fixed valid set
-        )
+        itr = valid_epoch_itr.next_epoch_itr ()
+        #     shuffle=False, set_dataset_epoch=False  # use a fixed valid set
+        # )
         with torch.no_grad():
             # print(len(self.testbatches[datasetname][0].decoderSeqs))
             # for batch in self.testbatches[datasetname]:
