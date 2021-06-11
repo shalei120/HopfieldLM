@@ -354,9 +354,9 @@ class Runner:
 
         valid_epoch_itr = self.get_valid_iterator('valid')
         print(type(valid_epoch_itr),dir(valid_epoch_itr))
-        itr = valid_epoch_itr.next_epoch_itr ()
-        #     shuffle=False, set_dataset_epoch=False  # use a fixed valid set
-        # )
+        itr = valid_epoch_itr.next_epoch_itr (
+            shuffle=False#, set_dataset_epoch=False  # use a fixed valid set
+        )
         with torch.no_grad():
             # print(len(self.testbatches[datasetname][0].decoderSeqs))
             # for batch in self.testbatches[datasetname]:

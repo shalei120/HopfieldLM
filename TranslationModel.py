@@ -171,8 +171,6 @@ class TranslationModel(nn.Module):
 
     # def predict(self, x, EVAL_BLEU_ORDER = 4):
     def predict(self, sample, EVAL_BLEU_ORDER = 4):
-        mask = torch.sign(x['dec_input'].float())
-        x['ntokens']=mask.sum()
 
         sample['net_input']['src_tokens'] =  sample['net_input']['src_tokens'].to(args['device'])
         sample['net_input']['src_lengths'] = sample['net_input']['src_lengths'].to(args['device'])
@@ -183,6 +181,9 @@ class TranslationModel(nn.Module):
             'dec_input':sample['net_input']['prev_output_tokens'],
             'target' : sample['target']
         }
+
+        mask = torch.sign(x['dec_input'].float())
+        x['ntokens']=mask.sum()
         # sample={
         #     'id': x['id'],
         #     'nsentences':len(x['id']),
