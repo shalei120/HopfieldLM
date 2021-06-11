@@ -115,7 +115,6 @@ class Runner:
 
         self.l1, self.l2 = args['typename'].split('_')
 
-
     def change_word(self, d):
 
         d.indices['START_TOKEN']=0
@@ -242,7 +241,7 @@ class Runner:
         min_BLEU = -1
 
         self._num_updates = 0
-        # self.Cal_BLEU_for_dataset('test')
+        self.Cal_BLEU_for_dataset('test')
 
         CE_loss_total = 0
         KL_total = 0
