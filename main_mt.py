@@ -376,11 +376,13 @@ class Runner:
                 # x['target'] = autograd.Variable(torch.LongTensor(batch.targetSeqs)).to(args['device'])
 
                 loss, sample_size, logging_output = self.model.predict(sample)    # batch seq_len outsize
+
                 pred_ans.extend([h.split() for h in logging_output['hyps']])
                 gold_ans.extend([[r.split()] for r in logging_output['refs']])
                 valid_loss.append(loss)
                 # if rec is None:
                 #     rec = (decoded_words[0], batch.raw_source[0], batch.raw_target[0])
+
 
                 counts, totals = [], []
                 for i in range(EVAL_BLEU_ORDER):
@@ -396,6 +398,7 @@ class Runner:
             metrics["_bleu_totals"]=_bleu_totals_
             metrics["_bleu_sys_len"]=_bleu_sys_len
             metrics["_bleu_ref_len"]=_bleu_ref_len
+
             print(metrics)
 
             def compute_bleu(meters):
