@@ -293,15 +293,17 @@ class TranslationModel(nn.Module):
         hyps, refs = [], []
         # print([len(g) for g in gen_out])
         for i in range(len(gen_out)):
-            endpos = gen_out[i][0]["tokens"].index('END_TOKEN')
-            gen_out[i][0]["tokens"] = gen_out[i][0]["tokens"][:endpos]
-            hyps.append(decode(gen_out[i][0]["tokens"]))
-            refs.append(
-                decode(
+            h = decode(gen_out[i][0]["tokens"])
+            endpos = h.index('END_TOKEN')
+            h = h[:endpos]
+            r=decode(
                     utils.strip_pad(sample["target"][i], self.dec_word2index['PAD']),
                     escape_unk=True,  # don't count <unk> as matches to the hypo
                 )
-            )
+            ref_endpos = r.index('END_TOKEN')
+            r = r[:ref_endpos]
+            hyps.append(h)
+            refs.append(r)
         # if self.cfg.eval_bleu_print_samples:
         #     logger.info("example hypothesis: " + hyps[0])
         #     logger.info("example reference: " + refs[0])

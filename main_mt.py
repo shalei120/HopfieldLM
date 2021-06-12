@@ -115,7 +115,6 @@ class Runner:
 
         self.l1, self.l2 = args['typename'].split('_')
 
-
     def change_word(self, d):
 
         d.indices['START_TOKEN']=0
@@ -242,7 +241,7 @@ class Runner:
         min_BLEU = -1
 
         self._num_updates = 0
-        # self.Cal_BLEU_for_dataset('test')
+        self.Cal_BLEU_for_dataset('test')
 
         CE_loss_total = 0
         KL_total = 0
@@ -351,13 +350,18 @@ class Runner:
         gold_ans = []
         rec = None
         valid_loss = []
-        logs = []
 
         valid_epoch_itr = self.get_valid_iterator('valid')
         print(type(valid_epoch_itr),dir(valid_epoch_itr))
         itr = valid_epoch_itr.next_epoch_itr (
             shuffle=False#, set_dataset_epoch=False  # use a fixed valid set
         )
+
+        _bleu_counts_ = 0
+        _bleu_totals_ = 0
+        _bleu_sys_len = 0
+        _bleu_ref_len = 0
+        n=0
         with torch.no_grad():
             # print(len(self.testbatches[datasetname][0].decoderSeqs))
             # for batch in self.testbatches[datasetname]:
@@ -372,22 +376,29 @@ class Runner:
                 # x['target'] = autograd.Variable(torch.LongTensor(batch.targetSeqs)).to(args['device'])
 
                 loss, sample_size, logging_output = self.model.predict(sample)    # batch seq_len outsize
-                logs.append(logging_output)
+
                 pred_ans.extend([h.split() for h in logging_output['hyps']])
                 gold_ans.extend([[r.split()] for r in logging_output['refs']])
                 valid_loss.append(loss)
                 # if rec is None:
                 #     rec = (decoded_words[0], batch.raw_source[0], batch.raw_target[0])
 
-            counts, totals = [], []
-            for i in range(EVAL_BLEU_ORDER):
-                counts.append(sum([log["_bleu_counts_" + str(i)] for log in logs])/len(logs))
-                totals.append(sum([log["_bleu_totals_" + str(i)] for log in logs])/len(logs))
+
+                counts, totals = [], []
+                for i in range(EVAL_BLEU_ORDER):
+                    counts.append(logging_output["_bleu_counts_" + str(i)])
+                    totals.append(logging_output["_bleu_totals_" + str(i)])
+                _bleu_counts_ = (_bleu_counts_ * n + np.array(counts))/ (n+1)
+                _bleu_totals_ = (_bleu_totals_ * n + np.array(counts))/ (n+1)
+                _bleu_sys_len = (_bleu_sys_len * n + np.array(counts))/ (n+1)
+                _bleu_ref_len = (_bleu_ref_len * n + np.array(counts))/ (n+1)
+                n+=1
             metrics = {}
-            metrics["_bleu_counts"] = np.array(counts)
-            metrics["_bleu_totals"]=np.array(totals)
-            metrics["_bleu_sys_len"]=sum([log["_bleu_sys_len"] for log in logs])/len(logs)
-            metrics["_bleu_ref_len"]=sum([log["_bleu_ref_len"] for log in logs])/len(logs)
+            metrics["_bleu_counts"] = _bleu_counts_
+            metrics["_bleu_totals"]=_bleu_totals_
+            metrics["_bleu_sys_len"]=_bleu_sys_len
+            metrics["_bleu_ref_len"]=_bleu_ref_len
+
             print(metrics)
 
             def compute_bleu(meters):
@@ -494,6 +505,7 @@ class Runner:
 if __name__ == '__main__':
     args['corpus'] = 'DE_EN'
     args['typename'] = args['corpus']
+    args['embeddingSize'] = 512
     # args['LMtype'] = 'transformer'
     args['norm_attn'] = True
     r = Runner()
