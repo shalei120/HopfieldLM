@@ -293,6 +293,8 @@ class TranslationModel(nn.Module):
         hyps, refs = [], []
         # print([len(g) for g in gen_out])
         for i in range(len(gen_out)):
+            endpos = gen_out[i][0]["tokens"].index('END_TOKEN')
+            gen_out[i][0]["tokens"] = gen_out[i][0]["tokens"][:endpos]
             hyps.append(decode(gen_out[i][0]["tokens"]))
             refs.append(
                 decode(

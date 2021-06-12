@@ -373,21 +373,21 @@ class Runner:
 
                 loss, sample_size, logging_output = self.model.predict(sample)    # batch seq_len outsize
                 logs.append(logging_output)
-                pred_ans.extend(logging_output['hyps'])
-                gold_ans.extend([[r] for r in logging_output['refs']])
+                pred_ans.extend([h.split() for h in logging_output['hyps']])
+                gold_ans.extend([[r.split()] for r in logging_output['refs']])
                 valid_loss.append(loss)
                 # if rec is None:
                 #     rec = (decoded_words[0], batch.raw_source[0], batch.raw_target[0])
 
             counts, totals = [], []
             for i in range(EVAL_BLEU_ORDER):
-                counts.append(sum([log["_bleu_counts_" + str(i)] for log in logs]))
-                totals.append(sum([log["_bleu_totals_" + str(i)] for log in logs]))
+                counts.append(sum([log["_bleu_counts_" + str(i)] for log in logs])/len(logs))
+                totals.append(sum([log["_bleu_totals_" + str(i)] for log in logs])/len(logs))
             metrics = {}
             metrics["_bleu_counts"] = np.array(counts)
             metrics["_bleu_totals"]=np.array(totals)
-            metrics["_bleu_sys_len"]=sum([log["_bleu_sys_len"] for log in logs])
-            metrics["_bleu_ref_len"]=sum([log["_bleu_ref_len"] for log in logs])
+            metrics["_bleu_sys_len"]=sum([log["_bleu_sys_len"] for log in logs])/len(logs)
+            metrics["_bleu_ref_len"]=sum([log["_bleu_ref_len"] for log in logs])/len(logs)
             print(metrics)
 
             def compute_bleu(meters):
