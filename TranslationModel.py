@@ -14,6 +14,8 @@ from Hyperparameters_MT import args
 from queue import PriorityQueue
 import copy, utils
 from argparse import Namespace
+from typing import Optional,Any, Callable, Dict, List, Tuple
+from torch import Tensor
 
 # from kenLM import LMEvaluator as LMEr
 
@@ -80,7 +82,11 @@ class TranslationModel(nn.Module):
     #     mask = (torch.triu(torch.ones(sz, sz)) == 1).transpose(0, 1)
     #     mask = mask.float().masked_fill(mask == 0, float('-inf')).masked_fill(mask == 1, float(0.0))
     #     return mask
-
+    def set_num_updates(self, num_updates):
+        """State from trainer to pass along to model at every update."""
+        for m in self.modules():
+            if hasattr(m, "set_num_updates") and m != self:
+                m.set_num_updates(num_updates)
     def get_lprobs_and_target(self, model, net_output, sample):
         lprobs = self.trans_net.decoder.get_normalized_probs(net_output, log_probs=True)
         target = sample["target"]
@@ -92,6 +98,10 @@ class TranslationModel(nn.Module):
                 lprobs = lprobs[self.ignore_prefix_size :, :, :].contiguous()
                 target = target[self.ignore_prefix_size :, :].contiguous()
         return lprobs.view(-1, lprobs.size(-1)), target.view(-1)
+
+    def get_targets(self, sample, net_output):
+        """Get targets from either the sample or the net's output."""
+        return sample["target"]
 
     def label_smoothed_nll_loss(self, lprobs, target, epsilon, ignore_index=None, reduce=True):
         if target.dim() == lprobs.dim() - 1:
@@ -112,6 +122,13 @@ class TranslationModel(nn.Module):
         loss = (1.0 - epsilon - eps_i) * nll_loss + eps_i * smooth_loss
         return loss, nll_loss
 
+    def get_normalized_probs(
+            self,
+            net_output: Tuple[Tensor, Optional[Dict[str, List[Optional[Tensor]]]]],
+            log_probs: bool,
+            sample: Optional[Dict[str, Tensor]] = None,
+    ):
+        return self.trans_net.get_normalized_probs(net_output, log_probs, sample)
     def build(self, x, epsilon = 0.1, reduce=True):
 
         # batch_size = self.decoderInputs.size()[0]
@@ -121,61 +138,76 @@ class TranslationModel(nn.Module):
         # mask = torch.sign(self.decoderTargets.float())
 
         net_output = self.trans_net(x)
-        lprobs, target = self.get_lprobs_and_target(self.trans_net, net_output, x)
-        loss, nll_loss = self.label_smoothed_nll_loss(
-            lprobs,
-            target,
-            epsilon,
-            ignore_index=self.padding_idx,
-            reduce=reduce,
-        )
-        sample_size = (
-            x["target"].size(0)
-        )
-        logging_output = {
-            "loss": loss.data / x['ntokens'] / np.log(2),
-            "nll_loss": nll_loss.data,
-            "ntokens": x['ntokens'],
-            "nsentences": x["target"].size(0),
-            "sample_size": sample_size,
-        }
-        loss = loss / x['ntokens'] / np.log(2)
-        # attn_list = net_output[1]['attn_list']
-        # if self.report_accuracy:
-        mask = target.ne(self.padding_idx)
-        n_correct = torch.sum(
-            lprobs.argmax(1).masked_select(mask).eq(target.masked_select(mask))
-        )
-        total = torch.sum(mask)
-        logging_output["n_correct"] = n_correct.data
-        logging_output["total"] = total.data
-        return loss, sample_size, logging_output
+        # lprobs, target = self.get_lprobs_and_target(self.trans_net, net_output, x)
+        # loss, nll_loss = self.label_smoothed_nll_loss(
+        #     lprobs,
+        #     target,
+        #     epsilon,
+        #     ignore_index=self.padding_idx,
+        #     reduce=reduce,
+        # )
+        # sample_size = (
+        #     x["target"].size(0)
+        # )
+        # logging_output = {
+        #     "loss": loss.data / x['ntokens'] / np.log(2),
+        #     "nll_loss": nll_loss.data,
+        #     "ntokens": x['ntokens'],
+        #     "nsentences": x["target"].size(0),
+        #     "sample_size": sample_size,
+        # }
+        # # loss = loss / x['ntokens'] / np.log(2)
+        # # attn_list = net_output[1]['attn_list']
+        # # if self.report_accuracy:
+        # mask = target.ne(self.padding_idx)
+        # n_correct = torch.sum(
+        #     lprobs.argmax(1).masked_select(mask).eq(target.masked_select(mask))
+        # )
+        # total = torch.sum(mask)
+        # logging_output["n_correct"] = n_correct.data
+        # logging_output["total"] = total.data
+        # return loss, sample_size, logging_output, net_output
+        return net_output
 
 
     # def forward(self, x):
-    def forward(self, sample):
-
-        sample['net_input']['src_tokens'] =  sample['net_input']['src_tokens'].to(args['device'])
-        sample['net_input']['src_lengths'] = sample['net_input']['src_lengths'].to(args['device'])
-        sample['net_input']['prev_output_tokens'] = sample['net_input']['prev_output_tokens'].to(args['device'])
-        sample['target'] = sample['target'].to(args['device'])
+    # def forward(self, sample):
+    def forward(
+            self,
+            src_tokens,
+            src_lengths,
+            prev_output_tokens
+            # return_all_hiddens: bool = True,
+            # features_only: bool = False,
+            # alignment_layer: Optional[int] = None,
+            # alignment_heads: Optional[int] = None,
+    ):
+        # print(sample)
+        sample = {'net_input':{
+            'src_tokens':src_tokens.to(args['device']),
+            'src_lengths':src_lengths.to(args['device']),
+            'prev_output_tokens':prev_output_tokens.to(args['device']),
+        }, 'target': 0}
+        # sample['net_input']['src_tokens'] =  sample['net_input']['src_tokens'].to(args['device'])
+        # sample['net_input']['src_lengths'] = sample['net_input']['src_lengths'].to(args['device'])
+        # sample['net_input']['prev_output_tokens'] = sample['net_input']['prev_output_tokens'].to(args['device'])
+        # sample['target'] = sample['target'].to(args['device'])
         x={
             'enc_input':sample['net_input']['src_tokens'],
             'dec_input':sample['net_input']['prev_output_tokens'],
-            'target' : sample['target']
+            # 'target' : sample['target']
         }
         mask = torch.sign(x['dec_input'].float())
         x['ntokens']=mask.sum()
-        loss, sample_size, logging_output = self.build(x)
-        return loss,logging_output
+        # loss, sample_size, logging_output, net_output = self.build(x)
+        net_output = self.build(x)
+        # return loss,logging_output
+        return net_output
 
     # def predict(self, x, EVAL_BLEU_ORDER = 4):
     def predict(self, sample, EVAL_BLEU_ORDER = 4):
 
-        sample['net_input']['src_tokens'] =  sample['net_input']['src_tokens'].to(args['device'])
-        sample['net_input']['src_lengths'] = sample['net_input']['src_lengths'].to(args['device'])
-        sample['net_input']['prev_output_tokens'] = sample['net_input']['prev_output_tokens'].to(args['device'])
-        sample['target'] = sample['target'].to(args['device'])
+
         x={
             'enc_input':sample['net_input']['src_tokens'],
             'dec_input':sample['net_input']['prev_output_tokens'],
