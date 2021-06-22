@@ -30,13 +30,13 @@ import copy
 import fairseq
 print(dir(fairseq))
 from fairseq.optim import lr_scheduler
+
+from fairseq import criterions
 import utils
 from trainer import Trainer
 import tasks
-from transformer2 import TransformerModel
-from fairseq import (
-    quantization_utils,
-)
+# from transformer2 import TransformerModel
+# from fairseq import
 from argparse import Namespace
 # from kenLM import LMEvaluator as LMEr
 from omegaconf import dictconfig
@@ -194,72 +194,11 @@ class Runner:
             epoch=1, load_dataset=True
         )
 
-        # self.model = TranslationModel(self.textData.word2index[args['typename']][self.l1],
-        #                               self.textData.index2word[args['typename']][self.l1],
-        #                               self.textData.word2index[args['typename']][self.l2],
-        #                               self.textData.index2word[args['typename']][self.l2]).to(args['device'])
-        self.model = TransformerModel.build_model(dictconfig.DictConfig(
-            {'_name': 'transformer_iwslt_de_en', 'activation_dropout': 0.0, 'activation_fn': 'relu',
-             'adam_betas': '(0.9,0.98)', 'adam_eps': 1e-08, 'adaptive_input': False, 'adaptive_softmax_cutoff': None,
-             'adaptive_softmax_dropout': 0, 'all_gather_list_size': 16384, 'arch': 'transformer_iwslt_de_en',
-             'attention_dropout': 0.0, 'azureml_logging': False, 'batch_size': None, 'batch_size_valid': None,
-             'best_checkpoint_metric': 'bleu', 'bf16': False, 'bpe': None, 'broadcast_buffers': False,
-             'bucket_cap_mb': 25, 'checkpoint_activations': False, 'checkpoint_shard_count': 1, 'checkpoint_suffix': '',
-             'choose': 'NN-NN', 'clip_norm': 0.0, 'combine_valid_subsets': None, 'cpu': False, 'cpu_offload': False,
-             'criterion': 'label_smoothed_cross_entropy', 'cross_self_attention': False, 'curriculum': 0,
-             'data': 'data-bin/iwslt14.tokenized.de-en', 'data_buffer_size': 10, 'dataset_impl': None,
-             'ddp_backend': 'pytorch_ddp', 'ddp_comm_hook': 'none', 'decoder_attention_heads': 4,
-             'decoder_embed_dim': 512, 'decoder_embed_path': None, 'decoder_ffn_embed_dim': 1024,
-             'decoder_input_dim': 512, 'decoder_layerdrop': 0, 'decoder_layers': 6, 'decoder_layers_to_keep': None,
-             'decoder_learned_pos': False, 'decoder_normalize_before': False, 'decoder_output_dim': 512, 'device_id': 0,
-             'disable_validation': False, 'distributed_backend': 'nccl', 'distributed_init_method': None,
-             'distributed_no_spawn': False, 'distributed_port': -1, 'distributed_rank': 0, 'distributed_world_size': 1,
-             'dropout': 0.3, 'empty_cache_freq': 0, 'encoder_attention_heads': 4, 'encoder_embed_dim': 512,
-             'encoder_embed_path': None, 'encoder_ffn_embed_dim': 1024, 'encoder_layerdrop': 0, 'encoder_layers': 6,
-             'encoder_layers_to_keep': None, 'encoder_learned_pos': False, 'encoder_normalize_before': False, 'eos': 2,
-             'eval_bleu': True, 'eval_bleu_args': '{"beam":5,"max_len_a":1.2,"max_len_b":10}',
-             'eval_bleu_detok': 'moses', 'eval_bleu_detok_args': '{}', 'eval_bleu_print_samples': True,
-             'eval_bleu_remove_bpe': '@@ ', 'eval_tokenized_bleu': False, 'fast_stat_sync': False,
-             'find_unused_parameters': False, 'finetune_from_model': None, 'fix_batches_to_gpus': False,
-             'fixed_validation_seed': None, 'fp16': False, 'fp16_init_scale': 128, 'fp16_no_flatten_grads': False,
-             'fp16_scale_tolerance': 0.0, 'fp16_scale_window': None, 'fp32_reduce_scatter': False, 'gen_subset': 'test',
-             'heartbeat_timeout': -1, 'ignore_prefix_size': 0, 'ignore_unused_valid_subsets': False,
-             'keep_best_checkpoints': -1, 'keep_interval_updates': -1, 'keep_interval_updates_pattern': -1,
-             'keep_last_epochs': -1, 'label_smoothing': 0.1, 'layernorm_embedding': False, 'left_pad_source': True,
-             'left_pad_target': False, 'load_alignments': False, 'load_checkpoint_on_all_dp_ranks': False,
-             'localsgd_frequency': 3, 'log_file': None, 'log_format': None, 'log_interval': 100, 'lr': [0.0005],
-             'lr_scheduler': 'inverse_sqrt', 'max_epoch': 0, 'max_source_positions': 1024, 'max_target_positions': 1024,
-             'max_tokens': 4096, 'max_tokens_valid': 4096, 'max_update': 0, 'max_valid_steps': None,
-             'maximize_best_checkpoint_metric': True, 'memory_efficient_bf16': False, 'memory_efficient_fp16': False,
-             'min_loss_scale': 0.0001, 'min_params_to_wrap': 100000000, 'model_parallel_size': 1,
-             'no_cross_attention': False, 'no_epoch_checkpoints': False, 'no_last_checkpoints': False,
-             'no_progress_bar': False, 'no_reshard_after_forward': False, 'no_save': False,
-             'no_save_optimizer_state': False, 'no_scale_embedding': False, 'no_seed_provided': False,
-             'no_token_positional_embeddings': False, 'nprocs_per_node': 1, 'num_batch_buckets': 0, 'num_shards': 1,
-             'num_workers': 1, 'offload_activations': False, 'optimizer': 'adam', 'optimizer_overrides': '{}', 'pad': 1,
-             'patience': -1, 'pipeline_balance': None, 'pipeline_checkpoint': 'never', 'pipeline_chunks': 0,
-             'pipeline_decoder_balance': None, 'pipeline_decoder_devices': None, 'pipeline_devices': None,
-             'pipeline_encoder_balance': None, 'pipeline_encoder_devices': None, 'pipeline_model_parallel': False,
-             'plasma_path': '/tmp/plasma', 'profile': False, 'quant_noise_pq': 0, 'quant_noise_pq_block_size': 8,
-             'quant_noise_scalar': 0, 'quantization_config_path': None, 'report_accuracy': False,
-             'required_batch_size_multiple': 8, 'required_seq_len_multiple': 1, 'reset_dataloader': False,
-             'reset_logging': False, 'reset_lr_scheduler': False, 'reset_meters': False, 'reset_optimizer': False,
-             'restore_file': 'checkpoint_last.pt', 'save_dir': 'checkpoints', 'save_interval': 1,
-             'save_interval_updates': 0, 'scoring': 'bleu', 'seed': 1, 'sentence_avg': False, 'shard_id': 0,
-             'share_all_embeddings': False, 'share_decoder_input_output_embed': True, 'simul_type': None,
-             'skip_invalid_size_inputs_valid_test': False, 'slowmo_algorithm': 'LocalSGD', 'slowmo_momentum': None,
-             'source_lang': None, 'stop_min_lr': -1.0, 'stop_time_hours': 0, 'suppress_crashes': False,
-             'target_lang': None, 'task': 'translation', 'tensorboard_logdir': None, 'threshold_loss_scale': None,
-             'tie_adaptive_weights': False, 'tokenizer': None, 'tpu': False, 'train_subset': 'train',
-             'truncate_source': False, 'unk': 3, 'update_freq': [1], 'upsample_primary': -1, 'use_bmuf': False,
-             'use_old_adam': False, 'use_plasma_view': False, 'user_dir': None, 'valid_subset': 'valid',
-             'validate_after_updates': 0, 'validate_interval': 1, 'validate_interval_updates': 0, 'wandb_project': None,
-             'warmup_init_lr': -1, 'warmup_updates': 4000, 'weight_decay': 0.0001,
-             'write_checkpoints_asynchronously': False, 'zero_sharding': 'none'}), self.task)
-        gen_args = json.loads('{"beam":5,"max_len_a":1.2,"max_len_b":10}')
-        self.task.sequence_generator = self.task.build_generator(
-            [self.model], Namespace(**gen_args)
-        )
+        self.model = TranslationModel(self.textData.word2index[args['typename']][self.l1],
+                                      self.textData.index2word[args['typename']][self.l1],
+                                      self.textData.word2index[args['typename']][self.l2],
+                                      self.textData.index2word[args['typename']][self.l2]).to(args['device'])
+        self.sequence_generator = self.model.sequence_generator
         self.criterion = self.task.build_criterion(dictconfig.DictConfig({'_name': 'label_smoothed_cross_entropy', 'label_smoothing': 0.1, 'report_accuracy': False, 'ignore_prefix_size': 0, 'sentence_avg': False}))
         # self.model = torch.load(self.model_path.replace('model', 'model_'+'fw'), map_location=args['device'])
         params = sum([np.prod(p.size()) for p in self.model.parameters()])
@@ -314,7 +253,10 @@ class Runner:
 
         # learning_rate =
         # optimizer = optim.Adam(self.model.parameters(), lr=0.001,betas=(0.9, 0.98), eps=1e-08, weight_decay = 0.0001)#, amsgrad=True)
-        optimizer = fairseq.optim.build_optimizer(dictconfig.DictConfig({'_name': 'adam', 'adam_betas': '(0.9,0.98)', 'adam_eps': 1e-08, 'weight_decay': 0.0001, 'use_old_adam': False, 'tpu': False, 'lr': [0.0005]}), self.model.parameters())
+        optimizer = fairseq.optim.build_optimizer(dictconfig.DictConfig(
+            {'_name': 'adam', 'adam_betas': '(0.9,0.98)', 'adam_eps': 1e-08, 'weight_decay': 0.0001,
+             'use_old_adam': False, 'tpu': False, 'lr': [0.0005]}), list(self.model.parameters()) + list(self.criterion.parameters()))
+
         # optimizer = torch.optim.SGD(self.model.parameters(), lr=5.0)
         # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1.0, gamma=0.95)
 
@@ -346,153 +288,153 @@ class Runner:
         #     max_update=cfg.optimization.max_update,
         # )
 
-        trainer = Trainer(dictconfig.DictConfig({'_name': None, 'common': {'_name': None, 'no_progress_bar': False,
-                                                                           'log_interval': 100, 'log_format': None,
-                                                                           'log_file': None, 'tensorboard_logdir': None,
-                                                                           'wandb_project': None,
-                                                                           'azureml_logging': False, 'seed': 1,
-                                                                           'cpu': False, 'tpu': False, 'bf16': False,
-                                                                           'memory_efficient_bf16': False,
-                                                                           'fp16': False,
-                                                                           'memory_efficient_fp16': False,
-                                                                           'fp16_no_flatten_grads': False,
-                                                                           'fp16_init_scale': 128,
-                                                                           'fp16_scale_window': None,
-                                                                           'fp16_scale_tolerance': 0.0,
-                                                                           'min_loss_scale': 0.0001,
-                                                                           'threshold_loss_scale': None,
-                                                                           'user_dir': None, 'empty_cache_freq': 0,
-                                                                           'all_gather_list_size': 16384,
-                                                                           'model_parallel_size': 1,
-                                                                           'quantization_config_path': None,
-                                                                           'profile': False, 'reset_logging': False,
-                                                                           'suppress_crashes': False,
-                                                                           'use_plasma_view': False,
-                                                                           'plasma_path': '/tmp/plasma'},
-                                                 'common_eval': {'_name': None, 'path': None, 'post_process': None,
-                                                                 'quiet': False, 'model_overrides': '{}',
-                                                                 'results_path': None},
-                                                 'distributed_training': {'_name': None, 'distributed_world_size': 1,
-                                                                          'distributed_rank': 0,
-                                                                          'distributed_backend': 'nccl',
-                                                                          'distributed_init_method': None,
-                                                                          'distributed_port': -1, 'device_id': 0,
-                                                                          'distributed_no_spawn': False,
-                                                                          'ddp_backend': 'pytorch_ddp',
-                                                                          'ddp_comm_hook': 'none', 'bucket_cap_mb': 25,
-                                                                          'fix_batches_to_gpus': False,
-                                                                          'find_unused_parameters': False,
-                                                                          'fast_stat_sync': False,
-                                                                          'heartbeat_timeout': -1,
-                                                                          'broadcast_buffers': False,
-                                                                          'slowmo_momentum': None,
-                                                                          'slowmo_algorithm': 'LocalSGD',
-                                                                          'localsgd_frequency': 3, 'nprocs_per_node': 1,
-                                                                          'pipeline_model_parallel': False,
-                                                                          'pipeline_balance': None,
-                                                                          'pipeline_devices': None,
-                                                                          'pipeline_chunks': 0,
-                                                                          'pipeline_encoder_balance': None,
-                                                                          'pipeline_encoder_devices': None,
-                                                                          'pipeline_decoder_balance': None,
-                                                                          'pipeline_decoder_devices': None,
-                                                                          'pipeline_checkpoint': 'never',
-                                                                          'zero_sharding': 'none', 'fp16': False,
-                                                                          'memory_efficient_fp16': False, 'tpu': False,
-                                                                          'no_reshard_after_forward': False,
-                                                                          'fp32_reduce_scatter': False,
-                                                                          'cpu_offload': False,
-                                                                          'distributed_num_procs': 0},
-                                                 'dataset': {'_name': None, 'num_workers': 1,
-                                                             'skip_invalid_size_inputs_valid_test': False,
-                                                             'max_tokens': 4096, 'batch_size': None,
-                                                             'required_batch_size_multiple': 8,
-                                                             'required_seq_len_multiple': 1, 'dataset_impl': None,
-                                                             'data_buffer_size': 10, 'train_subset': 'train',
-                                                             'valid_subset': 'valid', 'combine_valid_subsets': None,
-                                                             'ignore_unused_valid_subsets': False,
-                                                             'validate_interval': 1, 'validate_interval_updates': 0,
-                                                             'validate_after_updates': 0, 'fixed_validation_seed': None,
-                                                             'disable_validation': False, 'max_tokens_valid': 4096,
-                                                             'batch_size_valid': None, 'max_valid_steps': None,
-                                                             'curriculum': 0, 'gen_subset': 'test', 'num_shards': 1,
-                                                             'shard_id': 0},
-                                                 'optimization': {'_name': None, 'max_epoch': 0, 'max_update': 0,
-                                                                  'stop_time_hours': 0.0, 'clip_norm': 0.0,
-                                                                  'sentence_avg': False, 'update_freq': [1],
-                                                                  'lr': [0.0005], 'stop_min_lr': -1.0,
-                                                                  'use_bmuf': False},
-                                                 'checkpoint': {'_name': None, 'save_dir': 'checkpoints/de-en-NN-NN',
-                                                                'restore_file': 'checkpoint_last.pt',
-                                                                'finetune_from_model': None, 'reset_dataloader': False,
-                                                                'reset_lr_scheduler': False, 'reset_meters': False,
-                                                                'reset_optimizer': False, 'optimizer_overrides': '{}',
-                                                                'save_interval': 1, 'save_interval_updates': 0,
-                                                                'keep_interval_updates': -1,
-                                                                'keep_interval_updates_pattern': -1,
-                                                                'keep_last_epochs': -1, 'keep_best_checkpoints': -1,
-                                                                'no_save': False, 'no_epoch_checkpoints': False,
-                                                                'no_last_checkpoints': False,
-                                                                'no_save_optimizer_state': False,
-                                                                'best_checkpoint_metric': 'bleu',
-                                                                'maximize_best_checkpoint_metric': True, 'patience': -1,
-                                                                'checkpoint_suffix': '', 'checkpoint_shard_count': 1,
-                                                                'load_checkpoint_on_all_dp_ranks': False,
-                                                                'write_checkpoints_asynchronously': False,
-                                                                'model_parallel_size': 1},
-                                                 'bmuf': {'_name': None, 'block_lr': 1.0, 'block_momentum': 0.875,
-                                                          'global_sync_iter': 50, 'warmup_iterations': 500,
-                                                          'use_nbm': False, 'average_sync': False,
-                                                          'distributed_world_size': 1},
-                                                 'generation': {'_name': None, 'beam': 5, 'nbest': 1, 'max_len_a': 0.0,
-                                                                'max_len_b': 200, 'min_len': 1,
-                                                                'match_source_len': False, 'unnormalized': False,
-                                                                'no_early_stop': False, 'no_beamable_mm': False,
-                                                                'lenpen': 1.0, 'unkpen': 0.0, 'replace_unk': None,
-                                                                'sacrebleu': False, 'score_reference': False,
-                                                                'prefix_size': 0, 'no_repeat_ngram_size': 0,
-                                                                'sampling': False, 'sampling_topk': -1,
-                                                                'sampling_topp': -1.0, 'constraints': None,
-                                                                'temperature': 1.0, 'diverse_beam_groups': -1,
-                                                                'diverse_beam_strength': 0.5, 'diversity_rate': -1.0,
-                                                                'print_alignment': None, 'print_step': False,
-                                                                'lm_path': None, 'lm_weight': 0.0,
-                                                                'iter_decode_eos_penalty': 0.0,
-                                                                'iter_decode_max_iter': 10,
-                                                                'iter_decode_force_max_iter': False,
-                                                                'iter_decode_with_beam': 1,
-                                                                'iter_decode_with_external_reranker': False,
-                                                                'retain_iter_history': False, 'retain_dropout': False,
-                                                                'retain_dropout_modules': None, 'decoding_format': None,
-                                                                'no_seed_provided': False},
-                                                 'eval_lm': {'_name': None, 'output_word_probs': False,
-                                                             'output_word_stats': False, 'context_window': 0,
-                                                             'softmax_batch': 9223372036854775807},
-                                                 'interactive': {'_name': None, 'buffer_size': 0, 'input': '-'},
-                                                 'task': {'_name': 'translation',
-                                                          'data': 'data-bin/iwslt14.tokenized.de-en',
-                                                          'source_lang': None, 'target_lang': None,
-                                                          'load_alignments': False, 'left_pad_source': True,
-                                                          'left_pad_target': False, 'max_source_positions': 1024,
-                                                          'max_target_positions': 1024, 'upsample_primary': -1,
-                                                          'truncate_source': False, 'num_batch_buckets': 0,
-                                                          'train_subset': 'train', 'dataset_impl': None,
-                                                          'required_seq_len_multiple': 1, 'eval_bleu': True,
-                                                          'eval_bleu_args': '{"beam":5,"max_len_a":1.2,"max_len_b":10}',
-                                                          'eval_bleu_detok': 'moses', 'eval_bleu_detok_args': '{}',
-                                                          'eval_tokenized_bleu': False, 'eval_bleu_remove_bpe': '@@ ',
-                                                          'eval_bleu_print_samples': True},
-                                                 'criterion': {'_name': 'label_smoothed_cross_entropy',
-                                                               'label_smoothing': 0.1, 'report_accuracy': False,
-                                                               'ignore_prefix_size': 0, 'sentence_avg': False},
-                                                 'optimizer': {'_name': 'adam', 'adam_betas': '(0.9,0.98)',
-                                                               'adam_eps': 1e-08, 'weight_decay': 0.0001,
-                                                               'use_old_adam': False, 'tpu': False, 'lr': [0.0005]},
-                                                 'lr_scheduler': {'_name': 'inverse_sqrt', 'warmup_updates': 4000,
-                                                                  'warmup_init_lr': -1.0, 'lr': [0.0005]},
-                                                 'scoring': {'_name': 'bleu', 'pad': 1, 'eos': 2, 'unk': 3},
-                                                 'bpe': None, 'tokenizer': None, 'simul_type': None,
-                                                 'choose': 'NN-NN'}), self.task, self.model, self.criterion, None)
+        # trainer = Trainer(dictconfig.DictConfig({'_name': None, 'common': {'_name': None, 'no_progress_bar': False,
+        #                                                                    'log_interval': 100, 'log_format': None,
+        #                                                                    'log_file': None, 'tensorboard_logdir': None,
+        #                                                                    'wandb_project': None,
+        #                                                                    'azureml_logging': False, 'seed': 1,
+        #                                                                    'cpu': False, 'tpu': False, 'bf16': False,
+        #                                                                    'memory_efficient_bf16': False,
+        #                                                                    'fp16': False,
+        #                                                                    'memory_efficient_fp16': False,
+        #                                                                    'fp16_no_flatten_grads': False,
+        #                                                                    'fp16_init_scale': 128,
+        #                                                                    'fp16_scale_window': None,
+        #                                                                    'fp16_scale_tolerance': 0.0,
+        #                                                                    'min_loss_scale': 0.0001,
+        #                                                                    'threshold_loss_scale': None,
+        #                                                                    'user_dir': None, 'empty_cache_freq': 0,
+        #                                                                    'all_gather_list_size': 16384,
+        #                                                                    'model_parallel_size': 1,
+        #                                                                    'quantization_config_path': None,
+        #                                                                    'profile': False, 'reset_logging': False,
+        #                                                                    'suppress_crashes': False,
+        #                                                                    'use_plasma_view': False,
+        #                                                                    'plasma_path': '/tmp/plasma'},
+        #                                          'common_eval': {'_name': None, 'path': None, 'post_process': None,
+        #                                                          'quiet': False, 'model_overrides': '{}',
+        #                                                          'results_path': None},
+        #                                          'distributed_training': {'_name': None, 'distributed_world_size': 1,
+        #                                                                   'distributed_rank': 0,
+        #                                                                   'distributed_backend': 'nccl',
+        #                                                                   'distributed_init_method': None,
+        #                                                                   'distributed_port': -1, 'device_id': 0,
+        #                                                                   'distributed_no_spawn': False,
+        #                                                                   'ddp_backend': 'pytorch_ddp',
+        #                                                                   'ddp_comm_hook': 'none', 'bucket_cap_mb': 25,
+        #                                                                   'fix_batches_to_gpus': False,
+        #                                                                   'find_unused_parameters': False,
+        #                                                                   'fast_stat_sync': False,
+        #                                                                   'heartbeat_timeout': -1,
+        #                                                                   'broadcast_buffers': False,
+        #                                                                   'slowmo_momentum': None,
+        #                                                                   'slowmo_algorithm': 'LocalSGD',
+        #                                                                   'localsgd_frequency': 3, 'nprocs_per_node': 1,
+        #                                                                   'pipeline_model_parallel': False,
+        #                                                                   'pipeline_balance': None,
+        #                                                                   'pipeline_devices': None,
+        #                                                                   'pipeline_chunks': 0,
+        #                                                                   'pipeline_encoder_balance': None,
+        #                                                                   'pipeline_encoder_devices': None,
+        #                                                                   'pipeline_decoder_balance': None,
+        #                                                                   'pipeline_decoder_devices': None,
+        #                                                                   'pipeline_checkpoint': 'never',
+        #                                                                   'zero_sharding': 'none', 'fp16': False,
+        #                                                                   'memory_efficient_fp16': False, 'tpu': False,
+        #                                                                   'no_reshard_after_forward': False,
+        #                                                                   'fp32_reduce_scatter': False,
+        #                                                                   'cpu_offload': False,
+        #                                                                   'distributed_num_procs': 0},
+        #                                          'dataset': {'_name': None, 'num_workers': 1,
+        #                                                      'skip_invalid_size_inputs_valid_test': False,
+        #                                                      'max_tokens': 4096, 'batch_size': None,
+        #                                                      'required_batch_size_multiple': 8,
+        #                                                      'required_seq_len_multiple': 1, 'dataset_impl': None,
+        #                                                      'data_buffer_size': 10, 'train_subset': 'train',
+        #                                                      'valid_subset': 'valid', 'combine_valid_subsets': None,
+        #                                                      'ignore_unused_valid_subsets': False,
+        #                                                      'validate_interval': 1, 'validate_interval_updates': 0,
+        #                                                      'validate_after_updates': 0, 'fixed_validation_seed': None,
+        #                                                      'disable_validation': False, 'max_tokens_valid': 4096,
+        #                                                      'batch_size_valid': None, 'max_valid_steps': None,
+        #                                                      'curriculum': 0, 'gen_subset': 'test', 'num_shards': 1,
+        #                                                      'shard_id': 0},
+        #                                          'optimization': {'_name': None, 'max_epoch': 0, 'max_update': 0,
+        #                                                           'stop_time_hours': 0.0, 'clip_norm': 0.0,
+        #                                                           'sentence_avg': False, 'update_freq': [1],
+        #                                                           'lr': [0.0005], 'stop_min_lr': -1.0,
+        #                                                           'use_bmuf': False},
+        #                                          'checkpoint': {'_name': None, 'save_dir': 'checkpoints/de-en-NN-NN',
+        #                                                         'restore_file': 'checkpoint_last.pt',
+        #                                                         'finetune_from_model': None, 'reset_dataloader': False,
+        #                                                         'reset_lr_scheduler': False, 'reset_meters': False,
+        #                                                         'reset_optimizer': False, 'optimizer_overrides': '{}',
+        #                                                         'save_interval': 1, 'save_interval_updates': 0,
+        #                                                         'keep_interval_updates': -1,
+        #                                                         'keep_interval_updates_pattern': -1,
+        #                                                         'keep_last_epochs': -1, 'keep_best_checkpoints': -1,
+        #                                                         'no_save': False, 'no_epoch_checkpoints': False,
+        #                                                         'no_last_checkpoints': False,
+        #                                                         'no_save_optimizer_state': False,
+        #                                                         'best_checkpoint_metric': 'bleu',
+        #                                                         'maximize_best_checkpoint_metric': True, 'patience': -1,
+        #                                                         'checkpoint_suffix': '', 'checkpoint_shard_count': 1,
+        #                                                         'load_checkpoint_on_all_dp_ranks': False,
+        #                                                         'write_checkpoints_asynchronously': False,
+        #                                                         'model_parallel_size': 1},
+        #                                          'bmuf': {'_name': None, 'block_lr': 1.0, 'block_momentum': 0.875,
+        #                                                   'global_sync_iter': 50, 'warmup_iterations': 500,
+        #                                                   'use_nbm': False, 'average_sync': False,
+        #                                                   'distributed_world_size': 1},
+        #                                          'generation': {'_name': None, 'beam': 5, 'nbest': 1, 'max_len_a': 0.0,
+        #                                                         'max_len_b': 200, 'min_len': 1,
+        #                                                         'match_source_len': False, 'unnormalized': False,
+        #                                                         'no_early_stop': False, 'no_beamable_mm': False,
+        #                                                         'lenpen': 1.0, 'unkpen': 0.0, 'replace_unk': None,
+        #                                                         'sacrebleu': False, 'score_reference': False,
+        #                                                         'prefix_size': 0, 'no_repeat_ngram_size': 0,
+        #                                                         'sampling': False, 'sampling_topk': -1,
+        #                                                         'sampling_topp': -1.0, 'constraints': None,
+        #                                                         'temperature': 1.0, 'diverse_beam_groups': -1,
+        #                                                         'diverse_beam_strength': 0.5, 'diversity_rate': -1.0,
+        #                                                         'print_alignment': None, 'print_step': False,
+        #                                                         'lm_path': None, 'lm_weight': 0.0,
+        #                                                         'iter_decode_eos_penalty': 0.0,
+        #                                                         'iter_decode_max_iter': 10,
+        #                                                         'iter_decode_force_max_iter': False,
+        #                                                         'iter_decode_with_beam': 1,
+        #                                                         'iter_decode_with_external_reranker': False,
+        #                                                         'retain_iter_history': False, 'retain_dropout': False,
+        #                                                         'retain_dropout_modules': None, 'decoding_format': None,
+        #                                                         'no_seed_provided': False},
+        #                                          'eval_lm': {'_name': None, 'output_word_probs': False,
+        #                                                      'output_word_stats': False, 'context_window': 0,
+        #                                                      'softmax_batch': 9223372036854775807},
+        #                                          'interactive': {'_name': None, 'buffer_size': 0, 'input': '-'},
+        #                                          'task': {'_name': 'translation',
+        #                                                   'data': 'data-bin/iwslt14.tokenized.de-en',
+        #                                                   'source_lang': None, 'target_lang': None,
+        #                                                   'load_alignments': False, 'left_pad_source': True,
+        #                                                   'left_pad_target': False, 'max_source_positions': 1024,
+        #                                                   'max_target_positions': 1024, 'upsample_primary': -1,
+        #                                                   'truncate_source': False, 'num_batch_buckets': 0,
+        #                                                   'train_subset': 'train', 'dataset_impl': None,
+        #                                                   'required_seq_len_multiple': 1, 'eval_bleu': True,
+        #                                                   'eval_bleu_args': '{"beam":5,"max_len_a":1.2,"max_len_b":10}',
+        #                                                   'eval_bleu_detok': 'moses', 'eval_bleu_detok_args': '{}',
+        #                                                   'eval_tokenized_bleu': False, 'eval_bleu_remove_bpe': '@@ ',
+        #                                                   'eval_bleu_print_samples': True},
+        #                                          'criterion': {'_name': 'label_smoothed_cross_entropy',
+        #                                                        'label_smoothing': 0.1, 'report_accuracy': False,
+        #                                                        'ignore_prefix_size': 0, 'sentence_avg': False},
+        #                                          'optimizer': {'_name': 'adam', 'adam_betas': '(0.9,0.98)',
+        #                                                        'adam_eps': 1e-08, 'weight_decay': 0.0001,
+        #                                                        'use_old_adam': False, 'tpu': False, 'lr': [0.0005]},
+        #                                          'lr_scheduler': {'_name': 'inverse_sqrt', 'warmup_updates': 4000,
+        #                                                           'warmup_init_lr': -1.0, 'lr': [0.0005]},
+        #                                          'scoring': {'_name': 'bleu', 'pad': 1, 'eos': 2, 'unk': 3},
+        #                                          'bpe': None, 'tokenizer': None, 'simul_type': None,
+        #                                          'choose': 'NN-NN'}), self.task, self.model, self.criterion, None)
 
         self.lr_step_begin_epoch(epoch,scheduler)
         while epoch < args['numEpochs']:
@@ -504,6 +446,8 @@ class Runner:
 
             # for batch in batches:
             for sample in itr:
+
+                # self._set_seed()
                 optimizer.zero_grad()
                 # x={}
                 # x['id'] = torch.LongTensor(batch.id).to(args['device'])
@@ -512,25 +456,43 @@ class Runner:
                 # x['dec_len'] = batch.decoder_lens
                 # x['target'] = autograd.Variable(torch.LongTensor(batch.targetSeqs)).to(args['device'])
 
-
+                sample['net_input']['src_tokens'] = sample['net_input']['src_tokens'].to(args['device'])
+                sample['net_input']['src_lengths']= sample['net_input']['src_lengths'].to(args['device'])
+                sample['net_input']['prev_output_tokens'] =  sample['net_input']['prev_output_tokens'].to(args['device'])
+                sample['target'] = sample['target'].to(args['device'])
 
                 # loss, data = self.model(sample)    # batch seq_len outsize
-                # loss_mean = torch.mean(loss)
-                # # Reward = loss_mean.data
-                #
-                # optimizer.backward(loss_mean)
-                # # loss_mean.backward(retain_graph=True)
+                # loss, sample_size, logging_output = self.criterion(self.model,sample)
+
+                loss, sample_size_i, logging_output = self.train_step(
+                    sample=sample,
+                    model=self.model,
+                    criterion=self.criterion,
+                    optimizer=optimizer,
+                    update_num=self.get_num_updates(),
+                    ignore_grad=False,
+                )
+                loss_mean = torch.mean(loss)
+
+                # # # Reward = loss_mean.data
+                # #
+                # optimizer.backward(loss_mean, retain_graph=True)
+                # loss_mean.backward(retain_graph=True)
                 #
                 # # torch.nn.utils.clip_grad_norm_(self.model.parameters(), args['clip'])
                 #
-                # # self.model.all_reduce_grads()
-                # optimizer.multiply_grads(1 / (sample['ntokens'] or 1.0))
-                # # grad_norm = self.clip_grad_norm(0.0)
+                # optimizer.all_reduce_grads(self.model)
+                if torch.is_tensor(sample_size_i):
+                    sample_size_i = sample_size_i.float()
+                else:
+                    sample_size_i = float(sample_size_i)
+                optimizer.multiply_grads(1 / (sample_size_i or 1.0))
+                # grad_norm = self.clip_grad_norm(0.0)
                 # # self._check_grad_norms(grad_norm)
-                # optimizer.step()
+                optimizer.step()
 
-                log_output = trainer.train_step([sample])
-                loss_mean = log_output['loss']
+                # log_output = trainer.train_step([sample])
+                # loss_mean = log_output['loss']
 
                 print_loss_total += loss_mean
                 plot_loss_total += loss_mean
@@ -585,6 +547,39 @@ class Runner:
             print('Epoch ', epoch, 'loss = ', sum(losses) / len(losses), 'Valid BLEU = ', BLEU, bleu_ori,'best BLEU: ', min_BLEU)
             epoch += 1
 
+    def train_step(
+        self, sample, model, criterion, optimizer, update_num, ignore_grad=False
+    ):
+        """
+        Do forward and backward, and return the loss as computed by *criterion*
+        for the given *model* and *sample*.
+
+        Args:
+            sample (dict): the mini-batch. The format is defined by the
+                :class:`~fairseq.data.FairseqDataset`.
+            model (~fairseq.models.BaseFairseqModel): the model
+            criterion (~fairseq.criterions.FairseqCriterion): the criterion
+            optimizer (~fairseq.optim.FairseqOptimizer): the optimizer
+            update_num (int): the current update
+            ignore_grad (bool): multiply loss by 0 if this is set to True
+
+        Returns:
+            tuple:
+                - the loss
+                - the sample size, which is used as the denominator for the
+                  gradient
+                - logging outputs to display while training
+        """
+        model.train()
+        model.set_num_updates(update_num)
+        with torch.autograd.profiler.record_function("forward"):
+            loss, sample_size, logging_output = criterion(model, sample)
+        if ignore_grad:
+            loss *= 0
+        with torch.autograd.profiler.record_function("backward"):
+            optimizer.backward(loss)
+        return loss, sample_size, logging_output
+
     def testMT(self):
         start = time.time()
         print('Test set BLEU = ', self.Cal_BLEU_for_dataset('test'))
@@ -633,10 +628,10 @@ class Runner:
                 sample['net_input']['src_lengths'] = sample['net_input']['src_lengths'].to(args['device'])
                 sample['net_input']['prev_output_tokens'] = sample['net_input']['prev_output_tokens'].to(args['device'])
                 sample['target'] = sample['target'].to(args['device'])
-                # loss, sample_size, logging_output = self.model.predict(sample)    # batch seq_len outsize
-                loss, sample_size, logging_output = self.task.valid_step(
-                    sample, self.model, self.criterion
-                )
+                loss, sample_size, logging_output = self.model.predict(sample)    # batch seq_len outsize
+                # loss, sample_size, logging_output = self.task.valid_step(
+                #     sample, self.model, self.criterion
+                # )
                 pred_ans.extend([h.split() for h in logging_output['hyps']])
                 gold_ans.extend([[r.split()] for r in logging_output['refs']])
                 valid_loss.append(loss)

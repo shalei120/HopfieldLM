@@ -10,4 +10,5 @@ echo $CUDA_VISIBLE_DEVICES
 nvidia-smi
 echo $PWD
 # run the application
-python3 main.py -m asso -b 128  -d 1mb -g 0 > slurm-hopLM-1mb-$SLURM_JOB_ID.out
+python3 main.py -m asso_enco -b 64  -d 1mb -g 0 > slurm-hopencoLM-1mb-$SLURM_JOB_ID.out
+

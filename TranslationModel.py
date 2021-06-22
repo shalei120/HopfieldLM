@@ -195,13 +195,13 @@ class TranslationModel(nn.Module):
         x={
             'enc_input':sample['net_input']['src_tokens'],
             'dec_input':sample['net_input']['prev_output_tokens'],
-            # 'target' : sample['target']
+            'target' : sample['target']
         }
         mask = torch.sign(x['dec_input'].float())
         x['ntokens']=mask.sum()
         # loss, sample_size, logging_output, net_output = self.build(x)
         net_output = self.build(x)
-        # return loss,logging_output
+        # return loss,sample_size, logging_output
         return net_output
 
     # def predict(self, x, EVAL_BLEU_ORDER = 4):
@@ -213,9 +213,9 @@ class TranslationModel(nn.Module):
             'dec_input':sample['net_input']['prev_output_tokens'],
             'target' : sample['target']
         }
-
-        mask = torch.sign(x['dec_input'].float())
-        x['ntokens']=mask.sum()
+        #
+        # mask = torch.sign(x['dec_input'].float())
+        # x['ntokens']=mask.sum()
         # sample={
         #     'id': x['id'],
         #     'nsentences':len(x['id']),
@@ -229,10 +229,11 @@ class TranslationModel(nn.Module):
         # }
         # model.eval()
 
-        with torch.no_grad():
-            loss, sample_size, logging_output  = self.build(x)
+        # with torch.no_grad():
+        # #     loss, sample_size, logging_output, net_output  = self.build(x)
+        #     net_output  = self.build(x)
         bleu, hyps,refs = self._inference_with_bleu(self.sequence_generator, sample, self.trans_net)
-
+        logging_output = {}
         logging_output["_bleu_sys_len"] = bleu.sys_len
         logging_output["_bleu_ref_len"] = bleu.ref_len
         logging_output["hyps"] = hyps
@@ -241,7 +242,7 @@ class TranslationModel(nn.Module):
         for i in range(EVAL_BLEU_ORDER):
             logging_output["_bleu_counts_" + str(i)] = bleu.counts[i]
             logging_output["_bleu_totals_" + str(i)] = bleu.totals[i]
-        return loss, sample_size, logging_output
+        return -1, -1, logging_output
 
     def predict_ori(self, x):
         bs = x['dec_target'].size()[0]

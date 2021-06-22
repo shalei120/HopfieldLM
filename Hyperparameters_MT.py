@@ -52,7 +52,7 @@ class HP:
         args['saveEvery'] = 2000
         args['batchSize'] = 256
         args['learningRate'] = 0.001
-        args['dropout'] = 0.9
+        args['dropout'] = 0.3
         args['clip'] = 5.0
 
         args['encunit'] = 'lstm'
