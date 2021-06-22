@@ -629,7 +629,7 @@ class Trainer(object):
         """Do forward, backward and parameter update."""
         self._set_seed()
         self.model.train()
-        # self.criterion.train()
+        self.criterion.train()
         self.zero_grad()
 
         metrics.log_start_time("train_wall", priority=800, round=0)
@@ -726,11 +726,11 @@ class Trainer(object):
 
         overflow = False
         try:
-            # with torch.autograd.profiler.record_function("reduce-grads"):
-            #     # reduce gradients across workers
-            #     self.optimizer.all_reduce_grads(self.model)
-            #     if utils.has_parameters(self.criterion):
-            #         self.optimizer.all_reduce_grads(self.criterion)
+            with torch.autograd.profiler.record_function("reduce-grads"):
+                # reduce gradients across workers
+                self.optimizer.all_reduce_grads(self.model)
+                if utils.has_parameters(self.criterion):
+                    self.optimizer.all_reduce_grads(self.criterion)
 
             with torch.autograd.profiler.record_function("multiply-grads"):
                 # multiply gradients by (data_parallel_size / sample_size) since
@@ -769,10 +769,9 @@ class Trainer(object):
 
             with torch.autograd.profiler.record_function("optimizer"):
                 # take an optimization step
-                # self.task.optimizer_step(
-                #     self.optimizer, model=self.model, update_num=self.get_num_updates()
-                # )
-                self.optimizer.step()
+                self.task.optimizer_step(
+                    self.optimizer, model=self.model, update_num=self.get_num_updates()
+                )
 
         except FloatingPointError:
             # re-run the forward and backward pass with hooks attached to print

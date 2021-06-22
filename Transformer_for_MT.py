@@ -19,6 +19,8 @@ from quant_noise import quant_noise as apply_quant_noise_
 from layer_drop import LayerDropModuleList
 from adaptive_softmax import AdaptiveSoftmax
 import utils
+
+from omegaconf import dictconfig
 class TransformerModel(nn.Module):
     def __init__(self,  enc_w2i, enc_i2w, dec_w2i, dec_i2w, padding_idx = 1, embedding_dim = args['embeddingSize']):
         super(TransformerModel, self).__init__()
@@ -38,7 +40,6 @@ class TransformerModel(nn.Module):
 
         self.encoder = TransformerEncoder(self.enc_word2index, self.enc_index2word, self.embedding_src)
         self.decoder = TransformerDecoder(self.dec_word2index, self.dec_index2word, self.embedding_tgt)
-
 
     def forward( self, x,
                  return_all_hiddens: bool = True,
@@ -71,13 +72,25 @@ class TransformerModel(nn.Module):
             sample: Optional[Dict[str, Tensor]] = None,
     ):
         """Get normalized probabilities (or log probs) from a net's output."""
-        return self.decoder.get_normalized_probs(net_output, log_probs, sample)
+        if hasattr(self, "adaptive_softmax") and self.adaptive_softmax is not None:
+            if sample is not None:
+                assert "target" in sample
+                target = sample["target"]
+            else:
+                target = None
+            out = self.adaptive_softmax.get_log_prob(net_output[0], target=target)
+            return out.exp_() if not log_probs else out
+
+        logits = net_output[0]
+        if log_probs:
+            return F.log_softmax(logits, dim=-1)
+        else:
+            return F.softmax(logits, dim=-1)
 
 class TransformerEncoder(nn.Module):
 
 
     def __init__(self, enc_w2i, enc_i2w, enc_embs):
-
         super(TransformerEncoder, self).__init__()
 
         self.dropout_module = nn.Dropout(p=args['dropout'])
@@ -141,7 +154,7 @@ class TransformerEncoder(nn.Module):
 
     def build_encoder_layer(self):
         layer = nn.TransformerEncoderLayer(d_model=args['embeddingSize'], dim_feedforward = 1024, nhead=4).to(args['device'])
-
+        # layer = TransformerEncoderLayer(self.args1)
         return layer
 
     def forward_embedding(
@@ -216,7 +229,7 @@ class TransformerEncoder(nn.Module):
             if return_all_hiddens:
                 assert encoder_states is not None
                 encoder_states.append(x)
-
+        #src_key_padding_mask
         if self.layer_norm is not None:
             x = self.layer_norm(x)
 
@@ -745,3 +758,4 @@ class TransformerDecoder(nn.Module):
             return F.log_softmax(logits, dim=-1)
         else:
             return F.softmax(logits, dim=-1)
+
