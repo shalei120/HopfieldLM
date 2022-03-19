@@ -25,7 +25,7 @@ class HP:
         args['numLayers'] = 1
         args['softmaxSamples'] = 0
         args['initEmbeddings'] = True
-        args['embeddingSize'] = 100 #300
+        args['embeddingSize'] = 150 #300
         # args['embeddingSource'] = "GoogleNews-vectors-negative300.bin"
 
         args['numEpochs'] = 1000

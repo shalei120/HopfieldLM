@@ -130,18 +130,18 @@ class Runner:
         print(self.textData.getVocabularySize())
         print(args)
         torch.manual_seed(0)
-        # self.model = LanguageModel(self.textData.word2index, self.textData.index2word).to(args['device'])
+        self.model = LanguageModel(self.textData.word2index, self.textData.index2word, wordN= self.textData.word2count).to(args['device'])
         # self.model = torch.load(args['rootDir']+ 'model_energy_wiki2_100_6_300.pth', map_location=args['device'])
-        self.model = torch.load(args['rootDir']+ 'model_transformer_wiki2_100_6_300.pth', map_location=args['device'])
+        # self.model = torch.load(args['rootDir']+ 'model_transformer_wiki2_100_6_300.pth', map_location=args['device'])
         params = sum([np.prod(p.size()) for p in self.model.parameters()])
         print(params, sum([sys.getsizeof(p.storage()) for p in self.model.parameters()])/1000000, 'm')
-        # self.trainLM()     # contain  model saving
-        # self.evaluateRandomly()
+        self.trainLM()     # contain  model saving
+        self.evaluateRandomly()
         self.testLM()
 
      
 
-    def trainLM(self,  direction = 'fw', print_every=10000, plot_every=10, learning_rate=0.001):
+    def trainLM(self,   print_every=10000, plot_every=10, learning_rate=0.001):
         start = time.time()
         plot_losses = []
         print_loss_total = 0  # Reset every print_every
@@ -162,7 +162,7 @@ class Runner:
 
         min_perplexity = -1
 
-        self.Cal_perplexity_for_dataset('test', direction)
+        self.Cal_perplexity_for_dataset('test', False)
 
         CE_loss_total = 0
         KL_total = 0
@@ -216,15 +216,15 @@ class Runner:
                     VAE_recon_total = 0
                     error_avg = error_total / print_every
                     error_total = 0
-                    print('%s (%d %d%%) loss = %.4f, CE_loss = %.4f, VAE recon = %.4f, KL = %.4f, error=%.4f' % (timeSince(start, iter / n_iters),
-                                                 iter, iter / n_iters * 100, print_loss_avg, CEloss_avg, VAE_recon_avg, KL_avg, error_avg))
+                    print('%s (%d %d%%) loss = %.4f, CE_loss = %.4f, VAE recon = %.4f, amloss = %.4f, error=%.4f' % (timeSince(start, iter / n_iters),
+                                                 iter, iter / n_iters * 100, print_loss_avg, CEloss_avg, VAE_recon_avg, data['amloss'], error_avg))
                     # GPUtil.showUtilization()
                     # del de_output,loss,true_mean
                     # GPUtil.showUtilization()
                     # torch.cuda.empty_cache()
                     # GPUtil.showUtilization()
                     if args['corpus'] != '1mb' or iter % 100000 == 0:
-                        perplexity= self.Cal_perplexity_for_dataset('test', direction)
+                        perplexity= self.Cal_perplexity_for_dataset('test', False)
                         print('Test ppl: ', perplexity)
                         # print('Attention prop: ', attn)
                         # print('Attention other: ', other_attn)
@@ -243,7 +243,7 @@ class Runner:
                 iter+=1
 
             # scheduler.step()
-            perplexity= self.Cal_perplexity_for_dataset('test', direction)
+            perplexity= self.Cal_perplexity_for_dataset('test', False)
             if perplexity < min_perplexity or min_perplexity == -1:
                 print('perplexity = ', perplexity, '>= min_perplexity (', min_perplexity, '), saving model...')
                 torch.save(self.model, self.model_path.replace('model', 'model_'+args['LMtype']+'_'+args['corpus'] + '_'+str(args['maxLength'])+'_'+str(args['numLayers'])+'_'+str(args['embeddingSize'])))
@@ -282,7 +282,7 @@ class Runner:
             stds = []
             klcs = []
             klns = []
-            for batch in tqdm(self.testbatches[datasetname]):
+            for batch in self.testbatches[datasetname]:
                 x = {}
 
                 x['dec_input'] = autograd.Variable(torch.LongTensor(batch.decoderSeqs))

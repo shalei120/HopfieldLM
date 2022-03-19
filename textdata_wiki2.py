@@ -231,7 +231,7 @@ class TextData_wiki2:
                 v.close()
 
 
-            self.word2index = self.read_word2vec(args['rootDir'] + '/voc_'+dataname+'.txt')
+            self.word2index, self.word2count = self.read_word2vec(args['rootDir'] + '/voc_'+dataname+'.txt')
             self.sorted_word_index = sorted(self.word2index.items(), key=lambda item: item[1])
             print('sorted')
             self.index2word = [w for w, n in self.sorted_word_index]
@@ -270,7 +270,8 @@ class TextData_wiki2:
             data = {  # Warning: If adding something here, also modifying loadDataset
                 'word2index': self.word2index,
                 'index2word': self.index2word,
-                'datasets': self.datasets
+                'datasets': self.datasets,
+                'word2count':self.word2count
             }
             pickle.dump(data, handle, -1)  # Using the highest protocol available
 
@@ -286,9 +287,16 @@ class TextData_wiki2:
             self.word2index = data['word2index']
             self.index2word = data['index2word']
             self.datasets = data['datasets']
+            self.word2count = data['word2count']
 
 
     def read_word2vec(self, vocfile ):
+        word2count = []
+        word2count.append(1e6)
+        word2count.append(1e6)
+        word2count.append(1e6)
+        word2count.append(1e6)
+
         word2index = dict()
         word2index['PAD'] = 0
         word2index['START_TOKEN'] = 1
@@ -298,15 +306,16 @@ class TextData_wiki2:
         with open(vocfile, "r") as v:
 
             for line in v:
-                word = line.strip().split()[0]
+                word, wc = line.strip().split()
                 word2index[word] = cnt
                 print(word,cnt)
                 cnt += 1
+                word2count.append(int(wc))
 
         print(len(word2index),cnt)
         # dic = {w:numpy.random.normal(size=[int(sys.argv[1])]).astype('float32') for w in word2index}
         print ('Dictionary Got!')
-        return word2index
+        return word2index, word2count
 
     def TurnWordID(self, words):
         res = []

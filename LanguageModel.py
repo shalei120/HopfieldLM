@@ -20,9 +20,10 @@ from modules import Hopfield, HopfieldPooling, HopfieldLayer
 from modules.transformer import  HopfieldEncoderLayer
 from HackTransformer import TransformerEncoderLayer,TransformerEncoder
 from EnergyTransformer import EnergyTransformerEncoderLayer,EnergyTransformerEncoder
+from AMTransformer import AMTransformerEncoderLayer,AMTransformerEncoder
 
 class LanguageModel(nn.Module):
-    def __init__(self,w2i, i2w):
+    def __init__(self,w2i, i2w, wordN):
         """
         Args:
             args: parameters of the model
@@ -35,6 +36,7 @@ class LanguageModel(nn.Module):
         self.index2word = i2w
         self.max_length = args['maxLengthDeco']
         self.batch_size = args['batchSize']
+        self.wordN = nn.Embedding(args['vocabularySize'],1).from_pretrained(torch.FloatTensor(wordN).unsqueeze(1)).to(args['device'])
 
         self.dtype = 'float32'
 
@@ -91,7 +93,15 @@ class LanguageModel(nn.Module):
             self.output_projection = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize']).to(args['device'])
             # self.transformer_network = nn.Sequential(self.transformer_encoder, output_projection).to(args['device'])
             # self.energytransformer_encoder_neg = EnergyTransformerEncoder(self.trans_net, num_layers=args['numLayers'], choice = 0).to(args['device'])
-            # self.output_projection_neg = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize']).to(args['device'])
+            # self.output_projection_neg = nn.Linear(in_features=args['embeddingSize'], out_features=args['vocabularySize']).to(args['device']
+
+        elif args['LMtype'] == 'hop_energy':
+            self.trans_net = AMTransformerEncoderLayer(d_model=args['embeddingSize'], nhead=args['nhead']).to(
+                args['device'])
+            self.AMtransformer_encoder = AMTransformerEncoder(self.trans_net, num_layers=args['numLayers']).to(
+                args['device'])
+            self.output_projection = nn.Linear(in_features=args['embeddingSize'],
+                                               out_features=args['vocabularySize']).to(args['device'])
 
 
     def generate_square_subsequent_mask(self, sz):
@@ -121,6 +131,9 @@ class LanguageModel(nn.Module):
         self.decoder_lengths = x['dec_len']
         self.decoderTargets = x['dec_target'].to(args['device'])
 
+        wordcounts = self.wordN(self.decoderInputs)
+        # print(wordcounts)
+
         batch_size = self.decoderInputs.size()[0]
         self.dec_len = self.decoderInputs.size()[1]
         self.dec_input_embed = dec_input_embed = self.embedding(self.decoderInputs)
@@ -148,6 +161,7 @@ class LanguageModel(nn.Module):
             de_outputs, attns= self.transformer_encoder(dec_input_embed.transpose(0,1), mask=src_mask)
             de_outputs = self.output_projection(de_outputs)
             de_outputs = de_outputs.transpose(0,1)
+            sum_amloss = 0
             # print(de_outputs.size())
         elif args['LMtype'] == 'energy':
             src_mask = self.generate_square_subsequent_mask(self.dec_len).to(args['device'])
@@ -156,6 +170,13 @@ class LanguageModel(nn.Module):
             # de_outputs_neg, loss_tuple_neg, error_neg = self.energytransformer_encoder_neg(dec_input_embed, mask = src_mask, src_key_padding_mask = mask, training=training)
             # de_outputs_neg = self.output_projection(de_outputs_neg)
             # de_outputs = de_outputs.transpose(0,1)
+
+        elif args['LMtype'] == 'hop_energy':
+            src_mask = self.generate_square_subsequent_mask(self.dec_len).to(args['device'])
+            de_outputs, sum_amloss = self.AMtransformer_encoder(dec_input_embed.transpose(0,1),
+                                      mask=src_mask, src_key_padding_mask=(1-mask).to(torch.bool), wordN = wordcounts)
+            de_outputs = self.output_projection(de_outputs)
+            de_outputs = de_outputs.transpose(0,1)
         # print(de_outputs.size(),self.decoderTargets.size())
         # print(de_outputs.size(),self.decoderTargets.size() )
         recon_loss = self.CEloss(torch.transpose(de_outputs, 1, 2), self.decoderTargets)
@@ -170,7 +191,8 @@ class LanguageModel(nn.Module):
         true_mean = recon_loss.sum(1) / mask.sum(1)
 
         data = {'de_outputs': de_outputs,
-                'loss':recon_loss_mean,
+                'amloss': sum_amloss,
+                'loss':recon_loss_mean + 0.01* sum_amloss,
                 'true_mean':true_mean}
 
         if args['LMtype'] == 'energy':
